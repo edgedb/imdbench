@@ -1,0 +1,96 @@
+# getting movie profile with directors, cast, reviews, and average rating
+SELECT Movie {
+    id,
+    avatar,
+    title,
+    year,
+    description,
+    directors: {
+        id,
+        name,
+        avatar,
+    }
+    ORDER BY Movie.directors@list_order EMPTY LAST
+        THEN BY Movie.directors.name,
+    cast: {
+        id,
+        name,
+        avatar,
+    }
+    ORDER BY Movie.cast@list_order EMPTY LAST
+        THEN BY Movie.cast.name,
+    avg_rating,
+
+    # computables
+    reviews := (
+        SELECT Movie.<movie {
+            id,
+            body,
+            rating,
+            author: {
+                id,
+                name,
+                avatar,
+            }
+        }
+        ORDER BY .creation_time DESC
+    ),
+}
+FILTER .id = $0;
+
+
+# getting a person profile with movies that this person acted in or directed
+SELECT Person {
+    id,
+    name,
+    avatar,
+    bio,
+
+    # computables
+    acted_in := (
+        SELECT Person.<cast {
+            id,
+            title,
+            avatar,
+            year,
+            avg_rating,
+        }
+        ORDER BY .year ASC THEN BY .title ASC
+    ),
+    directed := (
+        SELECT Person.<directors {
+            id,
+            title,
+            avatar,
+            year,
+            avg_rating,
+        }
+        ORDER BY .year ASC THEN BY .title ASC
+    ),
+}
+FILTER .id = $0;
+
+
+# simple user profile with 3 latest comments
+SELECT User {
+    id,
+    name,
+    avatar,
+    latest_reviews := (
+        WITH UserReviews := User.<author
+        SELECT UserReviews {
+            id,
+            body,
+            rating,
+            movie: {
+                id,
+                title,
+                avatar,
+                avg_rating,
+            }
+        }
+        ORDER BY .creation_time DESC
+        LIMIT 3
+    )
+}
+FILTER .id = $0;

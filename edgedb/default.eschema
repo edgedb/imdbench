@@ -1,0 +1,57 @@
+abstract type Named:
+    required property name -> str
+
+
+abstract type Avatar:
+    # just a URL to the image
+    required property avatar -> str
+
+
+type User extending Named, Avatar
+
+
+type Review:
+    required property body -> str
+    required property rating -> int16:
+        constraint min(0)
+        constraint max(5)
+
+    required link author -> User:
+        cardinality := '*1'
+    required link movie -> Movie:
+        cardinality := '*1'
+
+    required property creation_time -> datetime
+
+
+type Person extending Named, Avatar:
+    property bio -> str
+
+
+abstract link crew:
+    # Provide a way to specify some "natural" ordering, as relevant to
+    # the movie. This may be order of importance, appearance, etc.
+    property list_order -> int16
+
+
+abstract link directors extending crew
+
+
+abstract link cast extending crew
+
+
+type Movie extending Avatar:
+    required property title -> str
+    required property year -> int16
+    required property description -> str
+
+    link directors -> Person:
+        cardinality := '1*'
+
+    link cast -> Person:
+        cardinality := '1*'
+
+    link avg_rating :=
+        WITH MovieReviews := Movie.<movie
+        SELECT sum(MovieReviews.rating) / count(MovieReviews)
+
