@@ -1,18 +1,15 @@
-abstract type Named:
-    required property name -> str
-
-
-abstract type Avatar:
+abstract type HasImage:
     # just a URL to the image
-    required property avatar -> str
+    required property image -> str
 
 
-type User extending Named, Avatar
+type User extending HasImage:
+    required property name -> str
 
 
 type Review:
     required property body -> str
-    required property rating -> int16:
+    required property rating -> int64:
         constraint min(0)
         constraint max(5)
 
@@ -21,17 +18,32 @@ type Review:
     required link movie -> Movie:
         cardinality := '*1'
 
-    required property creation_time -> datetime
+    required property creation_time -> datetime:
+        default := current_datetime()
 
 
-type Person extending Named, Avatar:
+type Person extending HasImage:
+    required property first_name -> str
+    required property middle_name -> str:
+        default := ''
+    required property last_name -> str
+    property full_name :=
+        (
+            __source__.first_name + ' ' +
+            (
+                (__source__.middle_name + ' ')
+                IF __source__.middle_name != '' ELSE
+                ''
+            ) +
+            __source__.last_name
+        )
     property bio -> str
 
 
 abstract link crew:
     # Provide a way to specify some "natural" ordering, as relevant to
     # the movie. This may be order of importance, appearance, etc.
-    property list_order -> int16
+    property list_order -> int64
 
 
 abstract link directors extending crew
@@ -40,18 +52,20 @@ abstract link directors extending crew
 abstract link cast extending crew
 
 
-type Movie extending Avatar:
+type Movie extending HasImage:
     required property title -> str
-    required property year -> int16
+    required property year -> int64
     required property description -> str
 
     link directors -> Person:
-        cardinality := '1*'
+        cardinality := '**'
 
     link cast -> Person:
-        cardinality := '1*'
+        cardinality := '**'
 
-    link avg_rating :=
-        WITH MovieReviews := Movie.<movie
-        SELECT sum(MovieReviews.rating) / count(MovieReviews)
-
+    property avg_rating :=
+        SELECT
+            (sum(__source__.<movie[IS Review].rating) /
+             count(__source__.<movie[IS Review]))
+            IF count(__source__.<movie[IS Review]) != 0 ELSE
+            <float64>0

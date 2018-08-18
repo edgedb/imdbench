@@ -1,24 +1,24 @@
 # getting movie profile with directors, cast, reviews, and average rating
 SELECT Movie {
     id,
-    avatar,
+    image,
     title,
     year,
     description,
     directors: {
         id,
-        name,
-        avatar,
+        full_name,
+        image,
     }
     ORDER BY Movie.directors@list_order EMPTY LAST
-        THEN BY Movie.directors.name,
+        THEN Movie.directors.last_name,
     cast: {
         id,
-        name,
-        avatar,
+        full_name,
+        image,
     }
     ORDER BY Movie.cast@list_order EMPTY LAST
-        THEN BY Movie.cast.name,
+        THEN Movie.cast.last_name,
     avg_rating,
 
     # computables
@@ -30,7 +30,7 @@ SELECT Movie {
             author: {
                 id,
                 name,
-                avatar,
+                image,
             }
         }
         ORDER BY .creation_time DESC
@@ -42,30 +42,32 @@ FILTER .id = $0;
 # getting a person profile with movies that this person acted in or directed
 SELECT Person {
     id,
-    name,
-    avatar,
+    full_name,
+    image,
     bio,
 
     # computables
     acted_in := (
-        SELECT Person.<cast {
+        WITH M := Person.<cast
+        SELECT M {
             id,
             title,
-            avatar,
+            image,
             year,
-            avg_rating,
+            avg_rating
         }
-        ORDER BY .year ASC THEN BY .title ASC
+        ORDER BY .year ASC THEN .title ASC
     ),
     directed := (
-        SELECT Person.<directors {
+        WITH M := Person.<directors
+        SELECT M {
             id,
             title,
-            avatar,
+            image,
             year,
-            avg_rating,
+            avg_rating
         }
-        ORDER BY .year ASC THEN BY .title ASC
+        ORDER BY .year ASC THEN .title ASC
     ),
 }
 FILTER .id = $0;
@@ -75,7 +77,7 @@ FILTER .id = $0;
 SELECT User {
     id,
     name,
-    avatar,
+    image,
     latest_reviews := (
         WITH UserReviews := User.<author
         SELECT UserReviews {
@@ -85,8 +87,8 @@ SELECT User {
             movie: {
                 id,
                 title,
-                avatar,
-                avg_rating,
+                image,
+                avg_rating
             }
         }
         ORDER BY .creation_time DESC
