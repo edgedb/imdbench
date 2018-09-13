@@ -51,8 +51,8 @@ SELECT Person {
         WITH M := Person.<cast
         SELECT M {
             id,
-            title,
             image,
+            title,
             year,
             avg_rating
         }
@@ -62,8 +62,8 @@ SELECT Person {
         WITH M := Person.<directors
         SELECT M {
             id,
-            title,
             image,
+            title,
             year,
             avg_rating
         }
@@ -86,8 +86,8 @@ SELECT User {
             rating,
             movie: {
                 id,
-                title,
                 image,
+                title,
                 avg_rating
             }
         }

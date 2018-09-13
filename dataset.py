@@ -61,10 +61,10 @@ def random_gauss_int(mu, sigma, minval=-99_999, maxval=99_999):
 
 
 class DataGenerator:
-    def __init__(self, people=10_000, users=10_000, reviews=50_000):
+    def __init__(self, people=10_000, users=10_000, reviews=50_000, new=False):
         self._pickle_name = f'mdb_{people}_{users}_{reviews}.pickle'
 
-        if os.path.exists(self._pickle_name):
+        if not new and os.path.exists(self._pickle_name):
             # retrieve the pickled movie DB data
             with open(self._pickle_name, 'rb') as f:
                 self.mdb = pickle.load(f)
@@ -223,7 +223,7 @@ class DataGenerator:
                 new_dir = random.choice(list(directors.keys()))
                 if new_dir not in movie.directors:
                     movie.directors.append(new_dir)
-                    break
+                break
 
         return directors
 

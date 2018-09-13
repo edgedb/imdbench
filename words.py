@@ -114,6 +114,8 @@ class TextGenerator:
                 (?<=\w)\s(?=')
                 |
                 (?<=')\s(?=[mdvstl])
+                |
+                [-:;,"']$
             ''',
             '', text).strip()
 

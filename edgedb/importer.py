@@ -40,7 +40,11 @@ def generate_eql(datagen):
                     {_generate_for_person_eql(directors)}
                 ),
                 cast := (
-                    {_generate_for_person_eql(cast, forvar='B')}
+                    {
+                        _generate_for_person_eql(cast)
+                        if m.nid % 10 else
+                        _generate_unordered_person_eql(cast)
+                    }
                 ),
             }};
         '''
@@ -61,7 +65,7 @@ def generate_eql(datagen):
     return output
 
 
-def _generate_for_person_eql(images, forvar='A'):
+def _generate_for_person_eql(images, forvar='X'):
     plist = []
     for i, img in enumerate(images):
         plist.append(f'({i}, {img!r})')
@@ -73,6 +77,15 @@ def _generate_for_person_eql(images, forvar='A'):
             SELECT Person {{@list_order := {forvar}.0}}
             FILTER .image = {forvar}.1
         )
+    '''
+
+
+def _generate_unordered_person_eql(images):
+    return f'''
+        SELECT Person
+        FILTER .image IN {{
+            {', '.join(repr(img) for img in images)}
+        }}
     '''
 
 
