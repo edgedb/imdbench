@@ -141,9 +141,6 @@ class UserReviewSerializer(serializers.ModelSerializer):
         model = models.Review
         fields = ('id', 'body', 'rating', 'movie')
 
-    def get_avg_rating(self, obj):
-        return obj.get_avg_rating()
-
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     latest_reviews = serializers.SerializerMethodField()
@@ -154,7 +151,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         depth = 2
 
     def get_latest_reviews(self, obj):
-        reviews = obj.reviews.all().order_by('-creation_time')[:3]
+        reviews = obj.reviews.all().order_by('-creation_time')
         # select all movie links in one query
         return UserReviewSerializer(
-            reviews.select_related('movie'), many=True).data
+            reviews.select_related('movie')[:3], many=True).data
