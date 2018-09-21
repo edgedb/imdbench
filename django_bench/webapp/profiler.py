@@ -16,31 +16,20 @@ def profiled(func):
             print(f'Queries: {num} in {round(time * 1000, 2)}ms')
 
             # inject the stats into the result
-            stats = {'_stats': {
-                'queries': num, 'time_ms': round(time * 1000, 2)}}
+            stats = {
+                'stats': {'queries': num, 'time_ms': round(time * 1000, 2)},
+                'data': None,
+            }
             # we might have either data or content to work with
             if hasattr(result, 'data'):
-                data = result.data
-                if isinstance(data, dict):
-                    stats.update(data)
-                    data = stats
-                else:
-                    data = [stats] + data
-
-                result.data = data
+                stats['data'] = result.data
+                result.data = stats
 
             else:
-                data = result.content
-                stats = json.dumps(stats)
-                # based on first character we know if it's a JSON
-                # array or object
-                if data[0] == b'['[0]:
-                    stats = f'[{stats}, '
-                else:
-                    stats = f'{stats[:-1]}, '
-
-                data = stats.encode() + data[1:]
-                result.content = data
+                stats = json.dumps(stats).encode()
+                stats = stats.replace(b'"data": null',
+                                      b'"data": ' + result.content)
+                result.content = stats
 
         return result
     return wrapper
