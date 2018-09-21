@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, subqueryload
 
 from . import models
+from .profiler import profiled
 
 
 app = flask.Flask('webapp')
@@ -97,6 +98,7 @@ class TreeResource(Resource):
     def get_query(self):
         raise NotImplementedError
 
+    @profiled
     def get(self, id=None):
         args = self.get_parser.parse_args()
         args.order = args.order or self.default_order
@@ -181,8 +183,8 @@ class PersonDetails(TreeResource):
         Person = self.Model
 
         query = Person.query.options(
-            subqueryload(Person.acted_in),
-            subqueryload(Person.directed),
+            joinedload(Person.acted_in),
+            joinedload(Person.directed),
         )
 
         return query
@@ -233,6 +235,7 @@ class MovieDetails(TreeResource):
         Cast = app.db.Cast
         Review = app.db.Review
 
+        # NOTE: turns out that subqueryload is better than joinedload here
         query = Movie.query.options(
             # get all the directors relationships in a subquery
             subqueryload(Movie.directors_rel)
