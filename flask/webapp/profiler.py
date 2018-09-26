@@ -6,7 +6,7 @@ import flask
 
 def profiled(func):
     def wrapper(*args, **kwargs):
-        if flask.current_app.config['PROFILER']:
+        if flask.current_app.config.get('PROFILER'):
             pr = cProfile.Profile()
             pr.enable()
 

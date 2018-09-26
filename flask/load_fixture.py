@@ -2,7 +2,6 @@ import argparse
 import collections
 import datetime
 import json
-import sqlalchemy as sa
 import webapp
 
 

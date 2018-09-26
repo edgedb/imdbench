@@ -2,10 +2,11 @@ import flask
 from flask_restful import Resource, Api, fields, marshal, reqparse
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import joinedload, subqueryload
+from sqlalchemy.orm import joinedload, selectinload
 
 from . import models
 from .profiler import profiled
+from .json import jsonify
 
 
 app = flask.Flask('webapp')
@@ -14,6 +15,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = \
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['PROFILER'] = True
+app.config['RAPID_JSONIFY'] = True
 app.db = SQLAlchemy(app)
 models.init(app.db)
 app.manager = Manager(app)
@@ -92,11 +94,16 @@ class TreeResource(Resource):
     get_parser.add_argument('offset', type=int, default=0)
     get_parser.add_argument('limit', type=int, default=10)
 
-    def marshal(self, result):
-        raise NotImplementedError
-
-    def get_query(self):
-        raise NotImplementedError
+    def dispatch_request(self, *args, **kwargs):
+        resp = super().dispatch_request(*args, **kwargs)
+        if flask.current_app.config.get('RAPID_JSONIFY'):
+            # this makes it easy to add a custom JSON encoder without
+            # having to worry about injecting SQL performance
+            # statistics into the final result
+            return jsonify(resp)
+        else:
+            # default Flask behavior
+            return resp
 
     @profiled
     def get(self, id=None):
@@ -105,13 +112,15 @@ class TreeResource(Resource):
 
         if id is not None:
             result = self.get_query().filter(self.Model.id == id).first()
-            return self.marshal(result)
+            result = self.marshal(result)
         else:
-            results = self.get_query().order_by(
+            result = self.get_query().order_by(
                 getattr(getattr(self.Model, args.order), args.dir)()
             ).offset(args.offset).limit(args.limit)
 
-            return [self.marshal(result) for result in results.all()]
+            result = [self.marshal(res) for res in result.all()]
+
+        return result
 
 
 class UserDetails(TreeResource):
@@ -235,16 +244,17 @@ class MovieDetails(TreeResource):
         Cast = app.db.Cast
         Review = app.db.Review
 
-        # NOTE: turns out that subqueryload is better than joinedload here
+        # NOTE: turns out that selectinload is better than joinedload
+        # for directors, cast and reviews
         query = Movie.query.options(
             # get all the directors relationships in a subquery
-            subqueryload(Movie.directors_rel)
+            selectinload(Movie.directors_rel)
             .joinedload(Directors.person_rel, innerjoin=True),
             # get all the cast relationships in a subquery
-            subqueryload(Movie.cast_rel)
+            selectinload(Movie.cast_rel)
             .joinedload(Cast.person_rel, innerjoin=True),
             # get all the reviews in a subquery and join in authors
-            subqueryload(Movie.reviews)
+            selectinload(Movie.reviews)
             .joinedload(Review.author, innerjoin=True),
         )
 
