@@ -164,7 +164,7 @@ class DataGenerator:
                 # always a chance to start a series
                 if not series_titles and random.random() < 0.08:
                     st = tgen.generate_title(2)
-                    series_wishlist = random.choices(
+                    series_wishlist = random.sample(
                         list(actor_pool.keys()),
                         k=random_gauss_int(10, 10, 1, 100)
                     )
