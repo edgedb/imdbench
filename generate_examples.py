@@ -28,3 +28,12 @@ if __name__ == '__main__':
 
     with open(f'setup_django_{tail}.json', 'wt') as f:
         f.write(generate_json(dgen))
+
+    with open(f'user_ids_{tail}.txt', 'wt') as f:
+        f.write('\n'.join([str(nid) for nid in dgen.mdb['users']]))
+
+    with open(f'person_ids_{tail}.txt', 'wt') as f:
+        f.write('\n'.join([str(nid) for nid in dgen.mdb['people']]))
+
+    with open(f'movie_ids_{tail}.txt', 'wt') as f:
+        f.write('\n'.join([str(nid) for nid in dgen.mdb['movies']]))

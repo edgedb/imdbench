@@ -1,4 +1,4 @@
-import json
+import rapidjson as json
 
 
 def generate_json(datagen, appname='webapp'):
