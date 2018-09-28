@@ -3,6 +3,7 @@ from flask_restful import Resource, Api, fields, marshal, reqparse
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
+import os
 
 from . import models
 from .profiler import profiled
@@ -13,8 +14,8 @@ app = flask.Flask('webapp')
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     'postgresql://flask_bench:edgedbbenchmark@localhost/flask_bench'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True
-app.config['PROFILER'] = True
+app.config['SQLALCHEMY_ECHO'] = False
+app.config['PROFILER'] = os.getenv('BENCH_DEBUG', '').lower() == 'true'
 app.config['RAPID_JSONIFY'] = True
 app.db = SQLAlchemy(app)
 models.init(app.db)
