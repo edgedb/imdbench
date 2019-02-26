@@ -1,3 +1,4 @@
+import asyncio
 import argparse
 
 
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     tail = f'{args.people}_{args.users}_{args.reviews}'
 
     if args.importeql:
-        import_data(dgen)
+        asyncio.run(import_data(dgen))
     else:
         with open(f'setup_edgedb_{tail}.eql', 'wt') as f:
             f.write(generate_eql(dgen))

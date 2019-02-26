@@ -1,160 +1,218 @@
+import asyncio
+
 import edgedb
 import progress.bar
 
 
-def bar(label, it):
-    return progress.bar.Bar(label).iter(it)
+class Pool:
+
+    _STOP = object()
+
+    def __init__(self, data, *, concurrency: int):
+        self._concurrency = concurrency
+
+        self._results = asyncio.Queue()
+
+        self._queue = asyncio.Queue()
+        for piece in data:
+            self._queue.put_nowait(piece)
+        for _ in range(self._concurrency):
+            self._queue.put_nowait(self._STOP)
+
+        self._workers = []
+
+    def _start(self):
+        for _ in range(self._concurrency):
+            self._workers.append(
+                asyncio.create_task(self._worker()))
+
+    async def _worker(self):
+        con = await edgedb.async_connect(
+            user='edgedb', database='edgedb_bench')
+
+        try:
+            while True:
+                piece = await self._queue.get()
+                if piece is self._STOP:
+                    self._results.put_nowait(self._STOP)
+                    break
+
+                args, kwargs = piece
+                await con.fetch(*args, **kwargs)
+                self._results.put_nowait(True)
+        finally:
+            await con.close()
+
+    @classmethod
+    async def map(cls, data, *, concurrency: int, label: str):
+        pool = cls(data, concurrency=concurrency)
+        pool._start()
+
+        bar = progress.bar.Bar(label, max=len(data))
+
+        stop_cnt = 0
+        while True:
+            piece = await pool._results.get()
+            if piece is cls._STOP:
+                stop_cnt += 1
+                if stop_cnt == concurrency:
+                    bar.finish()
+                    return
+            else:
+                bar.next()
 
 
-def import_data(datagen):
+async def import_data(datagen):
+    concurrency = 16
+
     users = datagen.mdb['users']
     reviews = datagen.mdb['reviews']
     movies = datagen.mdb['movies']
     people = datagen.mdb['people']
 
-    # assume that the DB and the schema have been initialized separately
-    con = edgedb.connect(user='edgedb', database='edgedb_bench')
+    ppl_insert_query = r'''
+        INSERT Person {
+            first_name := <str>$first_name,
+            middle_name := <str>$middle_name,
+            last_name := <str>$last_name,
+            image := <str>$image,
+            bio := <str>$bio,
+        };
+    '''
 
-    for p in bar('People', people.values()):
-        con.fetch(
-            r'''
-            INSERT Person {
-                first_name := <str>$first_name,
-                middle_name := <str>$middle_name,
-                last_name := <str>$last_name,
-                image := <str>$image,
-                bio := <str>$bio,
-            };
-            ''',
-            first_name=p.first_name,
-            middle_name=p.middle_name,
-            last_name=p.last_name,
-            image=p.image,
-            bio=p.bio,
-        )
-
-    for u in bar('Users', users.values()):
-        con.fetch(
-            r'''
-            INSERT User {
-                name := <str>$name,
-                image := <str>$image,
-            };
-            ''',
-            name=u.name,
-            image=u.image,
-        )
-
-    ord_eql = r'''
-    INSERT Movie {
-        title := <str>$title,
-        description := <str>$description,
-        year := <int64>$year,
-        image := <str>$image,
-
-        directors := (
-            FOR X IN {
-                enumerate(array_unpack(
-                    <array<str>>$directors
-                ))
-            }
-            UNION (
-                SELECT Person {@list_order := X.0}
-                FILTER .image = X.1
+    people_data = [
+        (
+            (ppl_insert_query,),
+            dict(
+                first_name=p.first_name,
+                middle_name=p.middle_name,
+                last_name=p.last_name,
+                image=p.image,
+                bio=p.bio
             )
-        ),
-        cast := (
-            FOR X IN {
-                enumerate(array_unpack(
+        ) for p in people.values()
+    ]
+
+    users_insert_query = r'''
+        INSERT User {
+            name := <str>$name,
+            image := <str>$image,
+        };
+    '''
+
+    users_data = [
+        (
+            (users_insert_query,),
+            dict(
+                name=u.name,
+                image=u.image,
+            )
+        ) for u in users.values()
+    ]
+
+    movies_ord_insert_query = r'''
+        INSERT Movie {
+            title := <str>$title,
+            description := <str>$description,
+            year := <int64>$year,
+            image := <str>$image,
+
+            directors := (
+                FOR X IN {
+                    enumerate(array_unpack(
+                        <array<str>>$directors
+                    ))
+                }
+                UNION (
+                    SELECT Person {@list_order := X.0}
+                    FILTER .image = X.1
+                )
+            ),
+            cast := (
+                FOR X IN {
+                    enumerate(array_unpack(
+                        <array<str>>$cast
+                    ))
+                }
+                UNION (
+                    SELECT Person {@list_order := X.0}
+                    FILTER .image = X.1
+                )
+            )
+        };
+    '''
+
+    movies_unord_insert_query = r'''
+        INSERT Movie {
+            title := <str>$title,
+            description := <str>$description,
+            year := <int64>$year,
+            image := <str>$image,
+
+            directors := (
+                FOR X IN {
+                    enumerate(array_unpack(
+                        <array<str>>$directors
+                    ))
+                }
+                UNION (
+                    SELECT Person {@list_order := X.0}
+                    FILTER .image = X.1
+                )
+            ),
+            cast := (
+                SELECT Person
+                FILTER .image IN array_unpack(
                     <array<str>>$cast
-                ))
-            }
-            UNION (
-                SELECT Person {@list_order := X.0}
-                FILTER .image = X.1
+                )
             )
-        )
-    };
+        };
     '''
 
-    unord_eql = r'''
-    INSERT Movie {
-        title := <str>$title,
-        description := <str>$description,
-        year := <int64>$year,
-        image := <str>$image,
-
-        directors := (
-            FOR X IN {
-                enumerate(array_unpack(
-                    <array<str>>$directors
-                ))
-            }
-            UNION (
-                SELECT Person {@list_order := X.0}
-                FILTER .image = X.1
-            )
-        ),
-        cast := (
-            SELECT Person
-            FILTER .image IN array_unpack(
-                <array<str>>$cast
-            )
-        )
-    };
-    '''
-
-    for m in bar('Movies', movies.values()):
-        directors = nid2image(people, m.directors)
-        cast = nid2image(people, m.cast)
-
-        if m.nid % 10:
-            eql = ord_eql
-        else:
-            eql = unord_eql
-
-        try:
-            con.fetch(
-                eql,
+    movies_data = [
+        (
+            (
+                (movies_ord_insert_query
+                    if m.nid % 10 else movies_unord_insert_query),
+            ),
+            dict(
                 title=m.title,
                 description=m.description,
                 year=m.year,
                 image=m.image,
-                directors=directors,
-                cast=cast,
+                directors=nid2image(people, m.directors),
+                cast=nid2image(people, m.cast),
             )
-        except:
-            print(f'''
-                {eql}
-                {m.title}
-                {m.description}
-                {m.year}
-                {m.image}
-                {directors}
-                {cast}
-            ''')
-            raise
+        ) for m in movies.values()
+    ]
 
-    for r in bar('Reviews', reviews.values()):
-        uimage = users[r.author_nid].image
-        mimage = movies[r.movie_nid].image
-
-        con.fetch(
-            r'''
+    reviews_insert_query = r'''
             INSERT Review {
-                body := <str>$body,
-                rating := <int64>$rating,
-                author := (SELECT User FILTER .image = <str>$uimage),
-                movie := (SELECT Movie FILTER .image = <str>$mimage),
-                creation_time := <datetime>$creation_time,
-            };
-            ''',
-            body=r.body,
-            rating=r.rating,
-            uimage=uimage,
-            mimage=mimage,
-            creation_time=r.creation_time,
-        )
+            body := <str>$body,
+            rating := <int64>$rating,
+            author := (SELECT User FILTER .image = <str>$uimage),
+            movie := (SELECT Movie FILTER .image = <str>$mimage),
+            creation_time := <datetime>$creation_time,
+        };
+    '''
+
+    reviews_data = [
+        (
+            (reviews_insert_query,),
+            dict(
+                body=r.body,
+                rating=r.rating,
+                uimage=users[r.author_nid].image,
+                mimage=movies[r.movie_nid].image,
+                creation_time=r.creation_time,
+            )
+        ) for r in reviews.values()
+    ]
+
+    await Pool.map(people_data, concurrency=concurrency, label='people')
+    await Pool.map(users_data, concurrency=concurrency, label='users')
+    await Pool.map(movies_data, concurrency=concurrency, label='movies')
+    await Pool.map(reviews_data, concurrency=concurrency, label='reviews')
 
 
 def nid2image(items, nids):
