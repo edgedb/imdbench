@@ -13,13 +13,11 @@ type Review:
         constraint min(0)
         constraint max(5)
 
-    required link author -> User:
-        cardinality := '*1'
-    required link movie -> Movie:
-        cardinality := '*1'
+    required link author -> User
+    required link movie -> Movie
 
     required property creation_time -> datetime:
-        default := current_datetime()
+        default := datetime_current()
 
 
 type Person extending HasImage:
@@ -29,12 +27,12 @@ type Person extending HasImage:
     required property last_name -> str
     property full_name :=
         (
-            __source__.first_name + ' ' +
+            __source__.first_name ++ ' ' ++
             (
-                (__source__.middle_name + ' ')
+                (__source__.middle_name ++ ' ')
                 IF __source__.middle_name != '' ELSE
                 ''
-            ) +
+            ) ++
             __source__.last_name
         )
     property bio -> str
@@ -57,11 +55,8 @@ type Movie extending HasImage:
     required property year -> int64
     required property description -> str
 
-    link directors -> Person:
-        cardinality := '**'
-
-    link cast -> Person:
-        cardinality := '**'
+    multi link directors -> Person
+    multi link cast -> Person
 
     property avg_rating :=
         SELECT

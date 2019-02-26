@@ -6,6 +6,8 @@ import random
 import re
 import typing
 
+from collections import OrderedDict
+
 from words import TextGenerator
 from names import NameGenerator
 
@@ -61,8 +63,11 @@ def random_gauss_int(mu, sigma, minval=-99_999, maxval=99_999):
 
 
 class DataGenerator:
-    def __init__(self, people=10_000, users=10_000, reviews=50_000, new=False):
+    def __init__(self, people=10_000, users=10_000, reviews=50_000, new=False,
+                 path=None):
         self._pickle_name = f'mdb_{people}_{users}_{reviews}.pickle'
+        if path is not None:
+            self._pickle_name = f'{path}{self._pickle_name}'
 
         if not new and os.path.exists(self._pickle_name):
             # retrieve the pickled movie DB data
@@ -100,6 +105,20 @@ class DataGenerator:
         # generate people first
         self.generate_people(num_people)
         self.generate_directors(num_people)
+
+        # clean up movies
+        movies = self.mdb['movies']
+        for m in movies.values():
+            od = OrderedDict((p, 1) for p in m.cast)
+            if len(m.cast) != len(od):
+                # have duplicate entries
+                m.cast = [p for p in od.keys()]
+
+            od = OrderedDict((p, 1) for p in m.directors)
+            if len(m.directors) != len(od):
+                # have duplicate entries
+                m.directors = [p for p in od.keys()]
+
         self.generate_users(num_users)
         self.generate_reviews(num_reviews)
 
