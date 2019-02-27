@@ -29,18 +29,4 @@ urlpatterns = [
          views.UserDetailsViewSet.as_view({'get': 'list'})),
     re_path(r'^api-auth/',
             include('rest_framework.urls', namespace='rest_framework')),
-
-    # custom views not using rest_framework
-    path('api/custom/movie_details/<int:pk>',
-         views.CustomMovieView.as_view(), name='movie_details'),
-    path('api/custom/pages/movie_details/',
-         views.CustomMovieView.as_view(), name='movie_details'),
-    path('api/custom/person_details/<int:pk>',
-         views.CustomPersonView.as_view(), name='person_details'),
-    path('api/custom/pages/person_details/',
-         views.CustomPersonView.as_view(), name='person_details'),
-    path('api/custom/user_details/<int:pk>',
-         views.CustomUserView.as_view(), name='user_details'),
-    path('api/custom/pages/user_details/',
-         views.CustomUserView.as_view(), name='user_details'),
 ]

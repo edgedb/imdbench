@@ -60,7 +60,7 @@ get_url()
                 ;;
         djrest)   URL="http://localhost:8000/webapp/api/$2$3_details/$4"
                 ;;
-        djcustom)   URL="http://localhost:8000/webapp/api/custom/$2$3_details/$4"
+        djcustom)   URL="http://localhost:8001/webapp/api/$2$3_details/$4"
                 ;;
     esac
 }

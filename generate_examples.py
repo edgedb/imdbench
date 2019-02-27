@@ -23,7 +23,7 @@ if __name__ == '__main__':
     import dataset
     from flask_edgedb.eqlgen import generate_eql
     from flask_edgedb.importer import import_data
-    from django_bench.importer import generate_json
+    from django_rest.importer import generate_json
     dgen = dataset.DataGenerator(people=args.people, users=args.users,
                                  reviews=args.reviews, new=args.new)
     tail = f'{args.people}_{args.users}_{args.reviews}'
