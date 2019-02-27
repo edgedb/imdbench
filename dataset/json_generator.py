@@ -1,7 +1,7 @@
-import rapidjson as json
+import json
 
 
-def generate_json(datagen, appname='webapp'):
+def to_json(datagen, appname='webapp'):
     output = []
     users = datagen.mdb['users']
     reviews = datagen.mdb['reviews']

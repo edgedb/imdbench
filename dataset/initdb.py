@@ -19,7 +19,7 @@ if __name__ == '__main__':
         CREATE DATABASE edgedb_bench;
     """)
 
-    with open('flask_edgedb/default.eschema') as f:
+    with open('../flask_edgedb/default.eschema') as f:
         schema = f.read()
 
     con = edgedb.connect(user='edgedb', database='edgedb_bench')

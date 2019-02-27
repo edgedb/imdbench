@@ -1,10 +1,13 @@
 import asyncio
 import argparse
 
+import edgedb_importer
+import json_generator
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Generate .eql and .json datasets for benchmarks.')
+        description='Generate .json datasets for benchmarks.')
     parser.add_argument('people', type=int,
                         help='number of people')
     parser.add_argument('users', type=int,
@@ -21,21 +24,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     import dataset
-    from flask_edgedb.eqlgen import generate_eql
-    from flask_edgedb.importer import import_data
-    from django_rest.importer import generate_json
     dgen = dataset.DataGenerator(people=args.people, users=args.users,
                                  reviews=args.reviews, new=args.new)
     tail = f'{args.people}_{args.users}_{args.reviews}'
 
     if args.importeql:
-        asyncio.run(import_data(dgen))
+        asyncio.run(edgedb_importer.import_data(dgen))
     else:
-        with open(f'setup_edgedb_{tail}.eql', 'wt') as f:
-            f.write(generate_eql(dgen))
-
-        with open(f'setup_django_{tail}.json', 'wt') as f:
-            f.write(generate_json(dgen))
+        with open(f'setup_dataset_{tail}.json', 'wt') as f:
+            f.write(json_generator.to_json(dgen))
 
         with open(f'user_ids_{tail}.txt', 'wt') as f:
             f.write('\n'.join([str(nid) for nid in dgen.mdb['users']]))

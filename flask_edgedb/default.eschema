@@ -59,9 +59,4 @@ type Movie extending HasImage:
     multi link directors -> Person
     multi link cast -> Person
 
-    property avg_rating :=
-        SELECT
-            (sum(__source__.<movie[IS Review].rating) /
-             count(__source__.<movie[IS Review]))
-            IF count(__source__.<movie[IS Review]) != 0 ELSE
-            <float64>0
+    property avg_rating := math::mean(__source__.<movie[IS Review].rating) ?? 0
