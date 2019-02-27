@@ -38,8 +38,12 @@ class Pool:
                     break
 
                 args, kwargs = piece
-                await con.fetch(*args, **kwargs)
-                self._results.put_nowait(True)
+                try:
+                    await con.fetch(*args, **kwargs)
+                except Exception as e:
+                    self._results.put_nowait(e)
+                else:
+                    self._results.put_nowait(True)
         finally:
             await con.close()
 
