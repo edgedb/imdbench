@@ -58,9 +58,9 @@ get_url()
     case $1 in
         fsql)   URL="http://localhost:5000/$2$3_details/$4"
                 ;;
-        djrest)   URL="http://localhost:8000/webapp/api/$2$3_details/$4"
+        djrest)   URL="http://localhost:8010/webapp/api/$2$3_details/$4"
                 ;;
-        djcustom)   URL="http://localhost:8001/webapp/api/$2$3_details/$4"
+        djcustom)   URL="http://localhost:8011/webapp/api/$2$3_details/$4"
                 ;;
     esac
 }
