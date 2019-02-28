@@ -25,7 +25,7 @@ app.api = Api(app)
 
 @app.route('/')
 def hello():
-    return 'Hello World!'
+    return 'Flask + SQLAlchemy'
 
 
 class BaseResource(Resource):

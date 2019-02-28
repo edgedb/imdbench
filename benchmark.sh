@@ -77,7 +77,7 @@ generic_bench()
 for SRV in $BACKENDS
 do
     echo "Testing $SRV$QUERY"
-    for BTYPE in 'single' 'pages'
+    for BTYPE in 'single' # 'pages'
     do
         for ENTITY in 'movie' 'user' 'person'
         do
