@@ -2,9 +2,11 @@ import dataclasses
 import datetime
 import os.path
 import pickle
+import progress.bar
 import random
 import re
 import typing
+
 
 from collections import OrderedDict
 
@@ -60,6 +62,10 @@ def random_gauss_int(mu, sigma, minval=-99_999, maxval=99_999):
         res = round(random.gauss(mu, sigma))
         if minval <= res <= maxval:
             return res
+
+
+def bar(label, it, total):
+    return progress.bar.Bar(label, max=total).iter(it)
 
 
 class DataGenerator:
@@ -124,7 +130,7 @@ class DataGenerator:
 
     def generate_people(self, num_people):
         people = self.mdb['people']
-        for i in range(num_people):
+        for i in bar('Actors', range(num_people), num_people):
             person = self.new_person()
             people[person.nid] = person
 
@@ -169,7 +175,7 @@ class DataGenerator:
                 # regular actors
                 actor_pool[person.nid] = (person, self.get_acting_career())
 
-        for director in directors.values():
+        for director in bar('Directors', directors.values(), len(directors)):
             # what makes directors special is that they make movies
             num_movies = max(1, round(random.expovariate(1 / 3.5)))
             career_start = max(1950, 2018 - num_movies - random.randint(0, 70))
@@ -265,7 +271,7 @@ class DataGenerator:
         users = self.mdb['users']
         unames = set()
 
-        for i in range(num_users):
+        for i in bar('Users', range(num_users), num_users):
             uname = ngen.get_first_name()
             nid = self.nid
 
@@ -290,7 +296,7 @@ class DataGenerator:
         delta = int(datetime.timedelta(days=365 * 5).total_seconds() / 60)
         avg = num_reviews / len(users)
 
-        for unid, uname in users.items():
+        for unid, uname in bar('User reviews', users.items(), len(users)):
             mnids = random.sample(
                 movies.keys(),
                 min(random_gauss_int(avg, 4, minval=1, maxval=20), len(movies))
