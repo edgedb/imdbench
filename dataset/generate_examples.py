@@ -39,7 +39,8 @@ if __name__ == '__main__':
     if args.importeql:
         asyncio.run(edgedb_importer.import_data(dgen))
 
-    if args.edgedb_ids:
+    # importing a new dataset means that the IDs need to be extracted again
+    if args.importeql or args.edgedb_ids:
         con = edgedb.connect(user='edgedb', database='edgedb_bench')
 
         with open(f'edgedb_user_ids_{tail}.txt', 'wt') as f:

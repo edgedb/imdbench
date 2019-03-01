@@ -4,9 +4,9 @@ SELFNAME=$0
 usage()
 {
     echo "Usage: $SELFNAME [options] [backends]"
-    echo "  backends            - One or more of 'fsql', 'djrest',"
-    echo "                        'djcustom'; if omitted all backends"
-    echo "                        will be targeted"
+    echo "  backends            - One or more of 'fedb', 'fedb2', 'fsql',"
+    echo "                        'djrest', 'djcustom'; if omitted all"
+    echo "                        backends will be targeted"
     echo "Options:"
     echo "  -d, --duration <d>  - Specify how long each test will run,"
     echo "                        the argument may include units"
@@ -46,7 +46,7 @@ if [ -z "$DUR" ]; then
 fi
 
 if [ -z "$BACKENDS" ]; then
-    BACKENDS="fsql djrest djcustom"
+    BACKENDS="fedb fedb2 fsql djrest djcustom"
 fi
 
 get_url()
@@ -56,6 +56,10 @@ get_url()
     # $3 is entity
     # $4 is tail
     case $1 in
+        fedb)   URL="http://localhost:5001/$2$3_details/$4"
+                ;;
+        fedb2)   URL="http://localhost:5001/json/$2$3_details/$4"
+                ;;
         fsql)   URL="http://localhost:5000/$2$3_details/$4"
                 ;;
         djrest)   URL="http://localhost:8010/webapp/api/$2$3_details/$4"
@@ -71,7 +75,7 @@ generic_bench()
     # $2 is the lua script
     # $3 is the test URL
     # $4 is the test arg (person, movie, user)
-    wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4"
+    wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4" "$5"
 }
 
 for SRV in $BACKENDS
@@ -94,7 +98,7 @@ do
 
             get_url "$SRV" "$PAGES" "$ENTITY" "$TAIL"
 
-            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY"
+            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY" "$SRV"
         done
     done
     echo

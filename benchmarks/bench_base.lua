@@ -5,16 +5,20 @@ local bench_base = {
 }
 
 
-function bench_base.load_ids(name)
+function bench_base.load_ids(name, t)
     -- if the ids have not been read from a file, load them
     if bench_base.ids[name] == nil then
         -- create a new table for ids
         bench_base.ids[name] = {}
         -- load them from the corresponding file
         for line in io.lines(string.format(
-            '%s_ids_100000_100000_500000.txt', name))
+            'benchmarks/%s_ids_100000_100000_500000.txt', name))
         do
-            table.insert(bench_base.ids[name], tonumber(line))
+            if t == 'int' then
+                table.insert(bench_base.ids[name], tonumber(line))
+            else
+                table.insert(bench_base.ids[name], line)
+            end
         end
     end
 end
@@ -22,8 +26,14 @@ end
 
 function bench_base.single.init(args)
     local name = args[1]
+    local t = 'int'
+
+    if args[2] == 'fedb' or args[2] == 'fedb2' then
+        name = 'edgedb_'..name
+        t = 'str'
+    end
     -- read the ids from a file, so that we can pick them randomly
-    bench_base.load_ids(name)
+    bench_base.load_ids(name, t)
     wrk.thread:set('ids', bench_base.ids[name])
     print(string.format('INIT %s ids', name), #bench_base.ids[name])
 end
@@ -49,6 +59,12 @@ end
 
 function bench_base.pages.init(args)
     local name = args[1]
+    local t = 'int'
+
+    if args[2] == 'fedb' or args[2] == 'fedb2' then
+        name = 'edgedb_'..name
+        t = 'str'
+    end
     -- read the ids from a file, so that we can figure out page_count
     bench_base.load_ids(name)
     local pages = math.ceil(#bench_base.ids[name] / 10)

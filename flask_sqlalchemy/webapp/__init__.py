@@ -203,8 +203,10 @@ class PersonDetails(TreeResource):
         result = marshal(result, self.mfields)
 
         # sorting can be done in Python
-        result['acted_in'].sort(key=lambda x: (x['year'], x['title']))
-        result['directed'].sort(key=lambda x: (x['year'], x['title']))
+        if result['acted_in']:
+            result['acted_in'].sort(key=lambda x: (x['year'], x['title']))
+        if result['directed']:
+            result['directed'].sort(key=lambda x: (x['year'], x['title']))
 
         return result
 
