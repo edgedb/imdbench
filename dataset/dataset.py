@@ -65,7 +65,7 @@ def random_gauss_int(mu, sigma, minval=-99_999, maxval=99_999):
 
 
 def bar(label, it, total):
-    return progress.bar.Bar(label, max=total).iter(it)
+    return progress.bar.Bar(label[:30].ljust(30), max=total).iter(it)
 
 
 class DataGenerator:
@@ -100,11 +100,6 @@ class DataGenerator:
         self.__lastnid += 1
         return self.__lastnid
 
-    def get_image(self, name, nid):
-        '''Given a string produce a plausible image file name.'''
-        img = re.sub(r'(?i)\W+', '_', name)
-        return f'{img}_{nid}.jpeg'
-
     def generate_mdb(self, num_people, num_users, num_reviews):
         self.mdb = {'movies': {}, 'people': {}, 'users': {}, 'reviews': {}}
 
@@ -128,28 +123,15 @@ class DataGenerator:
         self.generate_users(num_users)
         self.generate_reviews(num_reviews)
 
+        self.populate_details()
+
     def generate_people(self, num_people):
         people = self.mdb['people']
         for i in bar('Actors', range(num_people), num_people):
-            person = self.new_person()
-            people[person.nid] = person
+            # for now just fill in the nid for the objects
+            people[self.nid] = True
 
         return people
-
-    def new_person(self):
-        full_name = ngen.get_full_name(as_list=True)
-        fn, *mnid, ln = full_name
-        nid = self.nid
-
-        return Person(
-            nid=nid,
-            first_name=fn,
-            middle_name=' '.join(mnid),
-            last_name=ln,
-            image=self.get_image(' '.join(full_name), nid),
-            bio=tgen.generate_text(
-                maxwords=random_gauss_int(20, 20, minval=10, maxval=50))
-        )
 
     def get_acting_career(self):
         'A number of movies an actor starred in.'
@@ -159,23 +141,24 @@ class DataGenerator:
         people = self.mdb['people']
         movies = self.mdb['movies']
         # some of the people will be directors, the rest - actors
-        directors = {}
+        directors = set()
         # actor_pool is composed of all non-directors and some directors
         actor_pool = {}
 
-        for i, person in enumerate(people.values()):
+        for i, person_nid in enumerate(people.keys()):
             if i < round(num_people * 0.07):
                 # about 7% are directors
-                directors[person.nid] = person
+                directors.add(person_nid)
 
                 if random.random() < 0.15:
                     # about 15% of them are also actors
-                    actor_pool[person.nid] = (person, self.get_acting_career())
+                    actor_pool[person_nid] = self.get_acting_career()
             else:
                 # regular actors
-                actor_pool[person.nid] = (person, self.get_acting_career())
+                actor_pool[person_nid] = self.get_acting_career()
 
-        for director in bar('Directors', directors.values(), len(directors)):
+        for director_nid in bar('Directors & Movies',
+                                directors, len(directors)):
             # what makes directors special is that they make movies
             num_movies = max(1, round(random.expovariate(1 / 3.5)))
             career_start = max(1950, 2018 - num_movies - random.randint(0, 70))
@@ -220,9 +203,9 @@ class DataGenerator:
                     description=tgen.generate_text(
                         maxwords=random.randint(50, 100)),
                     year=round(year),
-                    directors=[director.nid],
+                    directors=[director_nid],
                     cast=cast,
-                    image=self.get_image(title, mnid)
+                    image=get_image(title, mnid)
                 )
                 # advance year
                 year += min(max_delay, random.randint(1, round(max_delay + 1)))
@@ -232,20 +215,20 @@ class DataGenerator:
 
         # if there are actors left over in the pool, distribute them
         # among movies
-        for actor_nid in actor_pool:
-            actor, n = actor_pool[actor_nid]
+        for actor_nid, n in actor_pool.items():
             m_nids = random.sample(list(movies.keys()), min(n, len(movies)))
             for nid in m_nids:
-                if actor.nid not in movies[nid].cast:
-                    movies[nid].cast.append(actor.nid)
+                if actor_nid not in movies[nid].cast:
+                    movies[nid].cast.append(actor_nid)
 
+        directors_list = list(directors)
         # some movies have 2 directors
         for nid in random.sample(
                 list(movies.keys()),
                 round(len(movies) * 0.05)):
             movie = movies[nid]
             while True:
-                new_dir = random.choice(list(directors.keys()))
+                new_dir = random.choice(directors_list)
                 if new_dir not in movie.directors:
                     movie.directors.append(new_dir)
                 break
@@ -258,33 +241,19 @@ class DataGenerator:
         for nid in wishlist:
             if nid in actor_pool:
                 cast.append(nid)
-                actor, n = actor_pool[nid]
+                n = actor_pool[nid]
                 n -= 1
                 if n == 0:
                     del actor_pool[nid]
                 else:
-                    actor_pool[nid] = (actor, n)
+                    actor_pool[nid] = n
 
         return cast
 
     def generate_users(self, num_users):
         users = self.mdb['users']
-        unames = set()
-
         for i in bar('Users', range(num_users), num_users):
-            uname = ngen.get_first_name()
-            nid = self.nid
-
-            if uname in unames:
-                uname += str(nid)
-
-            unames.add(uname)
-            user = User(
-                nid=nid,
-                name=uname,
-                image=f'{uname.lower()}.jpeg'
-            )
-            users[nid] = user
+            users[self.nid] = True
 
         return users
 
@@ -292,28 +261,103 @@ class DataGenerator:
         users = self.mdb['users']
         reviews = self.mdb['reviews']
         movies = self.mdb['movies']
-        # 5 year period within which reviews will be spread
-        delta = int(datetime.timedelta(days=365 * 5).total_seconds() / 60)
+        movie_nids = list(movies.keys())
         avg = num_reviews / len(users)
 
-        for unid, uname in bar('User reviews', users.items(), len(users)):
+        for unid in bar('User reviews', users.keys(), len(users)):
             mnids = random.sample(
-                movies.keys(),
+                movie_nids,
                 min(random_gauss_int(avg, 4, minval=1, maxval=20), len(movies))
             )
             for mnid in mnids:
-                tstamp = datetime.datetime.now() - datetime.timedelta(
-                    minutes=random.randint(0, delta))
-                r = random_gauss_int(3.5, 1.5, minval=0, maxval=5)
-                body_length = random_gauss_int(5, 30, minval=1, maxval=100)
-                body = tgen.generate_text(
-                    maxwords=body_length if body_length < 100 else 1000)
                 nid = self.nid
-                reviews[nid] = Review(
-                    nid=nid,
-                    body=body,
-                    rating=r,
-                    author_nid=unid,
-                    movie_nid=mnid,
-                    creation_time=tstamp,
-                )
+                reviews[nid] = (unid, mnid)
+
+    def update_users(self):
+        users = self.mdb['users']
+        unames = set()
+
+        for user in bar('reconciling usernames', users.values(), len(users)):
+            uname = user.name
+
+            if uname in unames:
+                uname += str(user.nid)
+                # update the name and image
+                user.name = uname
+                user.image = f'{uname.lower()}.jpeg'
+
+            unames.add(uname)
+
+    def populate_details(self):
+        people = self.mdb['people']
+        users = self.mdb['users']
+        reviews = self.mdb['reviews']
+
+        people_nids = list(people.keys())
+        users_nids = list(users.keys())
+        reviews_nids = list(reviews.keys())
+
+        kwargs = dict(ngen=ngen, tgen=tgen)
+
+        for nid in bar('generating person details',
+                       people_nids, len(people_nids)):
+            people[nid] = populate_person(nid, **kwargs)
+
+        for nid in bar('generating user details',
+                       users_nids, len(users_nids)):
+            users[nid] = populate_user(nid, **kwargs)
+
+        # 5 year period within which reviews will be spread
+        delta = int(datetime.timedelta(days=365 * 5).total_seconds() / 60)
+        for nid in bar('generating review details',
+                       reviews_nids, len(reviews_nids)):
+            unid, mnid = reviews[nid]
+            reviews[nid] = populate_review(nid, unid, mnid, delta, **kwargs)
+
+        self.update_users()
+
+
+def get_image(name, nid):
+    '''Given a string produce a plausible image file name.'''
+    img = re.sub(r'(?i)\W+', '_', name)
+    return f'{img}_{nid}.jpeg'
+
+
+def populate_person(nid, *, ngen, tgen):
+    full_name = ngen.get_full_name(as_list=True)
+    fn, *middle, ln = full_name
+
+    return Person(
+        nid=nid,
+        first_name=fn,
+        middle_name=' '.join(middle),
+        last_name=ln,
+        image=get_image(' '.join(full_name), nid),
+        bio=tgen.generate_text(
+                maxwords=random_gauss_int(20, 20, minval=10, maxval=50)),
+    )
+
+
+def populate_user(nid, *, ngen, tgen):
+    uname = ngen.get_first_name()
+
+    return User(
+        nid=nid,
+        name=uname,
+        image=f'{uname.lower()}.jpeg',
+    )
+
+
+def populate_review(nid, unid, mnid, delta, *, ngen, tgen):
+    body_length = random_gauss_int(5, 30, minval=1, maxval=100)
+
+    return Review(
+        nid=nid,
+        body=tgen.generate_text(
+            maxwords=body_length if body_length < 100 else 1000),
+        rating=random_gauss_int(3.5, 1.5, minval=0, maxval=5),
+        author_nid=unid,
+        movie_nid=mnid,
+        creation_time=datetime.datetime.now() - datetime.timedelta(
+            minutes=random.randint(0, delta)),
+    )

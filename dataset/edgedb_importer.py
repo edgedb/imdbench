@@ -67,7 +67,7 @@ class Pool:
 
 
 async def import_data(datagen):
-    concurrency = 16
+    concurrency = 32
 
     users = datagen.mdb['users']
     reviews = datagen.mdb['reviews']
