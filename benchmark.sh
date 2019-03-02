@@ -5,8 +5,9 @@ usage()
 {
     echo "Usage: $SELFNAME [options] [backends]"
     echo "  backends            - One or more of 'fedb', 'fedb2', 'fsql',"
-    echo "                        'djrest', 'djcustom'; if omitted all"
-    echo "                        backends will be targeted"
+    echo "                        'djrest', 'djcustom', 'sanicraw', "
+    echo "                        'sanicgql'; if omitted all backends"
+    echo "                        will be targeted"
     echo "Options:"
     echo "  -d, --duration <d>  - Specify how long each test will run,"
     echo "                        the argument may include units"
@@ -46,7 +47,7 @@ if [ -z "$DUR" ]; then
 fi
 
 if [ -z "$BACKENDS" ]; then
-    BACKENDS="fedb fedb2 fsql djrest djcustom"
+    BACKENDS="fedb fedb2 fsql djrest djcustom sanicraw"
 fi
 
 get_url()
@@ -66,6 +67,8 @@ get_url()
                 ;;
         djcustom)   URL="http://localhost:8011/webapp/api/$2$3_details/$4"
                 ;;
+        sanicraw)   URL="http://localhost:8100/$2$3_details/$4"
+                ;;
     esac
 }
 
@@ -75,11 +78,21 @@ generic_bench()
     # $2 is the lua script
     # $3 is the test URL
     # $4 is the test arg (person, movie, user)
+    # $5 is the DB used
     wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4" "$5"
 }
 
 for SRV in $BACKENDS
 do
+    DB="postgres"
+    for _S in "fedb" "fedb2" "sanicraw" "sanicgql"
+    do
+        if [ "$SRV" = "$_S" ]; then
+            DB="edb"
+            break
+        fi
+    done
+
     echo "Testing $SRV$QUERY"
     for BTYPE in 'single' # 'pages'
     do
@@ -98,7 +111,7 @@ do
 
             get_url "$SRV" "$PAGES" "$ENTITY" "$TAIL"
 
-            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY" "$SRV"
+            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY" "$DB"
         done
     done
     echo

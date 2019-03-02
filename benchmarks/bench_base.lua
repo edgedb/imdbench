@@ -28,7 +28,7 @@ function bench_base.single.init(args)
     local name = args[1]
     local t = 'int'
 
-    if args[2] == 'fedb' or args[2] == 'fedb2' then
+    if args[2] == 'edb' then
         name = 'edgedb_'..name
         t = 'str'
     end
@@ -61,7 +61,7 @@ function bench_base.pages.init(args)
     local name = args[1]
     local t = 'int'
 
-    if args[2] == 'fedb' or args[2] == 'fedb2' then
+    if args[2] == 'edb' then
         name = 'edgedb_'..name
         t = 'str'
     end
