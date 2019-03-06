@@ -1,3 +1,4 @@
+import pathlib
 import edgedb
 
 
@@ -19,7 +20,9 @@ if __name__ == '__main__':
         CREATE DATABASE edgedb_bench;
     """)
 
-    with open('../flask_edgedb/default.eschema') as f:
+    schema = (pathlib.Path(__file__).parent.parent
+              / 'flask_edgedb' / 'default.eschema')
+    with open(schema) as f:
         schema = f.read()
 
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
