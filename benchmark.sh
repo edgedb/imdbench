@@ -79,6 +79,10 @@ generic_bench()
     # $3 is the test URL
     # $4 is the test arg (person, movie, user)
     # $5 is the DB used
+
+    #warm-up
+    wrk -t1 -c1 -d5s -s "$2" "$3" -- "$4" "$5" > /dev/null
+    # real deal
     wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4" "$5"
 }
 

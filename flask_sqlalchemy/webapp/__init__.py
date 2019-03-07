@@ -3,6 +3,7 @@ from flask_restful import Resource, Api, fields, marshal, reqparse
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
+import logging
 import os
 
 from . import models
@@ -17,10 +18,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['PROFILER'] = os.getenv('BENCH_DEBUG', '').lower() == 'true'
 app.config['RAPID_JSONIFY'] = True
+app.config['NOLOG'] = os.getenv('BENCH_NOLOG', '').lower() == 'true'
 app.db = SQLAlchemy(app)
 models.init(app.db)
 app.manager = Manager(app)
 app.api = Api(app)
+
+if app.config['NOLOG']:
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
 
 
 @app.route('/')

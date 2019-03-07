@@ -1,6 +1,8 @@
 import edgedb
 import flask
 from flask_script import Manager
+import logging
+import os
 
 app = flask.Flask('webapp')
 app.config['EDGEDB_USER'] = 'edgedb'
@@ -9,7 +11,12 @@ app.db = edgedb.connect(
     user=app.config.get('EDGEDB_USER'),
     database=app.config.get('EDGEDB_DATABASE'),
 )
+app.config['NOLOG'] = os.getenv('BENCH_NOLOG', '').lower() == 'true'
 app.manager = Manager(app)
+
+if app.config['NOLOG']:
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
 
 NOT_FOUND = '{"detail": "Not found"}'
 

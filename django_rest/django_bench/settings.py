@@ -123,3 +123,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': os.getenv('BENCH_NOLOG', '').lower() == 'true',
+}
