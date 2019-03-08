@@ -18,6 +18,15 @@ if __name__ == '__main__':
 
     con.execute("""
         CREATE DATABASE edgedb_bench;
+
+        CONFIGURE SYSTEM INSERT Port {
+            protocol := "graphql+http",
+            database := "edgedb_bench",
+            address := "127.0.0.1",
+            port := 8888,
+            user := "http",
+            concurrency := 4,
+        };
     """)
 
     schema = (pathlib.Path(__file__).resolve().parent.parent
