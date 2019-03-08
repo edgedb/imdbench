@@ -20,7 +20,7 @@ if __name__ == '__main__':
         CREATE DATABASE edgedb_bench;
     """)
 
-    schema = (pathlib.Path(__file__).parent.parent
+    schema = (pathlib.Path(__file__).resolve().parent.parent
               / 'flask_edgedb' / 'default.eschema')
     with open(schema) as f:
         schema = f.read()
