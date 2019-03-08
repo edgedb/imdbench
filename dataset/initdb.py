@@ -22,13 +22,20 @@ if __name__ == '__main__':
 
     schema = (pathlib.Path(__file__).resolve().parent.parent
               / 'flask_edgedb' / 'default.eschema')
+
     with open(schema) as f:
         schema = f.read()
+
+    setup = (pathlib.Path(__file__).resolve().parent.parent
+             / 'flask_edgedb' / 'default_setup.eql')
+    with open(setup) as f:
+        setup = f.read()
 
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
     con.execute(f'''
         START TRANSACTION;
         CREATE MIGRATION default::d0 TO eschema $${schema}$$;
         COMMIT MIGRATION default::d0;
+        {setup}
         COMMIT;
     ''')

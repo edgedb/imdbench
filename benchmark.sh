@@ -8,7 +8,7 @@ usage()
     echo "Usage: $SELFNAME [options] [backends]"
     echo "  backends            - One or more of 'fedb', 'fedb2', 'fsql',"
     echo "                        'djrest', 'djcustom', 'sanicraw', "
-    echo "                        'sanicgql'; if omitted all backends"
+    echo "                        'gql'; if omitted all backends"
     echo "                        will be targeted"
     echo "Options:"
     echo "  -d, --duration <d>  - Specify how long each test will run,"
@@ -71,6 +71,8 @@ get_url()
                 ;;
         sanicraw)   URL="http://localhost:8100/$2$3_details/$4"
                 ;;
+        gql)   URL="http://localhost:8888/?operationName=$3"
+                ;;
     esac
 }
 
@@ -81,17 +83,18 @@ generic_bench()
     # $3 is the test URL
     # $4 is the test arg (person, movie, user)
     # $5 is the DB used
+    # $6 is the SRV used
 
     #warm-up
-    wrk -t1 -c1 -d5s -s "$2" "$3" -- "$4" "$5" > /dev/null
+    wrk -t4 -c4 -d5s -s "$2" "$3" -- "$4" "$5" "$6" > /dev/null
     # real deal
-    wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4" "$5"
+    wrk -t4 -c4 -d"$1" -s "$2" "$3" -- "$4" "$5" "$6"
 }
 
 for SRV in $BACKENDS
 do
     DB="postgres"
-    for _S in "fedb" "fedb2" "sanicraw" "sanicgql"
+    for _S in "fedb" "fedb2" "sanicraw" "gql"
     do
         if [ "$SRV" = "$_S" ]; then
             DB="edb"
@@ -104,7 +107,10 @@ do
     do
         for ENTITY in 'movie' 'user' 'person'
         do
-            if [ "$BTYPE" = "pages" ]; then
+            if [ "$SRV" = "gql" ]; then
+                PAGES=""
+                TAIL=''
+            elif [ "$BTYPE" = "pages" ]; then
                 PAGES="$BTYPE/"
                 TAIL='?format=json&offset=%s'
             else
@@ -117,7 +123,7 @@ do
 
             get_url "$SRV" "$PAGES" "$ENTITY" "$TAIL"
 
-            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY" "$DB"
+            generic_bench "$DUR" "$LUA" "$URL" "$ENTITY" "$DB" "$SRV"
         done
     done
     echo
