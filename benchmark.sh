@@ -1,6 +1,8 @@
 #!/bin/sh
 SELFNAME=$0
 
+trap "exit" INT
+
 usage()
 {
     echo "Usage: $SELFNAME [options] [backends]"
