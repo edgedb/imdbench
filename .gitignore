@@ -108,5 +108,7 @@ venv.bak/
 lastnames.txt
 firstnames_f.txt
 firstnames_m.txt
-setup*.eql
-setup*.json
+fixtures/
+benchmarks/*.txt
+benchmarks/*.enc
+*.dump

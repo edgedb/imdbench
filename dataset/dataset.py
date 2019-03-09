@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-import os.path
+import pathlib
 import pickle
 import progress.bar
 import random
@@ -12,10 +12,6 @@ from collections import OrderedDict
 
 from words import TextGenerator
 from names import NameGenerator
-
-
-tgen = TextGenerator()
-ngen = NameGenerator()
 
 
 @dataclasses.dataclass
@@ -69,26 +65,49 @@ def bar(label, it, total):
 
 
 class DataGenerator:
-    def __init__(self, people=10_000, users=10_000, reviews=50_000, new=False,
-                 path=None):
-        self._pickle_name = f'mdb_{people}_{users}_{reviews}.pickle'
-        if path is not None:
-            self._pickle_name = f'{path}{self._pickle_name}'
+    build = pathlib.Path(__file__).parent / 'build'
+    tgen = None
+    ngen = None
 
-        if not new and os.path.exists(self._pickle_name):
-            # retrieve the pickled movie DB data
-            with open(self._pickle_name, 'rb') as f:
-                self.mdb = pickle.load(f)
-                self.__lastnid = self.mdb['lastnid']
-
+    def __init__(self, people=10_000, users=10_000, reviews=50_000, *,
+                 new=False, check_only=False, pickle_path=None):
+        if pickle_path is not None:
+            # ignore people, users, and reviews
+            self.pickle_path = pathlib.Path(pickle_path)
+            if not self.pickle_path.exists():
+                raise Exception(f'path {self.pickle_path} not found')
         else:
+            self.pickle_path = self.get_pickle_path(people, users, reviews)
+
+        if not new and self.pickle_path.exists():
+            # don't bother retrieving the data if we're just checking the file
+            if not check_only:
+                # retrieve the pickled movie DB data
+                with open(self.pickle_path, 'rb') as f:
+                    self.mdb = pickle.load(f)
+                    self.__lastnid = self.mdb['lastnid']
+
+        elif pickle_path is not None:
+            # only generate new data if pickle has not been supplied
             self.__lastnid = 0
+            self.init_gens()
             self.generate_mdb(people, users, reviews)
             self.dump()
 
+    @classmethod
+    def get_pickle_path(cls, people, users, reviews):
+        return cls.build / f'mdb_{people}_{users}_{reviews}.pickle'
+
+    @classmethod
+    def init_gens(cls):
+        if cls.tgen is None:
+            cls.tgen = TextGenerator()
+        if cls.ngen is None:
+            cls.ngen = NameGenerator()
+
     def dump(self):
         # pickle generated data
-        with open(self._pickle_name, 'wb') as f:
+        with open(self.pickle_path, 'wb') as f:
             # write the __lastnid, so that we can generate more
             # data consistently, if needed
             self.mdb['lastnid'] = self.__lastnid
@@ -171,7 +190,7 @@ class DataGenerator:
             for i in range(num_movies):
                 # always a chance to start a series
                 if not series_titles and random.random() < 0.08:
-                    st = tgen.generate_title(2)
+                    st = self.tgen.generate_title(2)
                     series_wishlist = random.sample(
                         list(actor_pool.keys()),
                         k=random_gauss_int(10, 10, 1, 100)
@@ -187,7 +206,7 @@ class DataGenerator:
                     title = series_titles.pop(0)
                     cast = self.get_cast(actor_pool, series_wishlist)
                 else:
-                    title = tgen.generate_title(
+                    title = self.tgen.generate_title(
                         random_gauss_int(2, 1.5, 1, 10))
                     # figure out the movie cast
 
@@ -200,7 +219,7 @@ class DataGenerator:
                 m = Movie(
                     nid=self.nid,
                     title=title.title(),
-                    description=tgen.generate_text(
+                    description=self.tgen.generate_text(
                         maxwords=random.randint(50, 100)),
                     year=round(year),
                     directors=[director_nid],
@@ -297,7 +316,7 @@ class DataGenerator:
         users_nids = list(users.keys())
         reviews_nids = list(reviews.keys())
 
-        kwargs = dict(ngen=ngen, tgen=tgen)
+        kwargs = dict(ngen=self.ngen, tgen=self.tgen)
 
         for nid in bar('generating person details',
                        people_nids, len(people_nids)):

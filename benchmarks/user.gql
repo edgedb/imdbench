@@ -1,0 +1,18 @@
+query user($uuid: ID) {
+  UserDetails(filter: {id: {eq: $uuid}}) {
+    id
+    name
+    image
+    latest_reviews(order: {creation_time: {dir: DESC}}, first: 3) {
+      id
+      body
+      rating
+      movie {
+        id
+        image
+        title
+        avg_rating
+      }
+    }
+  }
+}

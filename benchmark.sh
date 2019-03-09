@@ -7,7 +7,7 @@ usage()
 {
     echo "Usage: $SELFNAME [options] [backends]"
     echo "  backends            - One or more of 'fedb', 'fedb2', 'fsql',"
-    echo "                        'djrest', 'djcustom', 'sanicraw', "
+    echo "                        'djrest', 'djcustom', 'sanicedb', "
     echo "                        'gql'; if omitted all backends"
     echo "                        will be targeted"
     echo "Options:"
@@ -49,7 +49,7 @@ if [ -z "$DUR" ]; then
 fi
 
 if [ -z "$BACKENDS" ]; then
-    BACKENDS="fedb fedb2 fsql djrest djcustom sanicraw"
+    BACKENDS="fedb fsql djrest djcustom sanicedb gql"
 fi
 
 get_url()
@@ -69,7 +69,7 @@ get_url()
                 ;;
         djcustom)   URL="http://localhost:8011/webapp/api/$2$3_details/$4"
                 ;;
-        sanicraw)   URL="http://localhost:8100/$2$3_details/$4"
+        sanicedb)   URL="http://localhost:8100/$2$3_details/$4"
                 ;;
         gql)   URL="http://localhost:8888/?operationName=$3"
                 ;;
@@ -86,15 +86,15 @@ generic_bench()
     # $6 is the SRV used
 
     #warm-up
-    wrk -t4 -c4 -d5s -s "$2" "$3" -- "$4" "$5" "$6" > /dev/null
+    wrk -t1 -c1 -d5s -s "$2" "$3" -- "$4" "$5" "$6" > /dev/null
     # real deal
-    wrk -t4 -c4 -d"$1" -s "$2" "$3" -- "$4" "$5" "$6"
+    wrk -t1 -c1 -d"$1" -s "$2" "$3" -- "$4" "$5" "$6"
 }
 
 for SRV in $BACKENDS
 do
     DB="postgres"
-    for _S in "fedb" "fedb2" "sanicraw" "gql"
+    for _S in "fedb" "fedb2" "sanicedb" "gql"
     do
         if [ "$SRV" = "$_S" ]; then
             DB="edb"

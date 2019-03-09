@@ -5,29 +5,6 @@ import random
 import re
 
 
-# get the relevant corpus, etc.
-try:
-    nltk.data.find('corpora/gutenberg')
-except LookupError:
-    nltk.download('gutenberg')
-nltk.corpus.gutenberg.ensure_loaded()
-
-try:
-    nltk.data.find('taggers/universal_tagset')
-except LookupError:
-    nltk.download('universal_tagset')
-
-try:
-    nltk.data.find('taggers/averaged_perceptron_tagger')
-except LookupError:
-    nltk.download('averaged_perceptron_tagger')
-
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-
-
 class TextGenerator:
     MAXHISTORY = 3
 
@@ -51,6 +28,29 @@ class TextGenerator:
         self._scrambled = {}
         self._words_by_tag = self.make_TFD(tagged_words)
         self.cfd = self.make_CFD(words_list)
+
+    def init_nltk(self):
+        # get the relevant corpus, etc.
+        try:
+            nltk.data.find('corpora/gutenberg')
+        except LookupError:
+            nltk.download('gutenberg')
+        nltk.corpus.gutenberg.ensure_loaded()
+
+        try:
+            nltk.data.find('taggers/universal_tagset')
+        except LookupError:
+            nltk.download('universal_tagset')
+
+        try:
+            nltk.data.find('taggers/averaged_perceptron_tagger')
+        except LookupError:
+            nltk.download('averaged_perceptron_tagger')
+
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt')
 
     def make_TFD(self, tagged_words):
         # setup some frequency distribution dicts

@@ -1,4 +1,4 @@
-import os.path
+import pathlib
 import pickle
 import random
 import requests
@@ -9,31 +9,39 @@ class NameGenerator:
     MIDDLE_CHANCE = 0.1
     MORE_MIDDLE_CHANCE = 0.01
     MIDDLE_INITIAL_CHANCE = 0.33
+    # paths where various data files may be expected/placed
+    build = pathlib.Path(__file__).parent / 'build'
+    pickle_path = build / 'names.pickle'
+    txt = {
+        'lastnames': build / 'lastnames.txt',
+        'firstnames_f': build / 'firstnames_f.txt',
+        'firstnames_m': build / 'firstnames_m.txt',
+    }
 
     def __init__(self):
-        if os.path.exists('names.pickle'):
+        if self.pickle_path.exists():
             # retrieve the pickled names
-            with open('names.pickle', 'rb') as f:
+            with open(self.pickle_path, 'rb') as f:
                 self.names = pickle.load(f)
 
         else:
             # download the names if not present
-            if not os.path.exists('lastnames.txt'):
-                with open('lastnames.txt', 'wt') as f:
+            if not self.txt['lastnames'].exists():
+                with open(self.txt['lastnames'], 'wt') as f:
                     res = requests.get(self.URL + 'dist.all.last')
                     f.write(res.text)
-            if not os.path.exists('firstnames_f.txt'):
-                with open('firstnames_f.txt', 'wt') as f:
+            if not self.txt['firstnames_f'].exists():
+                with open(self.txt['firstnames_f'], 'wt') as f:
                     res = requests.get(self.URL + 'dist.female.first')
                     f.write(res.text)
-            if not os.path.exists('firstnames_m.txt'):
-                with open('firstnames_m.txt', 'wt') as f:
+            if not self.txt['firstnames_m'].exists():
+                with open(self.txt['firstnames_m'], 'wt') as f:
                     res = requests.get(self.URL + 'dist.male.first')
                     f.write(res.text)
 
             self.names = {}
-            for cat in ['lastnames', 'firstnames_f', 'firstnames_m']:
-                with open(f'{cat}.txt', 'rt') as f:
+            for cat, path in self.txt.items():
+                with open(path, 'rt') as f:
                     ndict = {'values': [], 'freq': []}
                     self.names[cat] = ndict
 
@@ -47,7 +55,7 @@ class NameGenerator:
                                 max(1, round(float(fr) * 1000)))
 
             # pickle generated data
-            with open('names.pickle', 'wb') as f:
+            with open(self.pickle_path, 'wb') as f:
                 pickle.dump(self.names, f)
 
     def _get_name(self, kind):

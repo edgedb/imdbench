@@ -1,0 +1,30 @@
+query movie($uuid: ID) {
+  MovieDetails(filter: {id: {eq: $uuid}}) {
+    id
+    image
+    title
+    year
+    description
+    directors {
+      id
+      full_name
+      image
+    }
+    cast {
+      id
+      full_name
+      image
+    }
+    avg_rating
+    reviews(order: {creation_time: {dir: DESC}}) {
+      id
+      body
+      rating
+      author {
+        id
+        name
+        image
+      }
+    }
+  }
+}

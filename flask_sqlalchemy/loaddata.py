@@ -2,7 +2,25 @@ import argparse
 import collections
 import datetime
 import json
+import progress.bar
 import webapp
+
+
+def bar(label, total):
+    return progress.bar.Bar(label[:32].ljust(32), max=total)
+
+
+def bulk_insert(label, data, into):
+    label = f"Creating {len(data)} {label}"
+    pbar = bar(label, len(data))
+
+    while data:
+        chunk = data[:1000]
+        data = data[1000:]
+        db.session.bulk_insert_mappings(into, chunk)
+        db.session.commit()
+        pbar.next(len(chunk))
+    pbar.finish()
 
 
 if __name__ == '__main__':
@@ -50,31 +68,19 @@ if __name__ == '__main__':
         data[rtype].append(datum)
 
     # bulk create all the users
-    print(f"Creating {len(data['user'])} users...")
-    db.session.bulk_insert_mappings(db.User, data['user'])
-    db.session.commit()
+    bulk_insert('users', data['user'], db.User)
 
     # bulk create all the people
-    print(f"Creating {len(data['person'])} people...")
-    db.session.bulk_insert_mappings(db.Person, data['person'])
-    db.session.commit()
+    bulk_insert('people', data['person'], db.Person)
 
     # bulk create all the movies
-    print(f"Creating {len(data['movie'])} movies...")
-    db.session.bulk_insert_mappings(db.Movie, data['movie'])
-    db.session.commit()
+    bulk_insert('movies', data['movie'], db.Movie)
 
     # bulk create all the reviews
-    print(f"Creating {len(data['review'])} reviews...")
-    db.session.bulk_insert_mappings(db.Review, data['review'])
-    db.session.commit()
+    bulk_insert('reviews', data['review'], db.Review)
 
     # bulk create all the directors
-    print(f"Creating {len(data['directors'])} directors...")
-    db.session.bulk_insert_mappings(db.Directors, data['directors'])
-    db.session.commit()
+    bulk_insert('directors', data['directors'], db.Directors)
 
     # bulk create all the cast
-    print(f"Creating {len(data['cast'])} cast...")
-    db.session.bulk_insert_mappings(db.Cast, data['cast'])
-    db.session.commit()
+    bulk_insert('cast', data['cast'], db.Cast)

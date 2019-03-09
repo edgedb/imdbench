@@ -1,6 +1,7 @@
 import asyncio
-
+import argparse
 import edgedb
+import pathlib
 import progress.bar
 
 
@@ -52,7 +53,7 @@ class Pool:
         pool = cls(data, concurrency=concurrency)
         pool._start()
 
-        bar = progress.bar.Bar(label, max=len(data))
+        bar = progress.bar.Bar(label[:15].ljust(15), max=len(data))
 
         stop_cnt = 0
         while True:
@@ -225,3 +226,19 @@ def nid2image(items, nids):
         result.append(items[nid].image)
 
     return result
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Import EdgeDB data from the pickle file.')
+    parser.add_argument('pickle', type=str,
+                        help='the pickle file to import')
+
+    args = parser.parse_args()
+
+    pickle = pathlib.Path(args.pickle).resolve()
+
+    import dataset
+    dgen = dataset.DataGenerator(pickle_path=pickle)
+
+    asyncio.run(import_data(dgen))

@@ -18,7 +18,9 @@ if __name__ == '__main__':
 
     con.execute("""
         CREATE DATABASE edgedb_bench;
+    """)
 
+    con.execute("""
         CONFIGURE SYSTEM INSERT Port {
             protocol := "graphql+http",
             database := "edgedb_bench",
@@ -29,15 +31,12 @@ if __name__ == '__main__':
         };
     """)
 
-    schema = (pathlib.Path(__file__).resolve().parent.parent
-              / 'flask_edgedb' / 'default.eschema')
+    base_path = pathlib.Path(__file__).parent
 
-    with open(schema) as f:
+    with open(base_path / 'default.eschema') as f:
         schema = f.read()
 
-    setup = (pathlib.Path(__file__).resolve().parent.parent
-             / 'flask_edgedb' / 'default_setup.eql')
-    with open(setup) as f:
+    with open(base_path / 'default_setup.eql') as f:
         setup = f.read()
 
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
