@@ -120,7 +120,7 @@ def movie_details(id):
     movie = db.movies.aggregate([
         {
             '$match': {
-                '_id': bson.ObjectId("5c84875498c3060eff280ec8")
+                '_id': bson.ObjectId(id)
             }
         },
         {
@@ -198,7 +198,7 @@ def movie_details(id):
 def person_details(id):
     # getting a person profile with movies that this person acted in
     # or directed
-    person = result = db.people.aggregate([
+    person = db.people.aggregate([
         {
             '$match': {
                 '_id': bson.ObjectId(id)
