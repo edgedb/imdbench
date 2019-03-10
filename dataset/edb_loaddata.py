@@ -192,7 +192,7 @@ async def import_data(datagen):
     ]
 
     reviews_insert_query = r'''
-            INSERT Review {
+        INSERT Review {
             body := <str>$body,
             rating := <int64>$rating,
             author := (SELECT User FILTER .image = <str>$uimage),

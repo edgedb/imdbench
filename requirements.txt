@@ -13,3 +13,5 @@ python-rapidjson
 psycopg2==2.7.5
 requests
 sanic
+pymongo
+progress

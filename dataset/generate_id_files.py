@@ -1,6 +1,8 @@
 import argparse
-import edgedb
 import pathlib
+
+import edgedb
+import pymongo
 
 
 if __name__ == '__main__':
@@ -22,14 +24,31 @@ if __name__ == '__main__':
     # extract the UUIDs from EdgeDB
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
 
-    with open(base_path / f'edgedb_user_ids_{tail}.txt', 'wt') as f:
+    with open(base_path / f'edgedb_user_ids.txt', 'wt') as f:
         for res in con.fetch('SELECT User.id'):
             f.write(f'{res}\n')
 
-    with open(base_path / f'edgedb_person_ids_{tail}.txt', 'wt') as f:
+    with open(base_path / f'edgedb_person_ids.txt', 'wt') as f:
         for res in con.fetch('SELECT Person.id'):
             f.write(f'{res}\n')
 
-    with open(base_path / f'edgedb_movie_ids_{tail}.txt', 'wt') as f:
+    with open(base_path / f'edgedb_movie_ids.txt', 'wt') as f:
         for res in con.fetch('SELECT Movie.id'):
             f.write(f'{res}\n')
+
+    con.close()
+
+    client = pymongo.MongoClient()
+    mongodb = client.movies
+
+    with open(base_path / f'mongo_user_ids.txt', 'wt') as f:
+        for res in mongodb.users.find({}, {'_id': 1}):
+            f.write(f'{res["_id"]}\n')
+
+    with open(base_path / f'mongo_person_ids.txt', 'wt') as f:
+        for res in mongodb.people.find({}, {'_id': 1}):
+            f.write(f'{res["_id"]}\n')
+
+    with open(base_path / f'mongo_movie_ids.txt', 'wt') as f:
+        for res in mongodb.movies.find({}, {'_id': 1}):
+            f.write(f'{res["_id"]}\n')

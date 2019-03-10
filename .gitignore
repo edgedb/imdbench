@@ -112,3 +112,6 @@ fixtures/
 benchmarks/*.txt
 benchmarks/*.enc
 *.dump
+
+
+/Makefile

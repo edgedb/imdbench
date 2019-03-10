@@ -8,7 +8,7 @@ usage()
     echo "Usage: $SELFNAME [options] [backends]"
     echo "  backends            - One or more of 'fedb', 'fedb2', 'fsql',"
     echo "                        'djrest', 'djcustom', 'sanicedb', "
-    echo "                        'gql'; if omitted all backends"
+    echo "                        'gql', 'fmongo'; if omitted all backends"
     echo "                        will be targeted"
     echo "Options:"
     echo "  -d, --duration <d>  - Specify how long each test will run,"
@@ -59,6 +59,8 @@ get_url()
     # $3 is entity
     # $4 is tail
     case $1 in
+        fmongo)   URL="http://localhost:5002/$2$3_details/$4"
+                ;;
         fedb)   URL="http://localhost:5001/$2$3_details/$4"
                 ;;
         fedb2)   URL="http://localhost:5001/json/$2$3_details/$4"
@@ -101,6 +103,9 @@ do
             break
         fi
     done
+    if [ "$SRV" = "fmongo" ]; then
+        DB="mongo"
+    fi
 
     echo "Testing $SRV$QUERY"
     for BTYPE in 'single' # 'pages'

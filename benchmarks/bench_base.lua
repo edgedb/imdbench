@@ -5,13 +5,24 @@ local bench_base = {
 }
 
 
+function encodeURI(str)
+    if (str) then
+        str = string.gsub (str, "\n", "\r\n")
+        str = string.gsub (str, "([^%w ])",
+            function (c) return string.format ("%%%02X", string.byte(c)) end)
+        str = string.gsub (str, " ", "+")
+   end
+   return str
+end
+
+
 function bench_base.load_ids(name, t)
     -- if the ids have not been read from a file, load them
     if bench_base.ids[name] == nil then
         -- create a new table for ids
         bench_base.ids[name] = {}
         -- load them from the corresponding file
-        for line in io.lines(string.format('benchmarks/%s_ids.txt', name))
+        for line in io.lines(string.format('dataset/build/%s_ids.txt', name))
         do
             if t == 'int' then
                 table.insert(bench_base.ids[name], tonumber(line))
@@ -31,10 +42,14 @@ function bench_base.single.init(args)
         name = 'edgedb_'..name
         t = 'str'
     end
+    if args[2] == 'mongo' then
+        name = 'mongo_'..name
+        t = 'str'
+    end
     -- read the ids from a file, so that we can pick them randomly
     bench_base.load_ids(name, t)
     -- read the GraphQL queries from a file
-    io.input(string.format('benchmarks/%s.gql.enc', args[1]))
+    io.input(string.format('benchmarks/%s.gql', args[1]))
     wrk.thread:set('gql_query', io.read('*all'))
     wrk.thread:set('ids', bench_base.ids[name])
     wrk.thread:set('bench', args[3])
@@ -48,7 +63,7 @@ function bench_base.single.request()
         return wrk.format(
             'GET',
             wrk.path ..
-            '&query=' .. gql_query ..
+            '&query=' .. encodeURI(gql_query) ..
             '&variables=%7B%22uuid%22%3A%22' .. ids[math.random(#ids)] ..
             '%22%7D'
         )
