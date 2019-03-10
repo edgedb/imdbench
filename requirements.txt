@@ -3,15 +3,8 @@ alembic==1.0.0
 Django==2.1
 djangorestframework==3.8.2
 edgedb
-Flask==1.0.2
-Flask-Migrate==2.2.1
-Flask-RESTful==0.3.6
-Flask-Script==2.0.6
-Flask-SQLAlchemy==2.3.2
 nltk==3.3
-python-rapidjson
-psycopg2==2.7.5
-requests
-sanic
+psycopg2-binary==2.7.7
 pymongo
 progress
+uvloop
