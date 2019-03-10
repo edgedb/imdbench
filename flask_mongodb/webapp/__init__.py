@@ -219,7 +219,7 @@ def person_details(id):
             }
         },
         {
-            '$sort': {"acted_in.year": 1},
+            '$sort': {"acted_in.year": 1, "acted_in.title": 1},
         },
         {
             '$lookup': {
