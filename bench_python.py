@@ -229,8 +229,8 @@ warmup = 5
 duration = 30
 
 
-# run(ctx, 'edgedb', warmup, duration)
-# run(ctx, 'edgedb_repack', warmup, duration) ###### <---------
+run(ctx, 'edgedb', warmup, duration)
+run(ctx, 'edgedb_repack', warmup, duration) ###### <---------
 # run(ctx, 'edgedb_async', warmup, duration)
 
 # run(ctx, 'django', warmup, duration)
@@ -241,7 +241,7 @@ duration = 30
 # run(ctx, 'mongodb', warmup, duration)
 
 # run(ctx, 'postgres', warmup, duration)
-# run(ctx, 'postgres_psycopg', warmup, duration)
+run(ctx, 'postgres_psycopg', warmup, duration)
 
 
 async def test():
@@ -255,7 +255,7 @@ async def test():
     # conn = await postgres_queries.connect(ctx)
     # uid = (await postgres_queries.load_ids(ctx, conn))['get_movie'][20]
     # print(await postgres_queries.get_movie(conn, uid))
-asyncio.run(test())
+# asyncio.run(test())
 
 # async def dump_stats():
 #     import asyncpg

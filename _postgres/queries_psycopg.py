@@ -149,7 +149,7 @@ def get_movie(conn, id):
             actors.list_order NULLS LAST,
             person.last_name
     ''', [id])
-    people_rows = cur.fetchall()
+    cast_rows = cur.fetchall()
 
     cur.execute('''
         SELECT
@@ -176,7 +176,7 @@ def get_movie(conn, id):
         'title': movie[2],
         'year': movie[3],
         'description': movie[4],
-        'avg_rating': movie[5],
+        'avg_rating': str(movie[5]),
 
         'directors': [
             {
@@ -188,15 +188,22 @@ def get_movie(conn, id):
 
         'cast': [
             {
-                'id': d[0],
-                'full_name': d[1],
-                'image': d[2]
-            } for d in directors_rows
+                'id': c[0],
+                'full_name': c[1],
+                'image': c[2]
+            } for c in cast_rows
         ],
-    })
 
-    print(movie_rows)
-    print()
-    print(directors_rows)
-    print()
-    print(reviews_rows)
+        'reviews': [
+            {
+                'id': r[0],
+                'body': r[1],
+                'rating': r[2],
+                'author': {
+                    'id': r[3],
+                    'name': r[4],
+                    'image': r[5]
+                }
+            } for r in reviews_rows
+        ]
+    })
