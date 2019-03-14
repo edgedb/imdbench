@@ -56,7 +56,7 @@ type Movie extending HasImage:
     required property year -> int64
     required property description -> str
 
-    multi link directors -> Person
-    multi link cast -> Person
+    multi link directors extending (crew) -> Person
+    multi link cast extending (crew) -> Person
 
-    property avg_rating := math::mean(__source__.<movie[IS Review].rating) ?? 0
+    property avg_rating := math::mean(__source__.<movie[IS Review].rating)

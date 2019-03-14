@@ -15,6 +15,8 @@ from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
 from _sqlalchemy import queries as sqlalchemy_queries
+from _postgres import queries as postgres_queries
+from _postgres import queries_psycopg as postgres_psycopg_queries
 
 
 class Context(typing.NamedTuple):
@@ -35,9 +37,13 @@ BENCHMARKS = {
     'mongodb': mongodb_queries,
 
     'sqlalchemy': sqlalchemy_queries,
+
+    'postgres': postgres_queries,
+    'postgres_psycopg': postgres_psycopg_queries,
 }
 
 METHODS = ['get_user', 'get_movie', 'get_person']
+METHODS = ['get_movie']
 
 
 def run_benchmark_method(ctx, duration, conn, ids, method):
@@ -223,12 +229,48 @@ warmup = 5
 duration = 30
 
 
-run(ctx, 'edgedb', warmup, duration)
-run(ctx, 'edgedb_repack', warmup, duration)
-run(ctx, 'edgedb_async', warmup, duration)
+# run(ctx, 'edgedb', warmup, duration)
+# run(ctx, 'edgedb_repack', warmup, duration) ###### <---------
+# run(ctx, 'edgedb_async', warmup, duration)
 
-run(ctx, 'django', warmup, duration)
-run(ctx, 'django_restfw', warmup, duration)
+# run(ctx, 'django', warmup, duration)
+# run(ctx, 'django_restfw', warmup, duration)
 
-run(ctx, 'sqlalchemy', warmup, duration)
-run(ctx, 'mongodb', warmup, duration)
+# run(ctx, 'sqlalchemy', warmup, duration)
+
+# run(ctx, 'mongodb', warmup, duration)
+
+# run(ctx, 'postgres', warmup, duration)
+run(ctx, 'postgres_psycopg', warmup, duration)
+
+
+async def test():
+
+    conn = postgres_psycopg_queries.connect(ctx)
+    uid = (postgres_psycopg_queries.load_ids(ctx, conn))['get_movie'][20]
+    print(postgres_psycopg_queries.get_movie(conn, uid))
+
+    print('========')
+
+#     conn = await postgres_queries.connect(ctx)
+#     uid = (await postgres_queries.load_ids(ctx, conn))['get_movie'][20]
+#     print(await postgres_queries.get_movie(conn, uid))
+# asyncio.run(test())
+
+# async def dump_stats():
+#     import asyncpg
+#     con = await asyncpg.connect(
+#         user='edgedb', database='edgedb_bench',
+#         port=65027)
+
+#     res = []
+#     for r in await con.fetch('''
+#             select * from edgedb.pg_stat_statements;
+#         '''):
+#         if r['calls'] > 1000:
+#             res.append(dict(r))
+
+#     import pprint
+#     pprint.pprint(res)
+
+# asyncio.run(dump_stats())

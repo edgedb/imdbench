@@ -45,7 +45,7 @@ def get_user(conn, id):
                     }
                 }
                 ORDER BY .creation_time DESC
-                LIMIT 3
+                LIMIT 10
             )
         }
         FILTER .id = <uuid>$id
