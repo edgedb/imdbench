@@ -241,7 +241,7 @@ duration = 30
 # run(ctx, 'mongodb', warmup, duration)
 
 # run(ctx, 'postgres', warmup, duration)
-run(ctx, 'postgres_psycopg', warmup, duration)
+# run(ctx, 'postgres_psycopg', warmup, duration)
 
 
 async def test():
@@ -252,10 +252,10 @@ async def test():
 
     print('========')
 
-#     conn = await postgres_queries.connect(ctx)
-#     uid = (await postgres_queries.load_ids(ctx, conn))['get_movie'][20]
-#     print(await postgres_queries.get_movie(conn, uid))
-# asyncio.run(test())
+    # conn = await postgres_queries.connect(ctx)
+    # uid = (await postgres_queries.load_ids(ctx, conn))['get_movie'][20]
+    # print(await postgres_queries.get_movie(conn, uid))
+asyncio.run(test())
 
 # async def dump_stats():
 #     import asyncpg
