@@ -101,7 +101,7 @@ async def get_movie(conn, id):
     # This query only works on PostgreSQL 11 and
     # only asyncpg can unpack it.
 
-    rows = await conn.fetch('''
+    movie = await conn.fetch('''
         SELECT
             movie.id,
             movie.image,
@@ -111,7 +111,7 @@ async def get_movie(conn, id):
             movie.avg_rating,
 
             (SELECT
-                array_agg(q.v)
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
              FROM
                 (SELECT
                     ROW(
@@ -132,7 +132,7 @@ async def get_movie(conn, id):
             ) AS directors,
 
             (SELECT
-                array_agg(q.v)
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
              FROM
                 (SELECT
                     ROW(
@@ -154,7 +154,7 @@ async def get_movie(conn, id):
 
 
             (SELECT
-                array_agg(q.v)
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
              FROM
                 (SELECT
                     ROW(
@@ -187,4 +187,133 @@ async def get_movie(conn, id):
             id = $1;
     ''', id)
 
-    # print(rows)
+    movie = movie[0]
+
+    return json.dumps({
+        'id': movie['id'],
+        'image': movie['image'],
+        'title': movie['title'],
+        'year': movie['year'],
+        'description': movie['description'],
+        'avg_rating': float(movie['avg_rating']),
+
+        'directors': [
+            {
+                'id': d[0],
+                'full_name': d[1],
+                'image': d[2],
+            } for d in movie['directors']
+        ],
+
+        'cast': [
+            {
+                'id': c[0],
+                'full_name': c[1],
+                'image': c[2],
+            } for c in movie['actors']
+        ],
+
+        'reviews': [
+            {
+                'id': r[0],
+                'body': r[1],
+                'rating': r[2],
+                'author': {
+                    'id': r[3][0],
+                    'name': r[3][1],
+                    'image': r[3][2],
+                }
+            } for r in movie['reviews']
+        ]
+    })
+
+
+async def get_person(conn, id):
+    # This query only works on PostgreSQL 11 and
+    # only asyncpg can unpack it.
+
+    person = await conn.fetch('''
+        SELECT
+            person.id,
+            person.full_name,
+            person.image,
+            person.bio,
+
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+             FROM
+                (SELECT
+                    ROW(
+                        movie.id,
+                        movie.image,
+                        movie.title,
+                        movie.year,
+                        movie.avg_rating
+                    ) AS v
+                FROM
+                    actors
+                    INNER JOIN movies AS movie
+                        ON (actors.movie_id = movie.id)
+                WHERE
+                    actors.person_id = person.id
+                ORDER BY
+                    movie.year ASC, movie.title ASC
+                ) AS q
+            ) AS acted_in,
+
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+             FROM
+                (SELECT
+                    ROW(
+                        movie.id,
+                        movie.image,
+                        movie.title,
+                        movie.year,
+                        movie.avg_rating
+                    ) AS v
+                FROM
+                    directors
+                    INNER JOIN movies AS movie
+                        ON (directors.movie_id = movie.id)
+                WHERE
+                    directors.person_id = person.id
+                ORDER BY
+                    movie.year ASC, movie.title ASC
+                ) AS q
+            ) AS directed
+
+        FROM
+            persons AS person
+        WHERE
+            id = $1;
+    ''', id)
+
+    person = person[0]
+
+    return json.dumps({
+        'id': person['id'],
+        'full_name': person['full_name'],
+        'image': person['image'],
+        'bio': person['bio'],
+
+        'acted_in': [
+            {
+                'id': mov[0],
+                'image': mov[1],
+                'title': mov[2],
+                'year': mov[3],
+                'avg_rating': float(mov[4]),
+            } for mov in person['acted_in']
+        ],
+
+        'directed': [
+            {
+                'id': mov[0],
+                'image': mov[1],
+                'title': mov[2],
+                'year': mov[3],
+                'avg_rating': float(mov[4]),
+            } for mov in person['directed']
+        ]
+    })

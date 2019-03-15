@@ -207,3 +207,83 @@ def get_movie(conn, id):
             } for r in reviews_rows
         ]
     })
+
+
+def get_person(conn, id):
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT
+            p.id,
+            p.full_name,
+            p.image,
+            p.bio
+        FROM
+            persons p
+        WHERE
+            p.id = %s;
+    ''', [id])
+    people_rows = cur.fetchall()
+    person = people_rows[0]
+
+    cur.execute('''
+        SELECT
+            movie.id,
+            movie.image,
+            movie.title,
+            movie.year,
+            movie.avg_rating
+        FROM
+            actors
+            INNER JOIN movies AS movie
+                ON (actors.movie_id = movie.id)
+        WHERE
+            actors.person_id = %s
+        ORDER BY
+            movie.year ASC, movie.title ASC
+    ''', [id])
+    acted_in_rows = cur.fetchall()
+
+    cur.execute('''
+        SELECT
+            movie.id,
+            movie.image,
+            movie.title,
+            movie.year,
+            movie.avg_rating
+        FROM
+            directors
+            INNER JOIN movies AS movie
+                ON (directors.movie_id = movie.id)
+        WHERE
+            directors.person_id = %s
+        ORDER BY
+            movie.year ASC, movie.title ASC
+    ''', [id])
+    directed_rows = cur.fetchall()
+
+    return json.dumps({
+        'id': person[0],
+        'full_name': person[1],
+        'image': person[2],
+        'bio': person[3],
+
+        'acted_in': [
+            {
+                'id': mov[0],
+                'image': mov[1],
+                'title': mov[2],
+                'year': mov[3],
+                'avg_rating': float(mov[4]),
+            } for mov in acted_in_rows
+        ],
+
+        'directed': [
+            {
+                'id': mov[0],
+                'image': mov[1],
+                'title': mov[2],
+                'year': mov[3],
+                'avg_rating': float(mov[4]),
+            } for mov in directed_rows
+        ],
+    })

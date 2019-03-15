@@ -43,7 +43,7 @@ BENCHMARKS = {
 }
 
 METHODS = ['get_user', 'get_movie', 'get_person']
-METHODS = ['get_movie']
+METHODS = ['get_person',]
 
 
 def run_benchmark_method(ctx, duration, conn, ids, method):
@@ -229,8 +229,8 @@ warmup = 5
 duration = 30
 
 
-run(ctx, 'edgedb', warmup, duration)
-run(ctx, 'edgedb_repack', warmup, duration) ###### <---------
+# run(ctx, 'edgedb', warmup, duration)
+# run(ctx, 'edgedb_repack', warmup, duration) ###### <---------
 # run(ctx, 'edgedb_async', warmup, duration)
 
 # run(ctx, 'django', warmup, duration)
@@ -247,8 +247,8 @@ run(ctx, 'postgres_psycopg', warmup, duration)
 async def test():
 
     conn = postgres_psycopg_queries.connect(ctx)
-    uid = (postgres_psycopg_queries.load_ids(ctx, conn))['get_movie'][20]
-    print(postgres_psycopg_queries.get_movie(conn, uid))
+    uid = (postgres_psycopg_queries.load_ids(ctx, conn))['get_person'][20]
+    print(postgres_psycopg_queries.get_person(conn, uid))
 
     print('========')
 
