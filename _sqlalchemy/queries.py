@@ -12,7 +12,7 @@ engine = sa.create_engine(
 session_factory = orm.sessionmaker(bind=engine)
 
 
-def connect(ctx, ):
+def connect(ctx):
     return session_factory()
 
 
@@ -50,7 +50,7 @@ def get_user(sess, id):
     user = sess.query(m.User).filter_by(id=id).first()
 
     latest_reviews = user.latest_reviews.options(
-        orm.joinedload(m.Review.movie)).limit(3).all()
+        orm.joinedload(m.Review.movie)).limit(10).all()
 
     return json.dumps({
         'id': user.id,

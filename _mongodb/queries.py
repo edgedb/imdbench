@@ -50,7 +50,7 @@ def get_user(db, id):
             '$sort': {"latest_reviews.creation_time": -1},
         },
         {
-            '$limit': 3,
+            '$limit': 10,
         },
         {
             '$lookup': {

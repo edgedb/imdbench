@@ -4,7 +4,9 @@ import edgedb
 
 
 def connect(ctx):
-    return edgedb.connect(user='edgedb', database='edgedb_bench')
+    return edgedb.connect(
+        user='edgedb', database='edgedb_bench',
+        host=ctx.edgedb_host, port=ctx.edgedb_port)
 
 
 def close(ctx, conn):
@@ -12,7 +14,7 @@ def close(ctx, conn):
 
 
 def load_ids(ctx, conn):
-    d = conn.fetch_value('''
+    d = conn.fetchone('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},
@@ -28,7 +30,7 @@ def load_ids(ctx, conn):
 
 
 def get_user(conn, id):
-    u = conn.fetch_value('''
+    u = conn.fetchone('''
         SELECT User {
             id,
             name,
@@ -47,7 +49,7 @@ def get_user(conn, id):
                     }
                 }
                 ORDER BY .creation_time DESC
-                LIMIT 3
+                LIMIT 10
             )
         }
         FILTER .id = <uuid>$id
@@ -74,7 +76,7 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    m = conn.fetch_value('''
+    m = conn.fetchone('''
         SELECT Movie {
             id,
             image,
@@ -156,10 +158,12 @@ def get_movie(conn, id):
 
 
 def get_person(conn, id):
-    p = conn.fetch_value('''
+    p = conn.fetchone('''
         SELECT Person {
             id,
-            full_name,
+            # full_name,
+            first_name,
+            last_name,
             image,
             bio,
 
@@ -192,7 +196,8 @@ def get_person(conn, id):
 
     return json.dumps({
         'id': str(p.id),
-        'full_name': p.full_name,
+        'first_name': p.first_name,
+        'last_name': p.last_name,
         'image': p.image,
         'bio': p.bio,
 

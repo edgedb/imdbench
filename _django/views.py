@@ -133,7 +133,7 @@ class CustomUserView(CustomView):
                     },
                 } for review in user.reviews
                                     .order_by('-creation_time')
-                                    .select_related('movie')[:3]
+                                    .select_related('movie')[:10]
                 ],
             }
 

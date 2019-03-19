@@ -5,7 +5,9 @@ ASYNC = True
 
 
 async def connect(ctx):
-    return await edgedb.async_connect(user='edgedb', database='edgedb_bench')
+    return await edgedb.async_connect(
+        user='edgedb', database='edgedb_bench',
+        host=ctx.edgedb_host, port=ctx.edgedb_port)
 
 
 async def close(ctx, conn):
@@ -13,7 +15,7 @@ async def close(ctx, conn):
 
 
 async def load_ids(ctx, conn):
-    d = await conn.fetch_value('''
+    d = await conn.fetchone('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},
@@ -29,7 +31,7 @@ async def load_ids(ctx, conn):
 
 
 async def get_user(conn, id):
-    return await conn.fetch_json('''
+    return await conn.fetchone_json('''
         SELECT User {
             id,
             name,
@@ -48,7 +50,7 @@ async def get_user(conn, id):
                     }
                 }
                 ORDER BY .creation_time DESC
-                LIMIT 3
+                LIMIT 10
             )
         }
         FILTER .id = <uuid>$id
@@ -56,7 +58,7 @@ async def get_user(conn, id):
 
 
 async def get_movie(conn, id):
-    return await conn.fetch_json('''
+    return await conn.fetchone_json('''
         SELECT Movie {
             id,
             image,
@@ -100,7 +102,7 @@ async def get_movie(conn, id):
 
 
 async def get_person(conn, id):
-    return await conn.fetch_json('''
+    return await conn.fetchone_json('''
         SELECT Person {
             id,
             full_name,

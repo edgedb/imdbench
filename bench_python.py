@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures as futures
 import math
+import os.path
 import random
 import time
 import typing
@@ -15,6 +16,8 @@ from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
 from _sqlalchemy import queries as sqlalchemy_queries
+from _postgres import queries as postgres_queries
+from _postgres import queries_psycopg as postgres_psycopg_queries
 
 
 class Context(typing.NamedTuple):
@@ -23,10 +26,13 @@ class Context(typing.NamedTuple):
     concurrency: int
     timeout: float
 
+    edgedb_host = [os.path.expanduser('~/.edgedb/'), 'localhost']
+    edgedb_port = None
+
 
 BENCHMARKS = {
-    'edgedb': edgedb_queries,
-    'edgedb_async': edgedb_queries_async,
+    'edgedb_json': edgedb_queries,
+    'edgedb_json_async': edgedb_queries_async,
     'edgedb_repack': edgedb_queries_repack,
 
     'django': django_queries,
@@ -35,7 +41,11 @@ BENCHMARKS = {
     'mongodb': mongodb_queries,
 
     'sqlalchemy': sqlalchemy_queries,
+
+    'postgres': postgres_queries,
+    'postgres_psycopg': postgres_psycopg_queries,
 }
+
 
 METHODS = ['get_user', 'get_movie', 'get_person']
 
@@ -173,7 +183,7 @@ def run_sync(ctx, benchname, warmup, duration):
                 ctx, benchname, warmup, conns, methodname)
             res = run_benchmark_sync(
                 ctx, benchname, duration, conns, methodname)
-            print(methodname, res)
+            print(res)
     finally:
         for conn in conns:
             queries_mod.close(ctx, conn)
@@ -193,7 +203,7 @@ async def run_async(ctx, benchname, warmup, duration):
                 ctx, benchname, warmup, conns, methodname)
             res = await run_benchmark_async(
                 ctx, benchname, duration, conns, methodname)
-            print(methodname, res)
+            print(res)
     finally:
         for conn in conns:
             await queries_mod.close(ctx, conn)
@@ -220,15 +230,19 @@ ctx = Context(
 
 
 warmup = 5
-duration = 30
+duration = 5
 
 
-run(ctx, 'edgedb', warmup, duration)
+run(ctx, 'edgedb_json', warmup, duration)
+run(ctx, 'edgedb_json_async', warmup, duration)
 run(ctx, 'edgedb_repack', warmup, duration)
-run(ctx, 'edgedb_async', warmup, duration)
 
 run(ctx, 'django', warmup, duration)
 run(ctx, 'django_restfw', warmup, duration)
 
 run(ctx, 'sqlalchemy', warmup, duration)
+
 run(ctx, 'mongodb', warmup, duration)
+
+run(ctx, 'postgres', warmup, duration)
+run(ctx, 'postgres_psycopg', warmup, duration)

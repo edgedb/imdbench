@@ -154,4 +154,4 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         reviews = obj.reviews.all().order_by('-creation_time')
         # select all movie links in one query
         return UserReviewSerializer(
-            reviews.select_related('movie')[:3], many=True).data
+            reviews.select_related('movie')[:10], many=True).data

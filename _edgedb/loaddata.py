@@ -42,7 +42,7 @@ class Pool:
 
                 args, kwargs = piece
                 try:
-                    await con.fetch(*args, **kwargs)
+                    await con.fetchall(*args, **kwargs)
                 except Exception as e:
                     self._results.put_nowait(e)
                 else:

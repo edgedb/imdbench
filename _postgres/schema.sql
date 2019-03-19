@@ -41,6 +41,9 @@ CREATE TABLE directors (
     movie_id int NOT NULL REFERENCES movies(id)
 );
 
+CREATE INDEX directors_person_index ON directors(person_id);
+CREATE INDEX directors_movie_index ON directors(movie_id);
+
 
 CREATE TABLE actors (
     id serial PRIMARY KEY,
@@ -48,6 +51,9 @@ CREATE TABLE actors (
     person_id int NOT NULL REFERENCES persons(id),
     movie_id int NOT NULL REFERENCES movies(id)
 );
+
+CREATE INDEX actors_person_index ON actors(person_id);
+CREATE INDEX actors_movie_index ON actors(movie_id);
 
 
 CREATE TABLE reviews (
@@ -59,9 +65,14 @@ CREATE TABLE reviews (
     movie_id int NOT NULL REFERENCES movies(id)
 );
 
+CREATE INDEX review_author_index ON reviews(author_id);
+CREATE INDEX review_movie_index ON reviews(movie_id);
+
 
 CREATE OR REPLACE FUNCTION avg_rating(m movies) RETURNS numeric AS $$
     SELECT avg(rating)
     FROM reviews
     WHERE movie_id = m.id;
 $$ LANGUAGE SQL STABLE;
+
+

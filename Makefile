@@ -77,3 +77,5 @@ load-postgres: $(BUILD)/dataset.json
 
 	$(PSQL) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
+
+	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json

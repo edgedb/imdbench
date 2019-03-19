@@ -6,7 +6,7 @@ if __name__ == '__main__':
     con = edgedb.connect(user='edgedb', database='edgedb')
 
     # check if the DB exists
-    res = con.fetch("""
+    res = con.fetchall("""
         SELECT sys::Database.name
         FILTER sys::Database.name = 'edgedb_bench';
     """)
@@ -37,16 +37,16 @@ if __name__ == '__main__':
 
     base_path = pathlib.Path(__file__).resolve().parent
 
-    with open(base_path / 'default.eschema') as f:
+    with open(base_path / 'default.esdl') as f:
         schema = f.read()
 
-    with open(base_path / 'default_setup.eql') as f:
+    with open(base_path / 'default_setup.edgeql') as f:
         setup = f.read()
 
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
     con.execute(f'''
         START TRANSACTION;
-        CREATE MIGRATION default::d0 TO eschema $${schema}$$;
+        CREATE MIGRATION default::d0 TO {{ {schema} }};
         COMMIT MIGRATION default::d0;
         {setup}
         COMMIT;
