@@ -12,6 +12,7 @@ import uvloop
 from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
+from _edgedb import queries_graphql as queries_graphql_async
 from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
@@ -29,11 +30,15 @@ class Context(typing.NamedTuple):
     edgedb_host = [os.path.expanduser('~/.edgedb/'), 'localhost']
     edgedb_port = None
 
+    edgedb_graphql_host = '127.0.0.1'
+    edgedb_graphql_port = 8888
+
 
 BENCHMARKS = {
     'edgedb_json': edgedb_queries,
     'edgedb_json_async': edgedb_queries_async,
     'edgedb_repack': edgedb_queries_repack,
+    'edgedb_graphql_async': queries_graphql_async,
 
     'django': django_queries,
     'django_restfw': django_queries_restfw,
@@ -236,6 +241,8 @@ duration = 5
 run(ctx, 'edgedb_json', warmup, duration)
 run(ctx, 'edgedb_json_async', warmup, duration)
 run(ctx, 'edgedb_repack', warmup, duration)
+
+run(ctx, 'edgedb_graphql_async', warmup, duration)
 
 run(ctx, 'django', warmup, duration)
 run(ctx, 'django_restfw', warmup, duration)
