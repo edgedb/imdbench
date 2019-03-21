@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (c) 2019 MagicStack Inc.
+# All rights reserved.
+#
+# See LICENSE for details.
+##
+
+
 import asyncio
 import concurrent.futures as futures
+import json
 import math
-import os.path
 import random
 import time
 import typing
@@ -9,45 +19,18 @@ import typing
 import numpy as np
 import uvloop
 
-from _edgedb import queries as edgedb_queries
-from _edgedb import queries_async as edgedb_queries_async
-from _edgedb import queries_repack as edgedb_queries_repack
-from _django import queries as django_queries
-from _django import queries_restfw as django_queries_restfw
-from _mongodb import queries as mongodb_queries
-from _sqlalchemy import queries as sqlalchemy_queries
-from _postgres import queries as postgres_queries
-from _postgres import queries_psycopg as postgres_psycopg_queries
+import _shared
 
 
-class Context(typing.NamedTuple):
+class Result(typing.NamedTuple):
 
-    number_of_ids: int
-    concurrency: int
-    timeout: float
-
-    edgedb_host = [os.path.expanduser('~/.edgedb/'), 'localhost']
-    edgedb_port = None
-
-
-BENCHMARKS = {
-    'edgedb_json': edgedb_queries,
-    'edgedb_json_async': edgedb_queries_async,
-    'edgedb_repack': edgedb_queries_repack,
-
-    'django': django_queries,
-    'django_restfw': django_queries_restfw,
-
-    'mongodb': mongodb_queries,
-
-    'sqlalchemy': sqlalchemy_queries,
-
-    'postgres': postgres_queries,
-    'postgres_psycopg': postgres_psycopg_queries,
-}
-
-
-METHODS = ['get_user', 'get_movie', 'get_person']
+    benchmark: str
+    queryname: str
+    nqueries: int
+    duration: int
+    min_latency: int
+    max_latency: int
+    latency_stats: typing.List[int]
 
 
 def run_benchmark_method(ctx, duration, conn, ids, method):
@@ -96,7 +79,7 @@ async def run_async_benchmark_method(ctx, duration, conn, ids, method):
     return nqueries, latency_stats, min_latency, max_latency
 
 
-def agg_results(results, methodname, duration):
+def agg_results(results, benchname, queryname, duration) -> Result:
     min_latency = float('inf')
     max_latency = 0.0
     nqueries = 0
@@ -113,22 +96,23 @@ def agg_results(results, methodname, duration):
         if t_min_latency < min_latency:
             min_latency = t_min_latency
 
-    return {
-        'method': methodname,
-        'nqueries': nqueries,
-        'duration': duration,
-        'min_latency': min_latency,
-        'max_latency': max_latency,
-        # 'latency_stats': latency_stats,
-    }
+    return Result(
+        benchmark=benchname,
+        queryname=queryname,
+        nqueries=nqueries,
+        duration=duration,
+        min_latency=min_latency,
+        max_latency=max_latency,
+        latency_stats=latency_stats,
+    )
 
 
-def run_benchmark_sync(ctx, benchname, duration, conns, methodname):
-    queries_mod = BENCHMARKS[benchname]
+def run_benchmark_sync(ctx, benchname, duration, conns, queryname) -> Result:
+    queries_mod = _shared.BENCHMARKS[benchname].module
 
     ids = queries_mod.load_ids(ctx, conns[0])
-    method_ids = ids[methodname]
-    method = getattr(queries_mod, methodname)
+    method_ids = ids[queryname]
+    method = getattr(queries_mod, queryname)
 
     with futures.ThreadPoolExecutor(max_workers=ctx.concurrency) as e:
         tasks = []
@@ -144,15 +128,16 @@ def run_benchmark_sync(ctx, benchname, duration, conns, methodname):
 
         results = [fut.result() for fut in futures.wait(tasks).done]
 
-    return agg_results(results, methodname, duration)
+    return agg_results(results, benchname, queryname, duration)
 
 
-async def run_benchmark_async(ctx, benchname, duration, conns, methodname):
-    queries_mod = BENCHMARKS[benchname]
+async def run_benchmark_async(ctx, benchname, duration,
+                              conns, queryname) -> Result:
+    queries_mod = _shared.BENCHMARKS[benchname].module
 
     ids = await queries_mod.load_ids(ctx, conns[0])
-    method_ids = ids[methodname]
-    method = getattr(queries_mod, methodname)
+    method_ids = ids[queryname]
+    method = getattr(queries_mod, queryname)
 
     tasks = []
     for i in range(ctx.concurrency):
@@ -166,11 +151,12 @@ async def run_benchmark_async(ctx, benchname, duration, conns, methodname):
         tasks.append(task)
 
     results = await asyncio.gather(*tasks)
-    return agg_results(results, methodname, duration)
+    return agg_results(results, benchname, queryname, duration)
 
 
-def run_sync(ctx, benchname, warmup, duration):
-    queries_mod = BENCHMARKS[benchname]
+def run_sync(ctx, benchname) -> typing.List[Result]:
+    queries_mod = _shared.BENCHMARKS[benchname].module
+    results = []
 
     conns = []
     for i in range(ctx.concurrency):
@@ -178,19 +164,23 @@ def run_sync(ctx, benchname, warmup, duration):
         conns.append(conn)
 
     try:
-        for methodname in METHODS:
+        for queryname in ctx.queries:
             run_benchmark_sync(
-                ctx, benchname, warmup, conns, methodname)
+                ctx, benchname, ctx.warmup_time, conns, queryname)
             res = run_benchmark_sync(
-                ctx, benchname, duration, conns, methodname)
-            print(res)
+                ctx, benchname, ctx.duration, conns, queryname)
+            results.append(res)
+            print_result(ctx, res)
     finally:
         for conn in conns:
             queries_mod.close(ctx, conn)
 
+    return results
 
-async def run_async(ctx, benchname, warmup, duration):
-    queries_mod = BENCHMARKS[benchname]
+
+async def run_async(ctx, benchname) -> typing.List[Result]:
+    queries_mod = _shared.BENCHMARKS[benchname].module
+    results = []
 
     conns = []
     for i in range(ctx.concurrency):
@@ -198,51 +188,87 @@ async def run_async(ctx, benchname, warmup, duration):
         conns.append(conn)
 
     try:
-        for methodname in METHODS:
+        for queryname in ctx.queries:
             await run_benchmark_async(
-                ctx, benchname, warmup, conns, methodname)
+                ctx, benchname, ctx.warmup_time, conns, queryname)
             res = await run_benchmark_async(
-                ctx, benchname, duration, conns, methodname)
-            print(res)
+                ctx, benchname, ctx.duration, conns, queryname)
+            results.append(res)
+            print_result(ctx, res)
     finally:
         for conn in conns:
             await queries_mod.close(ctx, conn)
 
+    return results
 
-def run(ctx, benchname, warmup, duration):
-    print()
-    print()
-    print(benchname)
-    queries_mod = BENCHMARKS[benchname]
+
+def run_bench(ctx, benchname) -> typing.List[Result]:
+    queries_mod = _shared.BENCHMARKS[benchname].module
     if getattr(queries_mod, 'ASYNC', False):
-        uvloop.install()
-        return asyncio.run(
-            run_async(ctx, benchname, warmup, duration))
+        return asyncio.run(run_async(ctx, benchname))
     else:
-        return run_sync(ctx, benchname, warmup, duration)
+        return run_sync(ctx, benchname)
 
 
-ctx = Context(
-    number_of_ids=250,
-    concurrency=4,
-    timeout=2,
-)
+def print_result(ctx, result: Result):
+    print(f'== {result.benchmark} : {result.queryname} ==')
+    print(f'queries:\t{result.nqueries}')
+    print(f'min latency:\t{result.min_latency}')
+    print(f'max latency:\t{result.max_latency}')
+    print()
 
 
-warmup = 5
-duration = 5
+def main():
+    uvloop.install()
+    ctx, _ = _shared.parse_args(
+        prog_desc='EdgeDB Databases Benchmark (Python drivers)',
+        out_to_json=True)
+
+    print('============ Python ============')
+    print(f'concurrency:\t{ctx.concurrency}')
+    print(f'warmup time:\t{ctx.warmup_time} seconds')
+    print(f'duration:\t{ctx.duration} seconds')
+    print(f'queries:\t{", ".join(q for q in ctx.queries)}')
+    print(f'benchmarks:\t{", ".join(b for b in ctx.benchmarks)}')
+    print()
+
+    data = []
+    for benchmark in ctx.benchmarks:
+        bench_desc = _shared.BENCHMARKS[benchmark]
+        if bench_desc.language != 'python':
+            continue
+
+        res = run_bench(ctx, benchmark)
+        data.append(res)
+
+    if ctx.json:
+        json_data = []
+        for results in data:
+            json_results = []
+            for r in results:
+                json_results.append({
+                    'queryname': r.queryname,
+                    'nqueries': r.nqueries,
+                    'min_latency': r.min_latency,
+                    'max_latency': r.max_latency,
+                    'latency_stats': [int(i) for i in r.latency_stats.tolist()]
+                })
+            json_data.append({
+                'benchmark': results[0].benchmark,
+                'duration': results[0].duration,
+                'queries': json_results,
+            })
+
+        data = json.dumps({
+            'language': 'python',
+            'concurrency': ctx.concurrency,
+            'warmup_time': ctx.warmup_time,
+            'duration': ctx.duration,
+            'data': json_data,
+        })
+        with open(ctx.json, 'wt') as f:
+            f.write(data)
 
 
-run(ctx, 'edgedb_json', warmup, duration)
-run(ctx, 'edgedb_json_async', warmup, duration)
-run(ctx, 'edgedb_repack', warmup, duration)
-
-run(ctx, 'django', warmup, duration)
-run(ctx, 'django_restfw', warmup, duration)
-
-run(ctx, 'sqlalchemy', warmup, duration)
-
-run(ctx, 'mongodb', warmup, duration)
-
-run(ctx, 'postgres', warmup, duration)
-run(ctx, 'postgres_psycopg', warmup, duration)
+if __name__ == '__main__':
+    main()

@@ -5,8 +5,11 @@ import psycopg2
 
 def connect(ctx):
     return psycopg2.connect(
-        user='postgres_bench', dbname='postgres_bench',
-        password='edgedbbenchmark')
+        user='postgres_bench',
+        dbname='postgres_bench',
+        password='edgedbbenchmark',
+        host=ctx.pg_host,
+        port=ctx.pg_port)
 
 
 def close(ctx, conn):

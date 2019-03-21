@@ -10,3 +10,5 @@ __pycache__/
 /dist
 /.cache
 docs/_build
+/*.html
+/*.json

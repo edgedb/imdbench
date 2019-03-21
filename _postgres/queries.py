@@ -7,8 +7,11 @@ ASYNC = True
 
 async def connect(ctx):
     return await asyncpg.connect(
-        user='postgres_bench', database='postgres_bench',
-        password='edgedbbenchmark')
+        user='postgres_bench',
+        database='postgres_bench',
+        password='edgedbbenchmark',
+        host=ctx.pg_host,
+        port=ctx.pg_port)
 
 
 async def close(ctx, conn):

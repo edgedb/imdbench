@@ -4,7 +4,14 @@ import bson.json_util
 
 
 def connect(ctx):
-    client = pymongo.MongoClient()
+    client = pymongo.MongoClient(
+        host=ctx.mongodb_host,
+        port=ctx.mongodb_port,
+
+        # 1 is for "best speed" according to docs;
+        # FWIW, setting this to 0 (disable) doesn't seem to change anything.
+        zlibCompressionLevel=1,
+    )
     db = client.movies
     return db
 
