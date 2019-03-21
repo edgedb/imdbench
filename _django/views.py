@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2019 MagicStack Inc.
+# All rights reserved.
+#
+# See LICENSE for details.
+##
+
+
 from django.http import JsonResponse
 from django.views import View
 from _django import models, serializers

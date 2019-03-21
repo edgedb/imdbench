@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2019 MagicStack Inc.
+# All rights reserved.
+#
+# See LICENSE for details.
+##
+
+
 CREATE TABLE movies (
     id serial PRIMARY KEY,
     image text NOT NULL,

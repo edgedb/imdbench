@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2019 MagicStack Inc.
+# All rights reserved.
+#
+# See LICENSE for details.
+##
+
+
 from django.test.client import RequestFactory
 
 from . import bootstrap  # NoQA

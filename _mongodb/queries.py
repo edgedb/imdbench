@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2019 MagicStack Inc.
+# All rights reserved.
+#
+# See LICENSE for details.
+##
+
+
 import pymongo
 import bson
 import bson.json_util
