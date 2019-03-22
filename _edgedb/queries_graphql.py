@@ -15,7 +15,7 @@ ASYNC = True
 async def connect(ctx):
     conn = aiohttp.ClientSession()
     conn.post_local = lambda **kw: conn.post(
-        f'http://{ctx.edgedb_host}:{ctx.edgedb_graphql_port}',
+        f'http://{ctx.db_host}:{ctx.edgedb_graphql_port}',
         **kw)
     return conn
 

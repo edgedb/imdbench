@@ -13,7 +13,7 @@ import bson.json_util
 
 def connect(ctx):
     client = pymongo.MongoClient(
-        host=ctx.mongodb_host,
+        host=ctx.db_host,
         port=ctx.mongodb_port,
 
         # 1 is for "best speed" according to docs;

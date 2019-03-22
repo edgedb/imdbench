@@ -77,6 +77,10 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='number of concurrent connections')
 
     parser.add_argument(
+        '--db-host', type=str, default='127.0.0.1',
+        help='host with databases')
+
+    parser.add_argument(
         '-D', '--duration', type=int, default=30,
         help='duration of test in seconds')
     parser.add_argument(
@@ -87,15 +91,9 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='duration of warmup period for each benchmark in seconds')
 
     parser.add_argument(
-        '--pg-host', type=str, default='127.0.0.1',
-        help='PostgreSQL server host')
-    parser.add_argument(
         '--pg-port', type=int, default=5432,
         help='PostgreSQL server port')
 
-    parser.add_argument(
-        '--edgedb-host', type=str, default='127.0.0.1',
-        help='EdgeDB server host')
     parser.add_argument(
         '--edgedb-port', type=int, default=5656,
         help='EdgeDB server port')
@@ -106,9 +104,6 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         '--edgedb-user', type=str, default='edgedb',
         help='PostgreSQL server user')
 
-    parser.add_argument(
-        '--mongodb-host', type=str, default='127.0.0.1',
-        help='MongoDB server host')
     parser.add_argument(
         '--mongodb-port', type=int, default=27017,
         help='MongoDB server port')

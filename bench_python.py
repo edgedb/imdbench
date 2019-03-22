@@ -36,6 +36,9 @@ class Result(typing.NamedTuple):
 
 def run_benchmark_method(ctx, benchname, ids, queryname):
     queries_mod = _shared.BENCHMARKS[benchname].module
+    if hasattr(queries_mod, 'init'):
+        queries_mod.init(ctx)
+
     method = getattr(queries_mod, queryname)
     conn = queries_mod.connect(ctx)
 
@@ -73,6 +76,9 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
 async def run_async_benchmark_method(ctx, benchname, ids, queryname):
     queries_mod = _shared.BENCHMARKS[benchname].module
+    if hasattr(queries_mod, 'init'):
+        queries_mod.init(ctx)
+
     method = getattr(queries_mod, queryname)
     conn = await queries_mod.connect(ctx)
 

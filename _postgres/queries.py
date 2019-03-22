@@ -18,7 +18,7 @@ async def connect(ctx):
         user='postgres_bench',
         database='postgres_bench',
         password='edgedbbenchmark',
-        host=ctx.pg_host,
+        host=ctx.db_host,
         port=ctx.pg_port)
 
 

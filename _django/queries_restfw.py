@@ -12,6 +12,7 @@ from . import bootstrap  # NoQA
 
 from . import models
 from . import views
+from . import settings
 
 
 rf = RequestFactory()
@@ -19,6 +20,10 @@ DUMMY_REQUEST = rf.get('/')
 USER_VIEW = views.UserDetailsViewSet.as_view({'get': 'retrieve'})
 MOVIE_VIEW = views.MovieDetailsViewSet.as_view({'get': 'retrieve'})
 PERSON_VIEW = views.PersonDetailsViewSet.as_view({'get': 'retrieve'})
+
+
+def init(ctx):
+    settings.DATABASES["default"]["HOST"] = ctx.db_host
 
 
 def connect(ctx):

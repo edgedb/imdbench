@@ -15,15 +15,23 @@ import sqlalchemy.ext as ext
 import _sqlalchemy.models as m
 
 
-engine = sa.create_engine(
-    'postgresql://sqlalch_bench:edgedbbenchmark@localhost/sqlalch_bench')
+engine = None
+session_factory = None
 
-session_factory = orm.sessionmaker(bind=engine)
 
 bakery = ext.baked.bakery()
 
 
 def connect(ctx):
+    global engine
+    global session_factory
+
+    if session_factory is None:
+        engine = sa.create_engine(
+            f'postgresql://sqlalch_bench:edgedbbenchmark@'
+            f'{ctx.db_host}/sqlalch_bench')
+        session_factory = orm.sessionmaker(bind=engine)
+
     return session_factory()
 
 

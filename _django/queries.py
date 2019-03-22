@@ -12,6 +12,11 @@ from . import bootstrap  # NoQA
 
 from . import models
 from . import views
+from . import settings
+
+
+def init(ctx):
+    settings.DATABASES["default"]["HOST"] = ctx.db_host
 
 
 def connect(ctx):
