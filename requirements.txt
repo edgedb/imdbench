@@ -10,3 +10,4 @@ progress
 uvloop
 asyncpg
 distro
+numpy
