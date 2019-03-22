@@ -35,7 +35,11 @@ async def load_ids(ctx, conn):
         );
     ''', lim=ctx.number_of_ids)
 
-    return dict(get_user=d.users, get_movie=d.movies, get_person=d.people)
+    return dict(
+        get_user=list(d.users),
+        get_movie=list(d.movies),
+        get_person=list(d.people),
+    )
 
 
 async def get_user(conn, id):

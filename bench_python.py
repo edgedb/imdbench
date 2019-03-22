@@ -12,6 +12,7 @@ import asyncio
 import concurrent.futures as futures
 import json
 import math
+import multiprocessing
 import random
 import time
 import typing
@@ -33,50 +34,78 @@ class Result(typing.NamedTuple):
     latency_stats: typing.List[int]
 
 
-def run_benchmark_method(ctx, duration, conn, ids, method):
-    nqueries = 0
-    latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
-    min_latency = float('inf')
-    max_latency = 0.0
+def run_benchmark_method(ctx, benchname, ids, queryname):
+    queries_mod = _shared.BENCHMARKS[benchname].module
+    method = getattr(queries_mod, queryname)
+    conn = queries_mod.connect(ctx)
 
-    start = time.monotonic()
-    while time.monotonic() - start < duration:
-        rid = random.choice(ids)
-        req_start = time.monotonic_ns()
-        method(conn, rid)
-        req_time = (time.monotonic_ns() - req_start) // 10000
+    try:
+        nqueries = 0
+        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
+        min_latency = float('inf')
+        max_latency = 0.0
 
-        if req_time > max_latency:
-            max_latency = req_time
-        if req_time < min_latency:
-            min_latency = req_time
-        latency_stats[req_time] += 1
-        nqueries += 1
+        duration = ctx.warmup_time
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            rid = random.choice(ids)
+            method(conn, rid)
 
-    return nqueries, latency_stats, min_latency, max_latency
+        duration = ctx.duration
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            rid = random.choice(ids)
+            req_start = time.monotonic_ns()
+            method(conn, rid)
+            req_time = (time.monotonic_ns() - req_start) // 10000
+
+            if req_time > max_latency:
+                max_latency = req_time
+            if req_time < min_latency:
+                min_latency = req_time
+            latency_stats[req_time] += 1
+            nqueries += 1
+
+        return nqueries, latency_stats, min_latency, max_latency
+    finally:
+        queries_mod.close(ctx, conn)
 
 
-async def run_async_benchmark_method(ctx, duration, conn, ids, method):
-    nqueries = 0
-    latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
-    min_latency = float('inf')
-    max_latency = 0.0
+async def run_async_benchmark_method(ctx, benchname, ids, queryname):
+    queries_mod = _shared.BENCHMARKS[benchname].module
+    method = getattr(queries_mod, queryname)
+    conn = await queries_mod.connect(ctx)
 
-    start = time.monotonic()
-    while time.monotonic() - start < duration:
-        rid = random.choice(ids)
-        req_start = time.monotonic_ns()
-        await method(conn, rid)
-        req_time = (time.monotonic_ns() - req_start) // 10000
+    try:
+        nqueries = 0
+        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
+        min_latency = float('inf')
+        max_latency = 0.0
 
-        if req_time > max_latency:
-            max_latency = req_time
-        if req_time < min_latency:
-            min_latency = req_time
-        latency_stats[req_time] += 1
-        nqueries += 1
+        duration = ctx.warmup_time
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            rid = random.choice(ids)
+            await method(conn, rid)
 
-    return nqueries, latency_stats, min_latency, max_latency
+        duration = ctx.duration
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            rid = random.choice(ids)
+            req_start = time.monotonic_ns()
+            await method(conn, rid)
+            req_time = (time.monotonic_ns() - req_start) // 10000
+
+            if req_time > max_latency:
+                max_latency = req_time
+            if req_time < min_latency:
+                min_latency = req_time
+            latency_stats[req_time] += 1
+            nqueries += 1
+
+        return nqueries, latency_stats, min_latency, max_latency
+    finally:
+        await queries_mod.close(ctx, conn)
 
 
 def agg_results(results, benchname, queryname, duration) -> Result:
@@ -107,23 +136,18 @@ def agg_results(results, benchname, queryname, duration) -> Result:
     )
 
 
-def run_benchmark_sync(ctx, benchname, duration, conns, queryname) -> Result:
-    queries_mod = _shared.BENCHMARKS[benchname].module
-
-    ids = queries_mod.load_ids(ctx, conns[0])
+def run_benchmark_sync(ctx, benchname, duration, ids, queryname) -> Result:
     method_ids = ids[queryname]
-    method = getattr(queries_mod, queryname)
 
-    with futures.ThreadPoolExecutor(max_workers=ctx.concurrency) as e:
+    with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
         tasks = []
         for i in range(ctx.concurrency):
             task = e.submit(
                 run_benchmark_method,
                 ctx,
-                duration,
-                conns[i],
+                benchname,
                 method_ids,
-                method)
+                queryname)
             tasks.append(task)
 
         results = [fut.result() for fut in futures.wait(tasks).done]
@@ -132,22 +156,17 @@ def run_benchmark_sync(ctx, benchname, duration, conns, queryname) -> Result:
 
 
 async def run_benchmark_async(ctx, benchname, duration,
-                              conns, queryname) -> Result:
-    queries_mod = _shared.BENCHMARKS[benchname].module
-
-    ids = await queries_mod.load_ids(ctx, conns[0])
+                              ids, queryname) -> Result:
     method_ids = ids[queryname]
-    method = getattr(queries_mod, queryname)
 
     tasks = []
     for i in range(ctx.concurrency):
         task = asyncio.create_task(
             run_async_benchmark_method(
                 ctx,
-                duration,
-                conns[i],
+                benchname,
                 method_ids,
-                method))
+                queryname))
         tasks.append(task)
 
     results = await asyncio.gather(*tasks)
@@ -158,22 +177,17 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
     queries_mod = _shared.BENCHMARKS[benchname].module
     results = []
 
-    conns = []
-    for i in range(ctx.concurrency):
-        conn = queries_mod.connect(ctx)
-        conns.append(conn)
-
+    idconn = queries_mod.connect(ctx)
     try:
-        for queryname in ctx.queries:
-            run_benchmark_sync(
-                ctx, benchname, ctx.warmup_time, conns, queryname)
-            res = run_benchmark_sync(
-                ctx, benchname, ctx.duration, conns, queryname)
-            results.append(res)
-            print_result(ctx, res)
+        ids = queries_mod.load_ids(ctx, idconn)
     finally:
-        for conn in conns:
-            queries_mod.close(ctx, conn)
+        queries_mod.close(ctx, idconn)
+
+    for queryname in ctx.queries:
+        res = run_benchmark_sync(
+            ctx, benchname, ctx.duration, ids, queryname)
+        results.append(res)
+        print_result(ctx, res)
 
     return results
 
@@ -182,22 +196,17 @@ async def run_async(ctx, benchname) -> typing.List[Result]:
     queries_mod = _shared.BENCHMARKS[benchname].module
     results = []
 
-    conns = []
-    for i in range(ctx.concurrency):
-        conn = await queries_mod.connect(ctx)
-        conns.append(conn)
-
+    idconn = await queries_mod.connect(ctx)
     try:
-        for queryname in ctx.queries:
-            await run_benchmark_async(
-                ctx, benchname, ctx.warmup_time, conns, queryname)
-            res = await run_benchmark_async(
-                ctx, benchname, ctx.duration, conns, queryname)
-            results.append(res)
-            print_result(ctx, res)
+        ids = await queries_mod.load_ids(ctx, idconn)
     finally:
-        for conn in conns:
-            await queries_mod.close(ctx, conn)
+        await queries_mod.close(ctx, idconn)
+
+    for queryname in ctx.queries:
+        res = await run_benchmark_async(
+            ctx, benchname, ctx.duration, ids, queryname)
+        results.append(res)
+        print_result(ctx, res)
 
     return results
 
@@ -213,13 +222,16 @@ def run_bench(ctx, benchname) -> typing.List[Result]:
 def print_result(ctx, result: Result):
     print(f'== {result.benchmark} : {result.queryname} ==')
     print(f'queries:\t{result.nqueries}')
-    print(f'min latency:\t{result.min_latency}')
-    print(f'max latency:\t{result.max_latency}')
+    print(f'qps:\t\t{result.nqueries // ctx.duration} q/s')
+    print(f'min latency:\t{result.min_latency / 100:.2f}ms')
+    print(f'max latency:\t{result.max_latency / 100:.2f}ms')
     print()
 
 
 def main():
     uvloop.install()
+    multiprocessing.set_start_method('spawn')
+
     ctx, _ = _shared.parse_args(
         prog_desc='EdgeDB Databases Benchmark (Python drivers)',
         out_to_json=True)
