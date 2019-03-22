@@ -10,6 +10,7 @@ import json
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+import sqlalchemy.ext as ext
 
 import _sqlalchemy.models as m
 
@@ -18,6 +19,8 @@ engine = sa.create_engine(
     'postgresql://sqlalch_bench:edgedbbenchmark@localhost/sqlalch_bench')
 
 session_factory = orm.sessionmaker(bind=engine)
+
+bakery = ext.baked.bakery()
 
 
 def connect(ctx):
@@ -55,12 +58,14 @@ def load_ids(ctx, sess):
 
 
 def get_user(sess, id):
-    user = sess.query(m.User).filter_by(id=id).first()
+    user_query = bakery(lambda sess: sess.query(m.User))
+    user_query += lambda q: q.filter_by(id=sa.bindparam('id'))
+    user = user_query(sess).params(id=id).first()
 
     latest_reviews = user.latest_reviews.options(
         orm.joinedload(m.Review.movie)).limit(10).all()
 
-    return json.dumps({
+    result = json.dumps({
         'id': user.id,
         'name': user.name,
         'image': user.image,
@@ -78,6 +83,7 @@ def get_user(sess, id):
             } for r in latest_reviews
         ]
     })
+    return result
 
 
 def get_movie(sess, id):
@@ -91,17 +97,24 @@ def get_movie(sess, id):
         else:
             return (rel.list_order, rel.person_rel.last_name)
 
-    movie = sess.query(m.Movie) \
-        .options(
-            orm.selectinload(m.Movie.directors_rel)
-            .joinedload(m.Directors.person_rel, innerjoin=True),
+    baked_query = bakery(lambda sess: (
+        sess.query(m.Movie)
+            .options(
+                orm.subqueryload(m.Movie.directors_rel)
+                .joinedload(m.Directors.person_rel, innerjoin=True),
 
-            orm.selectinload(m.Movie.cast_rel)
-            .joinedload(m.Cast.person_rel, innerjoin=True),
+                orm.subqueryload(m.Movie.cast_rel)
+                .joinedload(m.Cast.person_rel, innerjoin=True),
 
-            orm.selectinload(m.Movie.reviews)
-            .joinedload(m.Review.author, innerjoin=True),
-        ).filter_by(id=id).first()
+                orm.subqueryload(m.Movie.reviews)
+                .joinedload(m.Review.author, innerjoin=True),
+            )
+        )
+    )
+
+    baked_query += lambda q: q.filter_by(id=sa.bindparam('id'))
+
+    movie = baked_query(sess).params(id=id).first()
 
     directors = [rel.person_rel for rel in
                  sorted(movie.directors_rel, key=sort_key)]
@@ -151,12 +164,14 @@ def get_movie(sess, id):
 
 
 def get_person(sess, id):
-    person = sess.query(m.Person).options(
-        # using "selectinload" is apparently faster than
-        # "joinedload" and "subqueryload" for this query.
-        orm.selectinload(m.Person.acted_in),
-        orm.selectinload(m.Person.directed),
-    ).filter_by(id=id).first()
+    baked_query = bakery(lambda sess: sess.query(m.Person).options(
+        orm.joinedload(m.Person.acted_in),
+        orm.joinedload(m.Person.directed),
+    ))
+
+    baked_query += lambda q: q.filter_by(id=sa.bindparam('id'))
+
+    person = baked_query(sess).params(id=id).first()
 
     result = {
         'id': person.id,
