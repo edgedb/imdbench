@@ -100,6 +100,7 @@ def get_movie(conn, id):
             }
             ORDER BY Movie.directors@list_order EMPTY LAST
                 THEN Movie.directors.last_name,
+
             cast: {
                 id,
                 full_name,
@@ -108,7 +109,6 @@ def get_movie(conn, id):
             ORDER BY Movie.cast@list_order EMPTY LAST
                 THEN Movie.cast.last_name,
 
-            # computables
             reviews := (
                 SELECT Movie.<movie {
                     id,
@@ -169,13 +169,10 @@ def get_person(conn, id):
     p = conn.fetchone('''
         SELECT Person {
             id,
-            # full_name,
-            first_name,
-            last_name,
+            full_name,
             image,
             bio,
 
-            # computables
             acted_in := (
                 WITH M := Person.<cast
                 SELECT M {
@@ -187,6 +184,7 @@ def get_person(conn, id):
                 }
                 ORDER BY .year ASC THEN .title ASC
             ),
+
             directed := (
                 WITH M := Person.<directors
                 SELECT M {
@@ -204,8 +202,7 @@ def get_person(conn, id):
 
     return json.dumps({
         'id': str(p.id),
-        'first_name': p.first_name,
-        'last_name': p.last_name,
+        'full_name': p.full_name,
         'image': p.image,
         'bio': p.bio,
 
