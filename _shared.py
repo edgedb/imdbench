@@ -56,7 +56,7 @@ BENCHMARKS = {
         bench('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        bench('python', 'PostgreSQL asyncpg', postgres_queries),
+        bench('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
 
     'postgres_psycopg':
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
