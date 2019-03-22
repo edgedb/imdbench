@@ -1,9 +1,9 @@
-#
-# Copyright (c) 2019 MagicStack Inc.
-# All rights reserved.
-#
-# See LICENSE for details.
-##
+--
+-- Copyright (c) 2019 MagicStack Inc.
+-- All rights reserved.
+--
+-- See LICENSE for details.
+--
 
 
 CREATE TABLE movies (
@@ -82,5 +82,3 @@ CREATE OR REPLACE FUNCTION avg_rating(m movies) RETURNS numeric AS $$
     FROM reviews
     WHERE movie_id = m.id;
 $$ LANGUAGE SQL STABLE;
-
-
