@@ -16,6 +16,8 @@ from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
 from _edgedb import queries_graphql as edgedb_graphql_aiohttp
+from _edgedb_go import queries_graphql as edgedb_graphql_golang
+from _edgedb_go import queries_edgeql as edgedb_edgeql_golang
 from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
@@ -42,6 +44,12 @@ BENCHMARKS = {
 
     'edgedb_graphql_aiohttp':
         bench('python', 'EdgeDB GraphQL aiohttp', edgedb_graphql_aiohttp),
+
+    'edgedb_graphql_go':
+        bench('go', 'EdgeDB GraphQL+HTTP golang', edgedb_graphql_golang),
+
+    'edgedb_http_go':
+        bench('go', 'EdgeDB EdgeQL+HTTP golang', edgedb_edgeql_golang),
 
     'django':
         bench('python', 'Django ORM', django_queries),

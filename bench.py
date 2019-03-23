@@ -181,6 +181,13 @@ def run_benchmarks(args, argv):
             python_args = [
                 'python', 'bench_python.py', '--json', '__tmp.json'
             ] + argv
+        elif bench.language == 'go':
+            python_args = [
+                'python', 'bench_go.py', '--json', '__tmp.json'
+            ] + argv
+        else:
+            raise ValueError('unsupported host language: {}'.format(
+                bench.language))
 
     try:
         agg_data = []
