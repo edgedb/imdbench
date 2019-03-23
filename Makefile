@@ -1,4 +1,4 @@
-.PHONY: all load new-dataset
+.PHONY: all load new-dataset go
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -81,3 +81,6 @@ load-postgres: $(BUILD)/dataset.json
 
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
+
+go:
+	make -C _edgedb_go
