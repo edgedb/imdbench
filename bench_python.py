@@ -44,7 +44,7 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
     try:
         nqueries = 0
-        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
+        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000 + 1,))
         min_latency = float('inf')
         max_latency = 0.0
 
@@ -56,6 +56,7 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
         duration = ctx.duration
         start = time.monotonic()
+        max_req_time = len(latency_stats) - 1
         while time.monotonic() - start < duration:
             rid = random.choice(ids)
             req_start = time.monotonic_ns()
@@ -66,7 +67,11 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
                 max_latency = req_time
             if req_time < min_latency:
                 min_latency = req_time
+
+            if req_time > max_req_time:
+                req_time = max_req_time
             latency_stats[req_time] += 1
+
             nqueries += 1
 
         return nqueries, latency_stats, min_latency, max_latency
@@ -84,7 +89,7 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
 
     try:
         nqueries = 0
-        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000,))
+        latency_stats = np.zeros((math.ceil(ctx.timeout) * 100 * 1000 + 1,))
         min_latency = float('inf')
         max_latency = 0.0
 
@@ -96,6 +101,7 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
 
         duration = ctx.duration
         start = time.monotonic()
+        max_req_time = len(latency_stats) - 1
         while time.monotonic() - start < duration:
             rid = random.choice(ids)
             req_start = time.monotonic_ns()
@@ -106,7 +112,11 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
                 max_latency = req_time
             if req_time < min_latency:
                 min_latency = req_time
+
+            if req_time > max_req_time:
+                req_time = max_req_time
             latency_stats[req_time] += 1
+
             nqueries += 1
 
         return nqueries, latency_stats, min_latency, max_latency

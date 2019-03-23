@@ -1,7 +1,7 @@
 .PHONY: clean
 
 
-bench: main.go
+gobench: main.go
 	rm -rf "$(CURDIR)/_go" && mkdir "$(CURDIR)/_go"
 	GOPATH="$(CURDIR)/_go" go get gopkg.in/alecthomas/kingpin.v2 \
 								  github.com/valyala/fasthttp

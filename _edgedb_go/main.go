@@ -32,7 +32,8 @@ func http_worker(
 
 	defer wg.Done()
 
-	latency_stats := make([]int64, timeout/1000/10)
+	latency_stats := make([]int64, timeout/1000/10 + 1)
+	timeout_ns := timeout.Nanoseconds()
 	min_latency := int64(math.MaxInt64)
 	max_latency := int64(0)
 	queries := int64(0)
@@ -73,14 +74,20 @@ func http_worker(
 
 		_ = resp.Body()
 
-		req_time := time.Since(req_start).Nanoseconds() / 1000 / 10
-		latency_stats[req_time] += 1
+		req_time_ns := time.Since(req_start).Nanoseconds()
+		req_time := req_time_ns / 1000 / 10
 		if req_time > max_latency {
 			max_latency = req_time
 		}
 		if req_time < min_latency {
 			min_latency = req_time
 		}
+
+		if req_time_ns > timeout_ns {
+			req_time = timeout_ns / 1000 / 10
+		}
+		latency_stats[req_time] += 1
+
 		queries += 1
 		if duration == 0 {
 			break
@@ -168,7 +175,7 @@ func main() {
 	queries := int64(0)
 	min_latency := int64(math.MaxInt64)
 	max_latency := int64(0)
-	latency_stats := make([]int64, timeout/1000/10)
+	latency_stats := make([]int64, timeout/1000/10 + 1)
 
 	report := func(t_queries int64,
 		t_min_latency int64, t_max_latency int64, t_latency_stats []int64) {
