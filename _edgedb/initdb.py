@@ -22,6 +22,9 @@ if __name__ == '__main__':
     if res:
         con.execute("""
             CONFIGURE SYSTEM RESET Port FILTER .port=8888;
+        """)
+
+        con.execute("""
             CONFIGURE SYSTEM RESET Port FILTER .port=8889;
         """)
 
@@ -42,7 +45,9 @@ if __name__ == '__main__':
             user := "http",
             concurrency := 10,
         };
+    """)
 
+    con.execute("""
         CONFIGURE SYSTEM INSERT Port {
             protocol := "edgeql+http",
             database := "edgedb_bench",

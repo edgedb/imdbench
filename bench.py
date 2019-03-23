@@ -173,16 +173,15 @@ def format_report_html(data, target_file):
 
 
 def run_benchmarks(args, argv):
-    python_args = None
-
+    lang_args = {}
     for benchname in args.benchmarks:
         bench = _shared.BENCHMARKS[benchname]
         if bench.language == 'python':
-            python_args = [
+            lang_args['python'] = [
                 'python', 'bench_python.py', '--json', '__tmp.json'
             ] + argv
         elif bench.language == 'go':
-            python_args = [
+            lang_args['go'] = [
                 'python', 'bench_go.py', '--json', '__tmp.json'
             ] + argv
         else:
@@ -191,9 +190,9 @@ def run_benchmarks(args, argv):
 
     try:
         agg_data = []
-        if python_args:
+        for args in lang_args.values():
             subprocess.run(
-                python_args, stdout=sys.stdout, stderr=sys.stderr, check=True)
+                args, stdout=sys.stdout, stderr=sys.stderr, check=True)
 
             with open('__tmp.json', 'rt') as f:
                 data = process_results(f.read())
