@@ -21,8 +21,8 @@ type User extending HasImage {
 type Review {
     required property body -> str;
     required property rating -> int64 {
-        constraint min(0);
-        constraint max(5);
+        constraint min_value(0);
+        constraint max_value(5);
     }
 
     required link author -> User;
