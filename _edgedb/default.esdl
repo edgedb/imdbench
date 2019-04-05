@@ -42,13 +42,13 @@ type Person extending HasImage {
     required property last_name -> str;
     property full_name :=
         (
-            __source__.first_name ++ ' ' ++
+            .first_name ++ ' ' ++
             (
-                (__source__.middle_name ++ ' ')
-                IF __source__.middle_name != '' ELSE
+                (.middle_name ++ ' ')
+                IF .middle_name != '' ELSE
                 ''
             ) ++
-            __source__.last_name
+            .last_name
         );
     property bio -> str;
 }
@@ -75,5 +75,5 @@ type Movie extending HasImage {
     multi link directors extending crew -> Person;
     multi link cast extending crew -> Person;
 
-    property avg_rating := math::mean(__source__.<movie[IS Review].rating);
+    property avg_rating := math::mean(.<movie[IS Review].rating);
 }
