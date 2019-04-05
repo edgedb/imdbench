@@ -75,6 +75,8 @@ class Pool:
                 if stop_cnt == concurrency:
                     bar.finish()
                     return
+            elif isinstance(piece, Exception):
+                raise piece
             else:
                 bar.next()
 

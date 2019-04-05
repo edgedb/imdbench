@@ -28,8 +28,8 @@ type Review {
     required link author -> User;
     required link movie -> Movie;
 
-    required property creation_time -> datetime {
-        default := datetime_current()
+    required property creation_time -> local_datetime {
+        default := to_local_datetime(datetime_current(), 'UTC')
     }
 }
 

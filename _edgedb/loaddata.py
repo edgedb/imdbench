@@ -7,9 +7,7 @@
 
 
 import asyncio
-import argparse
 import edgedb
-import pathlib
 import progress.bar
 
 import dataset
@@ -50,7 +48,15 @@ class Pool:
 
                 args, kwargs = piece
                 try:
-                    await con.fetchall(*args, **kwargs)
+                    ret = 0
+                    while ret < 5:
+                        ret += 1
+                        try:
+                            await con.fetchall(*args, **kwargs)
+                            break
+                        except edgedb.TransactionSerializationError:
+                            continue
+
                 except Exception as e:
                     self._results.put_nowait(e)
                 else:
@@ -73,6 +79,8 @@ class Pool:
                 if stop_cnt == concurrency:
                     bar.finish()
                     return
+            elif isinstance(piece, Exception):
+                raise piece
             else:
                 bar.next()
 
@@ -207,7 +215,7 @@ async def import_data(data: dict):
             rating := <int64>$rating,
             author := (SELECT User FILTER .image = <str>$uimage),
             movie := (SELECT Movie FILTER .image = <str>$mimage),
-            creation_time := <datetime>$creation_time,
+            creation_time := <local_datetime>$creation_time,
         };
     '''
 
