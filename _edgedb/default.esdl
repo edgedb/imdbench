@@ -75,5 +75,5 @@ type Movie extending HasImage {
     multi link directors extending crew -> Person;
     multi link cast extending crew -> Person;
 
-    property avg_rating := math::mean(.<movie[IS Review].rating);
+    property avg_rating := math::mean(.<movie[IS Review].rating ?? 0);
 }
