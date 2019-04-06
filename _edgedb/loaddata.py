@@ -48,15 +48,7 @@ class Pool:
 
                 args, kwargs = piece
                 try:
-                    ret = 0
-                    while ret < 5:
-                        ret += 1
-                        try:
-                            await con.fetchall(*args, **kwargs)
-                            break
-                        except edgedb.TransactionSerializationError:
-                            continue
-
+                    await con.fetchall(*args, **kwargs)
                 except Exception as e:
                     self._results.put_nowait(e)
                 else:

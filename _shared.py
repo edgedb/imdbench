@@ -42,9 +42,6 @@ BENCHMARKS = {
     'edgedb_repack_sync':
         bench('python', 'EdgeDB', edgedb_queries_repack),
 
-    'edgedb_graphql_aiohttp':
-        bench('python', 'EdgeDB GraphQL aiohttp', edgedb_graphql_aiohttp),
-
     'edgedb_graphql_go':
         bench('go', 'EdgeDB GraphQL+HTTP golang', edgedb_graphql_golang),
 
