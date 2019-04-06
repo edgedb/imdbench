@@ -15,7 +15,6 @@ import typing
 from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
-from _edgedb import queries_graphql as edgedb_graphql_aiohttp
 from _edgedb_go import queries_graphql as edgedb_graphql_golang
 from _edgedb_go import queries_edgeql as edgedb_edgeql_golang
 from _django import queries as django_queries
