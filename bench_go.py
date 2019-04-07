@@ -25,6 +25,7 @@ class Result(typing.NamedTuple):
     min_latency: int
     max_latency: int
     latency_stats: typing.List[int]
+    samples: typing.List[str]
 
 
 def print_result(ctx, result: Result):
@@ -43,7 +44,7 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
-           '--port', port, '--', '-']
+           '--port', port, '--nsamples', '10', '--', '-']
 
     cmd = [str(c) for c in cmd]
 
@@ -66,6 +67,7 @@ def run_query(ctx, benchmark, queryname, querydata, port):
         min_latency=data['min_latency'],
         max_latency=data['max_latency'],
         latency_stats=data['latency_stats'],
+        samples=data['samples'],
     )
 
 
@@ -118,7 +120,8 @@ def main():
                     'nqueries': r.nqueries,
                     'min_latency': r.min_latency,
                     'max_latency': r.max_latency,
-                    'latency_stats': [int(i) for i in r.latency_stats]
+                    'latency_stats': [int(i) for i in r.latency_stats],
+                    'samples': r.samples,
                 })
             json_data.append({
                 'benchmark': results[0].benchmark,

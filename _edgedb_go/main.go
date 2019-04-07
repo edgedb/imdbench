@@ -15,7 +15,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-type ReportFunc func(int64, int64, int64, []int64)
+type ReportFunc func(int64, int64, int64, []int64, []string)
 type WorkerFunc func(time.Time, time.Duration, time.Duration,
 	string, []string,
 	*sync.WaitGroup, ReportFunc)
@@ -32,6 +32,8 @@ func http_worker(
 
 	defer wg.Done()
 
+	var samples []string
+	samples_collected := int(0)
 	latency_stats := make([]int64, timeout/1000/10 + 1)
 	timeout_ns := timeout.Nanoseconds()
 	min_latency := int64(math.MaxInt64)
@@ -72,7 +74,7 @@ func http_worker(
 			log.Fatal(err)
 		}
 
-		_ = resp.Body()
+		resp_data := resp.Body()
 
 		req_time_ns := time.Since(req_start).Nanoseconds()
 		req_time := req_time_ns / 1000 / 10
@@ -89,6 +91,12 @@ func http_worker(
 		latency_stats[req_time] += 1
 
 		queries += 1
+
+		if samples_collected < *nsamples {
+			samples = append(samples, string(resp_data))
+			samples_collected += 1
+		}
+
 		if duration == 0 {
 			break
 		}
@@ -98,7 +106,7 @@ func http_worker(
 	fasthttp.ReleaseRequest(req)
 
 	if report != nil {
-		report(queries, min_latency, max_latency, latency_stats)
+		report(queries, min_latency, max_latency, latency_stats, samples)
 	}
 }
 
@@ -127,6 +135,9 @@ var (
 
 	port = app.Flag(
 		"port", "EdgeDB server port").Default("8080").Int()
+
+	nsamples = app.Flag(
+		"nsamples", "Number of result samples to return").Default("10").Int()
 
 	queryfile = app.Arg(
 		"queryfile", "file to read benchmark query information from").Required().String()
@@ -176,9 +187,11 @@ func main() {
 	min_latency := int64(math.MaxInt64)
 	max_latency := int64(0)
 	latency_stats := make([]int64, timeout/1000/10 + 1)
+	var samples []string
 
 	report := func(t_queries int64,
-		t_min_latency int64, t_max_latency int64, t_latency_stats []int64) {
+		t_min_latency int64, t_max_latency int64, t_latency_stats []int64,
+		t_samples []string) {
 
 		if t_min_latency < min_latency {
 			min_latency = t_min_latency
@@ -193,6 +206,7 @@ func main() {
 		}
 
 		queries += t_queries
+		samples = t_samples
 	}
 
 	var worker WorkerFunc
@@ -236,6 +250,7 @@ func main() {
 	data["max_latency"] = max_latency
 	data["latency_stats"] = latency_stats
 	data["duration"] = duration.Seconds()
+	data["samples"] = samples
 
 	json, err := json.Marshal(data)
 	if err != nil {
