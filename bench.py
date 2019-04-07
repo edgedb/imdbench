@@ -81,7 +81,7 @@ percentiles = [25, 50, 75, 90, 99, 99.99]
 
 
 def calc_latency_stats(queries, duration, min_latency, max_latency,
-                       latency_stats, output_format='text'):
+                       latency_stats, samples, *, output_format='text'):
     arange = np.arange(len(latency_stats))
 
     mean_latency = np.average(arange, weights=latency_stats)
@@ -106,7 +106,8 @@ def calc_latency_stats(queries, duration, min_latency, max_latency,
         latency_max=round(max_latency / 100, 3),
         latency_std=round(latency_std / 100, 3),
         latency_cv=round(latency_cv * 100, 2),
-        latency_percentiles=percentile_data
+        latency_percentiles=percentile_data,
+        samples=samples
     )
 
     return data
@@ -133,7 +134,8 @@ def process_results(results):
                 queries_bench['duration'],
                 query_bench['min_latency'],
                 query_bench['max_latency'],
-                np.array(query_bench['latency_stats']))
+                np.array(query_bench['latency_stats']),
+                query_bench.get('samples'))
 
             d['queryname'] = query_bench['queryname']
             data_bench.append(d)

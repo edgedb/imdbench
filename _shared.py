@@ -81,6 +81,10 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='number of concurrent connections')
 
     parser.add_argument(
+        '-A', '--async-concurrency', type=int, default=1,
+        help='number of concurrent async connections in a process')
+
+    parser.add_argument(
         '--db-host', type=str, default='127.0.0.1',
         help='host with databases')
 
