@@ -176,10 +176,10 @@ def get_movie(db, id):
         },
         {
             '$project': {
-                'cast': {  # This adds around 5% overhead, but our other
-                           # database benchmarks do this, so we might as well
-                           # test how well mongo performs with this kinds of
-                           # queries.
+                'cast': {  # This adds around 5% overhead, but all other
+                           # benchmarks do this, so we might as well
+                           # test how well mongodb performs with this
+                           # kind of queries.
                     '$map': {
                         'input': '$cast',
                         'as': 'c',
@@ -211,7 +211,7 @@ def get_movie(db, id):
                 },
                 'directors': {
                     '$map': {
-                        'input': '$cast',
+                        'input': '$directors',
                         'as': 'c',
                         'in': {
                             'name': {
