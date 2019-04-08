@@ -84,9 +84,6 @@ class Person(Base):
         backref='cast',
     )
 
-    # The <blah>_rel relationships allow direct access to the
-    # 'list_order' for purposes of modifying it or using it in some
-    # sort of non-trivial sorting.
     directed_rel = orm.relationship(
         Directors, back_populates='person_rel',
         cascade='all, delete, delete-orphan')
@@ -132,9 +129,6 @@ class Movie(Base):
         Review, back_populates='movie',
         cascade='all, delete, delete-orphan')
 
-    # The <blah>_rel relationships allow direct access to the
-    # 'list_order' for purposes of modifying it or using it in some
-    # sort of non-trivial sorting.
     directors_rel = orm.relationship(
         Directors, back_populates='movie_rel',
         cascade='all, delete, delete-orphan')
@@ -142,7 +136,6 @@ class Movie(Base):
         Cast, back_populates='movie_rel',
         cascade='all, delete, delete-orphan')
 
-    # we want the avg_rating to be computed in SQL rather than in Python
     avg_rating = orm.column_property(
         select(
             [func.avg(Review.rating)]

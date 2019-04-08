@@ -6,6 +6,10 @@
 ##
 
 
+# GraphQL lacks the means of navigating via backward links,
+# so we expose some EdgeQL views for it.
+
+
 CREATE VIEW GraphQLUserDetails := (
     WITH MODULE default
     SELECT User {
