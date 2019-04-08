@@ -33,15 +33,14 @@ load-edgedb:
 
 load-django: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
-		"DROP DATABASE IF EXISTS django_bench;" &> /dev/null
+		"DROP DATABASE IF EXISTS django_bench;"
 	$(PSQL) -U postgres -tc \
-		"DROP ROLE IF EXISTS django_bench;" &> /dev/null
+		"DROP ROLE IF EXISTS django_bench;"
 	$(PSQL) -U postgres -tc \
 		"CREATE ROLE django_bench WITH \
-			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';" &> /dev/null
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
 	$(PSQL) -U postgres -tc \
-		"CREATE DATABASE django_bench WITH OWNER = django_bench;" \
-		&> /dev/null
+		"CREATE DATABASE django_bench WITH OWNER = django_bench;"
 
 	$(PP) _django/manage.py flush --noinput
 	$(PP) _django/manage.py migrate
@@ -49,30 +48,28 @@ load-django: $(BUILD)/dataset.json
 
 load-sqlalchemy: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
-		"DROP DATABASE IF EXISTS sqlalch_bench;" &> /dev/null
+		"DROP DATABASE IF EXISTS sqlalch_bench;"
 	$(PSQL) -U postgres -tc \
-		"DROP ROLE IF EXISTS sqlalch_bench;" &> /dev/null
+		"DROP ROLE IF EXISTS sqlalch_bench;"
 	$(PSQL) -U postgres -tc \
 		"CREATE ROLE sqlalch_bench WITH \
-			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';" &> /dev/null
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
 	$(PSQL) -U postgres -tc \
-		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;" \
-		&> /dev/null
+		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;"
 
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
 load-postgres: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
-		"DROP DATABASE IF EXISTS postgres_bench;" &> /dev/null
+		"DROP DATABASE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
-		"DROP ROLE IF EXISTS postgres_bench;" &> /dev/null
+		"DROP ROLE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
 		"CREATE ROLE postgres_bench WITH \
-			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';" &> /dev/null
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
 	$(PSQL) -U postgres -tc \
-		"CREATE DATABASE postgres_bench WITH OWNER = postgres_bench;" \
-		&> /dev/null
+		"CREATE DATABASE postgres_bench WITH OWNER = postgres_bench;"
 
 	$(PSQL) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
