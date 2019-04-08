@@ -40,7 +40,7 @@ if __name__ == '__main__':
         CONFIGURE SYSTEM INSERT Port {
             protocol := "graphql+http",
             database := "edgedb_bench",
-            address := "127.0.0.1",
+            address := "0.0.0.0",
             port := 8888,
             user := "http",
             concurrency := 10,
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         CONFIGURE SYSTEM INSERT Port {
             protocol := "edgeql+http",
             database := "edgedb_bench",
-            address := "127.0.0.1",
+            address := "0.0.0.0",
             port := 8889,
             user := "http",
             concurrency := 10,
