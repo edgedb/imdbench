@@ -12,10 +12,10 @@ from . import bootstrap  # NoQA
 
 from . import models
 from . import views
-from . import settings
 
 
 def init(ctx):
+    from django.conf import settings
     settings.DATABASES["default"]["HOST"] = ctx.db_host
 
 

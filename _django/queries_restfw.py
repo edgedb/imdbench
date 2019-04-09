@@ -12,7 +12,6 @@ from . import bootstrap  # NoQA
 
 from . import models
 from . import views
-from . import settings
 
 
 rf = RequestFactory()
@@ -23,6 +22,7 @@ PERSON_VIEW = views.PersonDetailsViewSet.as_view({'get': 'retrieve'})
 
 
 def init(ctx):
+    from django.conf import settings
     settings.DATABASES["default"]["HOST"] = ctx.db_host
 
 

@@ -233,6 +233,8 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
     queries_mod = _shared.BENCHMARKS[benchname].module
     results = []
 
+    if hasattr(queries_mod, 'init'):
+        queries_mod.init(ctx)
     idconn = queries_mod.connect(ctx)
     try:
         ids = queries_mod.load_ids(ctx, idconn)
@@ -252,6 +254,8 @@ def run_async(ctx, benchname) -> typing.List[Result]:
     results = []
 
     async def fetch_ids():
+        if hasattr(queries_mod, 'init'):
+            queries_mod.init(ctx)
         idconn = await queries_mod.connect(ctx)
         try:
             return await queries_mod.load_ids(ctx, idconn)
