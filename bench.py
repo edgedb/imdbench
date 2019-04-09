@@ -13,6 +13,7 @@ import json
 import math
 import os.path
 import platform
+import random
 import string
 import subprocess
 import sys
@@ -97,6 +98,10 @@ def calc_latency_stats(queries, duration, min_latency, max_latency,
     for i, percentile in enumerate(percentiles):
         percentile_data.append((percentile, round(quantiles[i] / 100, 3)))
 
+    if samples:
+        random.shuffle(samples)
+        samples = samples[:3]
+
     data = dict(
         duration=round(duration, 2),
         queries=queries,
@@ -107,7 +112,7 @@ def calc_latency_stats(queries, duration, min_latency, max_latency,
         latency_std=round(latency_std / 100, 3),
         latency_cv=round(latency_cv * 100, 2),
         latency_percentiles=percentile_data,
-        samples=samples
+        samples=samples[:3] if samples else None
     )
 
     return data
