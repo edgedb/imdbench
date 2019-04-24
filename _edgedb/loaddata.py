@@ -205,8 +205,8 @@ async def import_data(data: dict):
         INSERT Review {
             body := <str>$body,
             rating := <int64>$rating,
-            author := (SELECT User FILTER .image = <str>$uimage),
-            movie := (SELECT Movie FILTER .image = <str>$mimage),
+            author := (SELECT User FILTER .image = <str>$uimage LIMIT 1),
+            movie := (SELECT Movie FILTER .image = <str>$mimage LIMIT 1),
             creation_time := <local_datetime>$creation_time,
         };
     '''
