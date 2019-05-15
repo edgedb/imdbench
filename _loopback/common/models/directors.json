@@ -1,0 +1,36 @@
+{
+  "name": "Directors",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "indexes": {
+    "directors_person_index": {
+      "person_id": 1
+    },
+    "directors_movie_index": {
+      "movie_id": 1
+    }
+  },
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "list_order": {
+      "type": "number"
+    }
+  },
+  "validations": [],
+  "relations": {
+    "person": {
+      "type": "belongsTo",
+      "model": "Person",
+      "foreignKey": "person_id"
+    },
+    "movie": {
+      "type": "belongsTo",
+      "model": "Movie",
+      "foreignKey": "movie_id"
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

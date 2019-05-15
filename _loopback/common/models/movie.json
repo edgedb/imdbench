@@ -1,0 +1,64 @@
+{
+  "name": "Movie",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "number",
+      "id": true
+    },
+    "image": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "year": {
+      "type": "number",
+      "required": true
+    },
+    "description": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "reviews": {
+      "type": "hasMany",
+      "model": "Review",
+      "foreignKey": "movie_id"
+    },
+    "cast": {
+      "type": "hasMany",
+      "model": "Person",
+      "foreignKey": "movie_id",
+      "keyThrough": "person_id",
+      "through": "Cast"
+    },
+    "directors": {
+      "type": "hasMany",
+      "model": "Person",
+      "foreignKey": "movie_id",
+      "keyThrough": "person_id",
+      "through": "Directors"
+    },
+    "cast_rel": {
+      "type": "hasMany",
+      "model": "Cast",
+      "foreignKey": "movie_id"
+    },
+    "directors_rel": {
+      "type": "hasMany",
+      "model": "Directors",
+      "foreignKey": "movie_id"
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

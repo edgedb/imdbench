@@ -1,0 +1,12 @@
+{
+  "psqlDs": {
+    "host": "localhost",
+    "port": 5432,
+    "url": "",
+    "database": "lb_bench",
+    "password": "edgedbbenchmark",
+    "name": "psqlDs",
+    "user": "lb_bench",
+    "connector": "postgresql"
+  }
+}

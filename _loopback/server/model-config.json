@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "Person": {
+    "dataSource": "psqlDs",
+    "public": true
+  },
+  "User": {
+    "dataSource": "psqlDs",
+    "public": true
+  },
+  "Movie": {
+    "dataSource": "psqlDs",
+    "public": true
+  },
+  "Review": {
+    "dataSource": "psqlDs",
+    "public": false
+  },
+  "Directors": {
+    "dataSource": "psqlDs",
+    "public": true
+  },
+  "Cast": {
+    "dataSource": "psqlDs",
+    "public": true
+  }
+}

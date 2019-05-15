@@ -76,6 +76,18 @@ load-postgres: $(BUILD)/dataset.json
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
 
+load-loopback: $(BUILD)/dataset.json
+	$(PSQL) -U postgres -tc \
+		"DROP DATABASE IF EXISTS lb_bench;"
+	$(PSQL) -U postgres -tc \
+		"DROP ROLE IF EXISTS lb_bench;"
+	$(PSQL) -U postgres -tc \
+		"CREATE ROLE lb_bench WITH \
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
+	$(PSQL) -U postgres -tc \
+		"CREATE DATABASE lb_bench WITH OWNER = lb_bench;"
+
+	node _loopback/server/loaddata.js $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 
