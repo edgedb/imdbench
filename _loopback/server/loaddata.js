@@ -55,7 +55,7 @@ boot(app, __dirname, async function(err) {
   }
 
   const dataset_path = process.argv[2];
-  var dataset = JSON.parse(fs.readFileSync(dataset_path));
+  var dataset = JSON.parse(fs.readFileSync(dataset_path, 'utf8'));
   var data = {};
 
   for (let rec of dataset) {

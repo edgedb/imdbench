@@ -89,6 +89,19 @@ load-loopback: $(BUILD)/dataset.json
 
 	node _loopback/server/loaddata.js $(BUILD)/dataset.json
 
+load-typeorm: $(BUILD)/dataset.json
+	$(PSQL) -U postgres -tc \
+		"DROP DATABASE IF EXISTS typeorm_bench;"
+	$(PSQL) -U postgres -tc \
+		"DROP ROLE IF EXISTS typeorm_bench;"
+	$(PSQL) -U postgres -tc \
+		"CREATE ROLE typeorm_bench WITH \
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
+	$(PSQL) -U postgres -tc \
+		"CREATE DATABASE typeorm_bench WITH OWNER = typeorm_bench;"
+
+	cd _typeorm && npm run loaddata $(BUILD)/dataset.json
+
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 
 go:

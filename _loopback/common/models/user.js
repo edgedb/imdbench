@@ -17,7 +17,7 @@ module.exports = function(User) {
 
       // repack the data into the desired shape, etc.
       response.reviews.sort((a, b) => b.creation_time - a.creation_time);
-      response.reviews = response.reviews.slice(10);
+      response.reviews = response.reviews.slice(0, 10);
       response.latest_reviews = response.reviews.map((rev) => {
         return {
           id: rev.id,
