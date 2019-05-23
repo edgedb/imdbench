@@ -102,7 +102,21 @@ load-typeorm: $(BUILD)/dataset.json
 
 	cd _typeorm && npm run loaddata $(BUILD)/dataset.json
 
-load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
+load-sequelize: $(BUILD)/dataset.json
+	$(PSQL) -U postgres -tc \
+		"DROP DATABASE IF EXISTS sequelize_bench;"
+	$(PSQL) -U postgres -tc \
+		"DROP ROLE IF EXISTS sequelize_bench;"
+	$(PSQL) -U postgres -tc \
+		"CREATE ROLE sequelize_bench WITH \
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
+	$(PSQL) -U postgres -tc \
+		"CREATE DATABASE sequelize_bench WITH OWNER = sequelize_bench;"
+
+	node _sequelize/loaddata.js $(BUILD)/dataset.json
+
+load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
+	  load-loopback load-typeorm load-sequelize
 
 go:
 	make -C _edgedb_go
