@@ -1,6 +1,6 @@
 aiohttp
 alembic==1.0.0
-Django==2.1
+Django==2.1.7
 djangorestframework==3.8.2
 edgedb
 nltk==3.3
