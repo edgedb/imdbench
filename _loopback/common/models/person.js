@@ -10,8 +10,8 @@ module.exports = function(Person) {
     );
   };
 
-  Person.person_details = function(id, cb) {
-    Person.findById(id, {
+  Person.person_details = async function(id) {
+    let instance = await Person.findById(id, {
       // unfortunately when 'scope' and 'fields' is used, nested
       // include stops working
       include: [
@@ -21,54 +21,35 @@ module.exports = function(Person) {
           directed: {relation: 'reviews', scope: {fields: ['rating']}}
         }
       ]
-    }, function (err, instance) {
-      let response = instance.toJSON();
+    })
+    let response = instance.toJSON();
 
-      response = {
-        id: response.id,
-        full_name: response.full_name,
-        image: response.image,
-        bio: response.bio,
-        acted_in: response.acted_in,
-        directed: response.directed,
-      };
+    response = {
+      id: response.id,
+      full_name: response.full_name,
+      image: response.image,
+      bio: response.bio,
+      acted_in: response.acted_in,
+      directed: response.directed,
+    };
 
-      // repack the data into the desired shape, etc.
-      for (let fname of ['acted_in', 'directed']) {
-        let base = response[fname];
-        base.sort((a, b) => a.year - b.year);
+    // repack the data into the desired shape, etc.
+    for (let fname of ['acted_in', 'directed']) {
+      let base = response[fname];
+      base.sort((a, b) => a.year - b.year);
 
-        response[fname] = base.map((movie) => {
-          return {
-            id: movie.id,
-            image: movie.image,
-            title: movie.title,
-            year: movie.year,
-            avg_rating: movie.reviews.reduce(
-              (total, r) => (total + r.rating), 0) / movie.reviews.length
-          }
-        });
-      }
-
-      cb(null, response);
-    });
-  }
-  Person.remoteMethod(
-    'person_details', {
-      http: {
-        path: '/person_details',
-        verb: 'get'
-      },
-      accepts: {
-        arg: 'id',
-        type: 'number',
-        required: true,
-        http: { source: 'query' }
-      },
-      returns: {
-        arg: 'status',
-        type: 'Object'
-      }
+      response[fname] = base.map((movie) => {
+        return {
+          id: movie.id,
+          image: movie.image,
+          title: movie.title,
+          year: movie.year,
+          avg_rating: movie.reviews.reduce(
+            (total, r) => (total + r.rating), 0) / movie.reviews.length
+        }
+      });
     }
-  );
+
+    return response;
+  }
 };

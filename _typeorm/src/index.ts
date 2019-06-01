@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import {createConnection} from "typeorm";
+import {createConnection, Connection, ConnectionOptions} from "typeorm";
 import {User} from "./entity/User"
 import {Person} from "./entity/Person"
 import {Movie, MovieView} from "./entity/Movie"
@@ -8,16 +8,16 @@ import {Directors} from "./entity/Directors"
 import {Cast} from "./entity/Cast"
 
 
-export var app = createConnection({
-   type: "postgres",
-   host: "localhost",
-   port: 5432,
-   username: "typeorm_bench",
-   password: "edgedbbenchmark",
-   database: "typeorm_bench",
-   synchronize: false,
-   logging: true,
-   entities: [
+var defaultOptions: ConnectionOptions = {
+    type: "postgres",
+    host: "localhost",
+    port: 5432,
+    username: "typeorm_bench",
+    password: "edgedbbenchmark",
+    database: "typeorm_bench",
+    synchronize: false,
+    logging: false,
+    entities: [
         User,
         Person,
         Movie,
@@ -25,12 +25,52 @@ export var app = createConnection({
         Review,
         Directors,
         Cast,
-   ]
-});
+    ]
+};
 
 
-export async function user_details(conn, id: number) {
-    var user = await conn.createQueryBuilder(User, 'user')
+export class App extends Connection {
+    constructor(options: ConnectionOptions) {
+        var opts: ConnectionOptions = {
+            ...defaultOptions,
+        };
+        Object.assign(opts, options || {});
+
+        super(opts);
+    }
+
+    async bench_query(query: string, id) {
+        var method;
+
+        if (query == 'get_user') {
+            method = user_details.bind(this);
+        } else if (query == 'get_person') {
+            method = person_details.bind(this);
+        } else if (query == 'get_movie') {
+            method = movie_details.bind(this);
+        }
+
+        return await method(id);
+    }
+
+    async get_ids() {
+        var ids = await Promise.all([
+            this.getRepository(User).find({select: ['id']}),
+            this.getRepository(Person).find({select: ['id']}),
+            this.getRepository(Movie).find({select: ['id']}),
+        ]);
+
+        return {
+            get_user: ids[0].map((x) => x.id),
+            get_person: ids[1].map((x) => x.id),
+            get_movie: ids[2].map((x) => x.id),
+        };
+    }
+}
+
+
+export async function user_details(this, id: number) {
+    var user = await this.createQueryBuilder(User, 'user')
         .select([
             'user',
             'review.id',
@@ -55,14 +95,14 @@ export async function user_details(conn, id: number) {
         return rev;
     });
     delete user.reviews
-    var result = JSON.stringify(user);
+    var result = user;
 
     return result;
 }
 
 
-export async function person_details(conn, id: number) {
-    var person = await conn.createQueryBuilder(Person, 'person')
+export async function person_details(this, id: number) {
+    var person = await this.createQueryBuilder(Person, 'person')
         .leftJoinAndSelect('person.directed', 'directors')
         .leftJoinAndMapOne('directors.movie', MovieView, 'dmovie',
                            'dmovie.id = directors.movie_id')
@@ -86,21 +126,21 @@ export async function person_details(conn, id: number) {
             }
         });
     }
-    var result = JSON.stringify({
+    var result = {
         id: person.id,
         full_name: person.get_full_name(),
         image: person.image,
         bio: person.bio,
         acted_in: person.acted_in,
         directed: person.directed,
-    });
+    };
 
     return result;
 }
 
 
-export async function movie_details(conn, id: number) {
-    var movie = await conn.createQueryBuilder(Movie, 'movie')
+export async function movie_details(this, id: number) {
+    var movie = await this.createQueryBuilder(Movie, 'movie')
         .select([
             'movie.id',
             'movie.image',
@@ -156,7 +196,7 @@ export async function movie_details(conn, id: number) {
         delete rev.creation_time;
         return rev;
     });
-    var result = JSON.stringify(movie);
+    var result = movie;
 
     return result;
 }

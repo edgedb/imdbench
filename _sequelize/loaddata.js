@@ -1,7 +1,7 @@
 "use strict";
 
 const Sequelize = require('sequelize');
-const {sequelize, User} = require("./models.js");
+const {App} = require("./models.js");
 
 const fs = require('fs');
 const _ = require('lodash');
@@ -61,6 +61,11 @@ async function main() {
     data[rtype].push(datum);
   }
 
+  var sequelize = new App({
+    pool: {
+      max: 10
+    }
+  });
   await sequelize.sync({force: true});
 
   await bulk_insert(sequelize, data, 'User');
@@ -69,6 +74,16 @@ async function main() {
   await bulk_insert(sequelize, data, 'Review');
   await bulk_insert(sequelize, data, 'Directors');
   await bulk_insert(sequelize, data, 'Cast');
+
+  // creating these particular indexes is awkward in the model description
+  await sequelize.getQueryInterface().addIndex('Review', {
+    using: 'btree',
+    fields: ['author_id'],
+  });
+  await sequelize.getQueryInterface().addIndex('Review', {
+    using: 'btree',
+    fields: ['movie_id'],
+  });
 
   console.log('Models created.');
 }

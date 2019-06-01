@@ -64,6 +64,15 @@ BENCHMARKS = {
 
     'postgres_psycopg':
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+
+    'loopback':
+        bench('js', 'Loopback', None),
+
+    'typeorm':
+        bench('js', 'Typeorm', None),
+
+    'sequelize':
+        bench('js', 'Sequelize', None),
 }
 
 

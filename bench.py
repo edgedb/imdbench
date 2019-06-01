@@ -191,6 +191,10 @@ def run_benchmarks(args, argv):
             lang_args['go'] = [
                 'python', 'bench_go.py', '--json', '__tmp.json'
             ] + argv
+        elif bench.language == 'js':
+            lang_args['js'] = [
+                'python', 'bench_js.py', '--json', '__tmp.json'
+            ] + argv
         else:
             raise ValueError('unsupported host language: {}'.format(
                 bench.language))

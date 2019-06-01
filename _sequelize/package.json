@@ -1,0 +1,19 @@
+{
+  "name": "_sequelize",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=6"
+  },
+  "repository": {
+    "type": "",
+    "url": ""
+  },
+  "license": "UNLICENSED",
+  "description": "_loopback",
+  "dependencies": {
+    "pg": "^7.11.0",
+    "pg-hstore": "^2.3.2",
+    "pg-native": "^3.0.0",
+    "sequelize": "^5.8.7"
+  }
+}

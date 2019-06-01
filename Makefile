@@ -120,3 +120,6 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 
 go:
 	make -C _edgedb_go
+
+ts:
+	cd _typeorm && tsc

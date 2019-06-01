@@ -24,7 +24,9 @@ Installation and Use
 
 6. Compile Go benchmarks: ``$ make go``
 
-7. Run benchmarks via ``bench.py``, for example:
+7. Compile TypeScript benchmarks: ``$ make ts``
+
+8. Run benchmarks via ``bench.py``, for example:
 
    .. code-block::
 
