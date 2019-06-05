@@ -73,6 +73,9 @@ BENCHMARKS = {
 
     'sequelize':
         bench('js', 'Sequelize', None),
+
+    'postgres_js':
+        bench('js', 'PostgreSQL JavaScript', None),
 }
 
 

@@ -16,6 +16,7 @@ const process = require('process');
 const loopback_app = require('./_loopback/server/bench');
 const typeorm_app = require('./_typeorm/build/index');
 const sequelize_app = require('./_sequelize/index');
+const pg_app = require('./_postgres/index');
 
 
 async function _get_app(args) {
@@ -45,6 +46,12 @@ async function _get_app(args) {
         min: ncon,
         max: ncon
       }
+    });
+  } else if (args.orm == 'postgres_js') {
+    app = new pg_app.App({
+      host: args.host,
+      port: args.port,
+      max: ncon,
     });
   } else {
     throw new Error('unexected orm: ' + orm)
@@ -240,7 +247,7 @@ async function main() {
     parser.addArgument(
         'orm',
         {type: String, help: 'ORM implementation to use',
-         choices: ['loopback', 'typeorm', 'sequelize']})
+         choices: ['loopback', 'typeorm', 'sequelize', 'postgres_js']})
 
     let args = parser.parseArgs();
     await runner(args);
