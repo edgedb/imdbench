@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function(Movie) {
-  Movie.movie_details = async function(id) {
+  Movie.movieDetails = async function(id) {
     let instance = await Movie.findById(id, {
       // unfortunately when 'scope' and 'fields' is used, nested
       // include stops working

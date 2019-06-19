@@ -10,7 +10,7 @@ module.exports = function(Person) {
     );
   };
 
-  Person.person_details = async function(id) {
+  Person.personDetails = async function(id) {
     let instance = await Person.findById(id, {
       // unfortunately when 'scope' and 'fields' is used, nested
       // include stops working

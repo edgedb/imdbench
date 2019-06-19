@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function(User) {
-  User.user_details = async function(id) {
+  User.userDetails = async function(id) {
     let instance = await User.findById(id, {
       // unfortunately when 'scope' and 'fields' is used, nested
       // include stops working
