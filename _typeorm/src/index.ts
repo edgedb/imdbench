@@ -62,7 +62,7 @@ export class App extends Connection {
   }
 }
 
-export async function userDetails(this, id: number) {
+export async function userDetails(this, id: number): Promise<string> {
   var user = await this.createQueryBuilder(User, "user")
     .select(["user", "review.id", "review.body", "review.rating"])
     .leftJoin("user.reviews", "review")
@@ -89,10 +89,10 @@ export async function userDetails(this, id: number) {
   delete user.reviews;
   var result = user;
 
-  return result;
+  return JSON.stringify(result);
 }
 
-export async function personDetails(this, id: number) {
+export async function personDetails(this, id: number): Promise<string> {
   var person = await this.createQueryBuilder(Person, "person")
     .leftJoinAndSelect("person.directed", "directors")
     .leftJoinAndMapOne(
@@ -134,10 +134,10 @@ export async function personDetails(this, id: number) {
     directed: person.directed
   };
 
-  return result;
+  return JSON.stringify(result);
 }
 
-export async function movieDetails(this, id: number) {
+export async function movieDetails(this, id: number): Promise<string> {
   var movie = await this.createQueryBuilder(Movie, "movie")
     .select([
       "movie.id",
@@ -197,5 +197,5 @@ export async function movieDetails(this, id: number) {
   });
   var result = movie;
 
-  return result;
+  return JSON.stringify(result);
 }

@@ -30,7 +30,7 @@ class BenchApp extends App {
       benchmark: true
     });
 
-    return result;
+    return JSON.stringify(result);
   }
 
   async personDetails(id) {
@@ -85,7 +85,7 @@ class BenchApp extends App {
       directed: result.directed
     };
 
-    return result;
+    return JSON.stringify(result);
   }
 
   async movieDetails(id) {
@@ -158,7 +158,7 @@ class BenchApp extends App {
       });
     }
 
-    return result;
+    return JSON.stringify(result);
   }
 
   async benchQuery(query, id) {

@@ -41,10 +41,15 @@ def run_query(ctx, benchmark, queryname):
     dirn = pathlib.Path(__file__).resolve().parent
     exe = dirn / 'jsbench.js'
 
+    if benchmark.startswith('edgedb'):
+        port = ctx.edgedb_port
+    else:
+        port = ctx.pg_port
+
     cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
-           '--port', ctx.pg_port, '--nsamples', 10,
+           '--port', port, '--nsamples', 10, '--number-of-ids', ctx.number_of_ids,
            '--query', queryname, benchmark]
 
     cmd = [str(c) for c in cmd]

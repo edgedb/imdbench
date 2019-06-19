@@ -15,6 +15,7 @@ const loopbackapp = require("./_loopback/server/bench");
 const typeormapp = require("./_typeorm/build/index");
 const sequelizeapp = require("./_sequelize/index");
 const pgapp = require("./_postgres/index");
+const edgedbapp = require("./_edgedb_js/index");
 
 async function getApp(args) {
   var app;
@@ -50,6 +51,22 @@ async function getApp(args) {
       port: args.port,
       max: ncon
     });
+  } else if (args.orm == "edgedb_json_js") {
+    app = new edgedbapp.App({
+      style: "json",
+      host: args.host,
+      port: args.port,
+      pool: ncon
+    });
+    await app.initPool();
+  } else if (args.orm == "edgedb_repack_js") {
+    app = new edgedbapp.App({
+      style: "repack",
+      host: args.host,
+      port: args.port,
+      pool: ncon
+    });
+    await app.initPool();
   } else {
     throw new Error("unexected orm: " + orm);
   }
@@ -75,7 +92,11 @@ async function runner(args) {
   var samples = [];
 
   var app = await getApp(args);
-  var ids = _.shuffle((await app.getIDs())[args.query]);
+  var ids = (await app.getIDs())[args.query];
+  if (ids.length > args.numner_of_ids) {
+    ids = ids.slice(0, args.numner_of_ids);
+  }
+  ids = _.shuffle(ids);
   var idIndex = 0;
 
   function reportResults(
@@ -137,13 +158,13 @@ async function runner(args) {
         reqStart = _now();
 
         var id = ids[idIndex];
-        var data = await app.benchQuery(query, id);
         idIndex += 1;
         idIndex %= ids.length;
+        var data = await app.benchQuery(query, id);
 
         // record the sample if needed
         if (samples.length < nsamples) {
-          samples.push(JSON.stringify(data));
+          samples.push(data);
         }
 
         // Request time in tens of microseconds
@@ -253,6 +274,11 @@ async function main() {
     defaultValue: 0,
     help: "number of result samples to return"
   });
+  parser.addArgument("--number-of-ids", {
+    type: Number,
+    defaultValue: 250,
+    help: "number of random IDs to fetch data with in benchmarks"
+  });
   parser.addArgument("--query", {
     type: String,
     help: "specific query to run",
@@ -261,7 +287,14 @@ async function main() {
   parser.addArgument("orm", {
     type: String,
     help: "ORM implementation to use",
-    choices: ["loopback", "typeorm", "sequelize", "postgres_js"]
+    choices: [
+      "loopback",
+      "typeorm",
+      "sequelize",
+      "postgres_js",
+      "edgedb_json_js",
+      "edgedb_repack_js"
+    ]
   });
 
   let args = parser.parseArgs();

@@ -65,6 +65,12 @@ BENCHMARKS = {
     'postgres_psycopg':
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
 
+    'edgedb_json_js':
+        bench('js', 'EdgeDB NodeJS JSON', None),
+
+    'edgedb_repack_js':
+        bench('js', 'EdgeDB NodeJS Objects', None),
+
     'loopback':
         bench('js', 'Loopback', None),
 
@@ -75,7 +81,7 @@ BENCHMARKS = {
         bench('js', 'Sequelize', None),
 
     'postgres_js':
-        bench('js', 'PostgreSQL JavaScript', None),
+        bench('js', 'PostgreSQL NodeJS', None),
 }
 
 

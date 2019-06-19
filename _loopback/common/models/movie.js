@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 module.exports = function(Movie) {
   Movie.movieDetails = async function(id) {
@@ -6,19 +6,20 @@ module.exports = function(Movie) {
       // unfortunately when 'scope' and 'fields' is used, nested
       // include stops working
       include: [
-        {directors_rel: 'person'},
-        {cast_rel: 'person'},
-        {reviews: 'author'}
+        { directors_rel: "person" },
+        { cast_rel: "person" },
+        { reviews: "author" }
       ]
     });
     let response = instance.toJSON();
 
-    response.avg_rating = response.reviews.reduce(
-      (total, r) => (total + r.rating), 0) / response.reviews.length
+    response.avg_rating =
+      response.reviews.reduce((total, r) => total + r.rating, 0) /
+      response.reviews.length;
 
     // repack the data into the desired shape, etc.
-    for (let fname of ['directors', 'cast']) {
-      let base = response[fname + '_rel'];
+    for (let fname of ["directors", "cast"]) {
+      let base = response[fname + "_rel"];
       base.sort((a, b) => {
         let lo = a.list_order - b.list_order;
         // list order may be sufficient by itself
@@ -34,29 +35,30 @@ module.exports = function(Movie) {
         return 0;
       });
 
-      response[fname] = base.map((rel) => {
+      response[fname] = base.map(rel => {
         return {
           id: rel.person.id,
           full_name: rel.person.full_name,
-          image: rel.person.image,
-        }
+          image: rel.person.image
+        };
       });
-      delete response[fname + '_rel'];
+      delete response[fname + "_rel"];
     }
 
     let reviews = response.reviews.sort(
-      (a, b) => b.creation_time - a.creation_time);
+      (a, b) => b.creation_time - a.creation_time
+    );
     // reorder the JSON
     delete response.reviews;
-    response.reviews = reviews.map((rev) => {
+    response.reviews = reviews.map(rev => {
       return {
         id: rev.id,
         body: rev.body,
         rating: rev.rating,
-        author: rev.author,
-      }
+        author: rev.author
+      };
     });
 
-    return response;
-  }
+    return JSON.stringify(response);
+  };
 };
