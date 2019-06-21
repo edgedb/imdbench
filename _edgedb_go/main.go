@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -46,7 +47,7 @@ func http_worker(
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
-	url := fmt.Sprintf("http://%s:%d", *host, *port)
+	url := fmt.Sprintf("http://%s:%d%s", *host, *port, *path)
 
 	req.Header.SetMethod("POST")
 	req.Header.Add("Content-Type", "application/json")
@@ -59,7 +60,15 @@ func http_worker(
 	for time.Since(start) < duration || duration == 0 {
 		req_start := time.Now()
 
-		query_data.Variables["id"] = ids[rand.Intn(num_ids)]
+		if *ids_are_ints == "True" {
+			rid, err := strconv.Atoi(ids[rand.Intn(num_ids)])
+			if err != nil {
+				log.Fatal(err)
+			}
+			query_data.Variables["id"] = rid
+		} else {
+			query_data.Variables["id"] = ids[rand.Intn(num_ids)]
+		}
 
 		json_data, err := json.Marshal(query_data)
 
@@ -136,8 +145,14 @@ var (
 	port = app.Flag(
 		"port", "EdgeDB server port").Default("8080").Int()
 
+	path = app.Flag(
+		"path", "GraphQL API path").Default("").String()
+
 	nsamples = app.Flag(
 		"nsamples", "Number of result samples to return").Default("10").Int()
+
+	ids_are_ints = app.Flag(
+		"ids-are-ints", "Whether or not ids are integers").Default("False").Enum("True", "False")
 
 	queryfile = app.Arg(
 		"queryfile", "file to read benchmark query information from").Required().String()

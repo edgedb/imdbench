@@ -16,6 +16,7 @@ from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
 from _edgedb_go import queries_graphql as edgedb_graphql_golang
+from _edgedb_go import queries_hasura as postgres_hasura_golang
 from _edgedb_go import queries_edgeql as edgedb_edgeql_golang
 from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
@@ -64,6 +65,9 @@ BENCHMARKS = {
 
     'postgres_psycopg':
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+
+    'postgres_hasura_go':
+        bench('go', 'Postgres+Hasura HTTP golang', postgres_hasura_golang),
 
     'edgedb_json_js':
         bench('js', 'EdgeDB NodeJS JSON', None),

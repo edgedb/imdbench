@@ -60,7 +60,14 @@ load-sqlalchemy: $(BUILD)/dataset.json
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
-load-postgres: $(BUILD)/dataset.json
+load-postgres: reset-postgres $(BUILD)/dataset.json
+	$(PSQL) -U postgres_bench -d postgres_bench \
+			--file=$(CURRENT_DIR)/_postgres/schema.sql
+
+	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
+
+reset-postgres:
+	-docker stop hasura-bench
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
@@ -71,10 +78,42 @@ load-postgres: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"CREATE DATABASE postgres_bench WITH OWNER = postgres_bench;"
 
-	$(PSQL) -U postgres_bench -d postgres_bench \
-			--file=$(CURRENT_DIR)/_postgres/schema.sql
+load-postgres-helpers:
+	$(PSQL) -U postgres_bench -d postgres_bench -tc "\
+		CREATE OR REPLACE VIEW movie_view AS \
+		SELECT \
+			movies.id, \
+			movies.image, \
+			movies.title, \
+			movies.year, \
+			movies.description, \
+			movies.avg_rating AS avg_rating \
+		FROM movies; \
+		CREATE OR REPLACE VIEW person_view AS \
+		SELECT \
+			persons.id, \
+			persons.first_name, \
+			persons.middle_name, \
+			persons.last_name, \
+			persons.image, \
+			persons.bio, \
+			persons.full_name AS full_name \
+		FROM persons; \
+		"
 
-	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
+load-hasura: load-postgres-helpers
+	$(PSQL) -U postgres -tc \
+		"DROP ROLE IF EXISTS hasurauser;"
+	$(PSQL) -U postgres -tc \
+		"CREATE ROLE hasurauser WITH \
+			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
+	$(PSQL) -U postgres -tc \
+		"CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+	$(PSQL) -U postgres -tc \
+		"ALTER USER hasurauser WITH SUPERUSER;"
+	_hasura/docker-run.sh
+	sleep 5s
+	cd _hasura && ./send-metadata.sh
 
 load-loopback: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -116,7 +155,8 @@ load-sequelize: $(BUILD)/dataset.json
 	node _sequelize/loaddata.js $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
-	  load-loopback load-typeorm load-sequelize
+	  load-loopback load-typeorm load-sequelize \
+	  load-hasura
 
 go:
 	make -C _edgedb_go
