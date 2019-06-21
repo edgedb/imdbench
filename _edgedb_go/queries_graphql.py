@@ -68,21 +68,21 @@ def load_ids(ctx, conn):
 
 GRAPHQL_GET_USER = '''
     query user($id: ID) {
-        GraphQLUserDetails(filter: {id: {eq: $id}}) {
+        user: GraphQLUserDetails(filter: {id: {eq: $id}}) {
         id
         name
         image
         latest_reviews(
-            order: {creation_time: {dir: DESC}}, first: 3
+            order: {creation_time: {dir: DESC}}, first: 10
         ) {
             id
             body
             rating
             movie {
-            id
-            image
-            title
-            avg_rating
+                id
+                image
+                title
+                avg_rating
             }
         }
         }
@@ -91,7 +91,7 @@ GRAPHQL_GET_USER = '''
 
 GRAPHQL_GET_MOVIE = '''
     query movie($id: ID) {
-        GraphQLMovieDetails(filter: {id: {eq: $id}}) {
+        movie: GraphQLMovieDetails(filter: {id: {eq: $id}}) {
         id
         image
         title
@@ -113,9 +113,9 @@ GRAPHQL_GET_MOVIE = '''
             body
             rating
             author {
-            id
-            name
-            image
+                id
+                name
+                image
             }
         }
         }
@@ -125,7 +125,7 @@ GRAPHQL_GET_MOVIE = '''
 
 GRAPHQL_GET_PERSON = '''
     query person($id: ID) {
-        GraphQLPersonDetails(filter: {id: {eq: $id}}) {
+        person: GraphQLPersonDetails(filter: {id: {eq: $id}}) {
         id
         full_name
         image

@@ -41,10 +41,19 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__).parent
     exe = dirn / 'gobench'
 
+    # Hasura needs a special GraphQL API path, otherwise it should be ignored
+    if 'hasura' in benchmark:
+        path = '/v1/graphql'
+        int_ids = True
+    else:
+        path = "/"
+        int_ids = False
+
     cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
-           '--port', port, '--nsamples', '10', '--', '-']
+           '--port', port, '--path', path, '--ids-are-ints', int_ids,
+           '--nsamples', '10', '--', '-']
 
     cmd = [str(c) for c in cmd]
 
