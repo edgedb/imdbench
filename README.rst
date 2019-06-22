@@ -14,19 +14,26 @@ Installation and Use
 
 3. Install EdgeDB, MongoDB, PostgreSQL 11, Golang toolchain.
 
-4. Configure PostgreSQL similarly to EdgeDB:
+4. Install NodeJS (at least v10.15.3) and TypeScript toolchains.
+
+5. Install docker and docker-compose (needed for Hasura and Prisma benchmarks).
+
+6. Install Prisma 1.26.4 (later versions don't work with timestamptz) via
+   ``npm i -g prisma@1.26.4``.
+
+7. Configure PostgreSQL similarly to EdgeDB:
 
    * ``shared_buffers``: 20% of RAM.
    * ``effective_cache_size``: 50% of RAM.
    * ``query_work_mem``: 6MB.
 
-5. Load data via ``$ make load``.
+8. Load data via ``$ make load``.
 
-6. Compile Go benchmarks: ``$ make go``
+9. Compile Go benchmarks: ``$ make go``
 
-7. Compile TypeScript benchmarks: ``$ make ts``
+10. Compile TypeScript benchmarks: ``$ make ts``
 
-8. Run benchmarks via ``bench.py``, for example:
+11. Run benchmarks via ``bench.py``, for example:
 
    .. code-block::
 

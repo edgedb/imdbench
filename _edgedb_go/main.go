@@ -50,7 +50,7 @@ func http_worker(
 	url := fmt.Sprintf("http://%s:%d%s", *host, *port, *path)
 
 	req.Header.SetMethod("POST")
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.SetContentType("application/json")
 	req.SetRequestURI(url)
 
 	query_data := &Query{}

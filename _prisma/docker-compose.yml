@@ -1,0 +1,24 @@
+version: "3"
+services:
+  prisma:
+    image: prismagraphql/prisma:1.26
+    restart: always
+    container_name: prisma-bench
+    network_mode: "host"
+    environment:
+      PRISMA_CONFIG: |
+        port: 4466
+        # uncomment the next line and provide the env var PRISMA_MANAGEMENT_API_SECRET=my-secret to activate cluster security
+        # managementApiSecret: my-secret
+        databases:
+          default:
+            connector: postgres
+            host: localhost
+            database: postgres_bench
+            schema: public
+            user: postgres_bench
+            password: edgedbbenchmark
+            rawAccess: true
+            port: '5432'
+            migrations: false
+            connectionLimit: 10
