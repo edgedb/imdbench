@@ -44,10 +44,10 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     # Hasura needs a special GraphQL API path, otherwise it should be ignored
     if 'hasura' in benchmark:
         path = '/v1/graphql'
-        int_ids = True
     else:
         path = "/"
-        int_ids = False
+
+    int_ids = 'edgedb' not in benchmark
 
     cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,

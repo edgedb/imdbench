@@ -68,6 +68,7 @@ load-postgres: reset-postgres $(BUILD)/dataset.json
 
 reset-postgres:
 	-docker stop hasura-bench
+	-docker stop prisma-bench && docker rm prisma-bench
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
@@ -115,6 +116,12 @@ load-hasura: load-postgres-helpers
 	sleep 5s
 	cd _hasura && ./send-metadata.sh
 
+load-prisma: load-postgres-helpers
+	-docker stop prisma-bench && docker rm prisma-bench
+	cd _prisma && docker-compose up -d
+	sleep 5s
+	cd _prisma && prisma deploy
+
 load-loopback: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS lb_bench;"
@@ -156,7 +163,7 @@ load-sequelize: $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 	  load-loopback load-typeorm load-sequelize \
-	  load-hasura
+	  load-hasura load-prisma
 
 go:
 	make -C _edgedb_go

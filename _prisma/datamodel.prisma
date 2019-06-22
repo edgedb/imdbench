@@ -1,0 +1,53 @@
+type Actors @pgTable(name: "actors") {
+  id: Int! @unique
+  list_order: Int
+  movie: Movies @pgRelation(column: "movie_id")
+  person: Persons @pgRelation(column: "person_id")
+}
+
+type Directors @pgTable(name: "directors") {
+  id: Int! @unique
+  list_order: Int
+  movie: Movies @pgRelation(column: "movie_id")
+  person: Persons @pgRelation(column: "person_id")
+}
+
+type Movies @pgTable(name: "movie_view") {
+  actors: [Actors!]!
+  description: String!
+  directors: [Directors!]!
+  id: Int! @unique
+  image: String!
+  reviews: [Reviews!]!
+  title: String!
+  year: Int!
+  avg_rating: Float
+}
+
+type Persons @pgTable(name: "person_view") {
+  actors: [Actors!]!
+  bio: String!
+  directors: [Directors!]!
+  first_name: String!
+  id: Int! @unique
+  image: String!
+  last_name: String!
+  middle_name: String!
+  full_name: String!
+}
+
+type Reviews @pgTable(name: "reviews") {
+  author: Users @pgRelation(column: "author_id")
+  body: String!
+  creation_time: DateTime!
+  id: Int! @unique
+  movie: Movies @pgRelation(column: "movie_id")
+  rating: Int!
+}
+
+type Users @pgTable(name: "users") {
+  id: Int! @unique
+  image: String!
+  name: String!
+  reviews: [Reviews!]!
+}
