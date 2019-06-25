@@ -1,7 +1,6 @@
 "use strict";
 
 const { App } = require("./models.js");
-const logging = false;
 
 class BenchApp extends App {
   async userDetails(id) {
@@ -26,7 +25,6 @@ class BenchApp extends App {
           limit: 10
         }
       ],
-      logging: logging,
       benchmark: true
     });
 
@@ -71,7 +69,6 @@ class BenchApp extends App {
         [{ model: Movie, as: "directed" }, "year", "ASC"],
         [{ model: Movie, as: "directed" }, "title", "ASC"]
       ],
-      logging: logging,
       benchmark: true
     });
 
@@ -138,7 +135,6 @@ class BenchApp extends App {
         [{ model: Person, as: "cast" }, Cast, "list_order", "ASC"],
         [{ model: Person, as: "cast" }, "last_name", "ASC"]
       ],
-      logging: logging,
       benchmark: true
     });
 

@@ -12,3 +12,4 @@ __pycache__/
 docs/_build
 /*.html
 /*.json
+node_modules
