@@ -50,45 +50,46 @@ def load_ids(ctx, conn):
 
 
 def get_user(conn, id):
-    cur = conn.cursor()
-    cur.execute('''
-        SELECT
-            users.id,
-            users.name,
-            users.image,
-            q.review_id,
-            q.review_body,
-            q.review_rating,
-            q.movie_id,
-            q.movie_image,
-            q.movie_title,
-            q.movie_avg_rating
-        FROM
-            users,
-            LATERAL (
-                SELECT
-                    review.id AS review_id,
-                    review.body AS review_body,
-                    review.rating AS review_rating,
-                    movie.id AS movie_id,
-                    movie.image AS movie_image,
-                    movie.title AS movie_title,
-                    movie.avg_rating AS movie_avg_rating
-                FROM
-                    reviews AS review
-                    INNER JOIN movies AS movie
-                        ON (review.movie_id = movie.id)
-                WHERE
-                    review.author_id = users.id
-                ORDER BY
-                    review.creation_time DESC
-                LIMIT 10
-            ) AS q
-        WHERE
-            users.id = %s
-    ''', [id])
+    with conn.cursor() as cur:
+        cur.execute('''
+            SELECT
+                users.id,
+                users.name,
+                users.image,
+                q.review_id,
+                q.review_body,
+                q.review_rating,
+                q.movie_id,
+                q.movie_image,
+                q.movie_title,
+                q.movie_avg_rating
+            FROM
+                users,
+                LATERAL (
+                    SELECT
+                        review.id AS review_id,
+                        review.body AS review_body,
+                        review.rating AS review_rating,
+                        movie.id AS movie_id,
+                        movie.image AS movie_image,
+                        movie.title AS movie_title,
+                        movie.avg_rating AS movie_avg_rating
+                    FROM
+                        reviews AS review
+                        INNER JOIN movies AS movie
+                            ON (review.movie_id = movie.id)
+                    WHERE
+                        review.author_id = users.id
+                    ORDER BY
+                        review.creation_time DESC
+                    LIMIT 10
+                ) AS q
+            WHERE
+                users.id = %s
+        ''', [id])
 
-    rows = cur.fetchall()
+        rows = cur.fetchall()
+
     return json.dumps({
         'id': rows[0][0],
         'name': rows[0][1],
@@ -110,76 +111,76 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    cur = conn.cursor()
-    cur.execute('''
-        SELECT
-            movie.id,
-            movie.image,
-            movie.title,
-            movie.year,
-            movie.description,
-            movie.avg_rating
-        FROM
-            movies AS movie
-        WHERE
-            movie.id = %s;
-    ''', [id])
+    with conn.cursor() as cur:
+        cur.execute('''
+            SELECT
+                movie.id,
+                movie.image,
+                movie.title,
+                movie.year,
+                movie.description,
+                movie.avg_rating
+            FROM
+                movies AS movie
+            WHERE
+                movie.id = %s;
+        ''', [id])
 
-    movie_rows = cur.fetchall()
-    movie = movie_rows[0]
+        movie_rows = cur.fetchall()
+        movie = movie_rows[0]
 
-    cur.execute('''
-        SELECT
-            person.id,
-            person.full_name,
-            person.image
-        FROM
-            directors
-            INNER JOIN persons AS person
-                ON (directors.person_id = person.id)
-        WHERE
-            directors.movie_id = %s
-        ORDER BY
-            directors.list_order NULLS LAST,
-            person.last_name
-    ''', [id])
-    directors_rows = cur.fetchall()
+        cur.execute('''
+            SELECT
+                person.id,
+                person.full_name,
+                person.image
+            FROM
+                directors
+                INNER JOIN persons AS person
+                    ON (directors.person_id = person.id)
+            WHERE
+                directors.movie_id = %s
+            ORDER BY
+                directors.list_order NULLS LAST,
+                person.last_name
+        ''', [id])
+        directors_rows = cur.fetchall()
 
-    cur.execute('''
-        SELECT
-            person.id,
-            person.full_name,
-            person.image
-        FROM
-            actors
-            INNER JOIN persons AS person
-                ON (actors.person_id = person.id)
-        WHERE
-            actors.movie_id = %s
-        ORDER BY
-            actors.list_order NULLS LAST,
-            person.last_name
-    ''', [id])
-    cast_rows = cur.fetchall()
+        cur.execute('''
+            SELECT
+                person.id,
+                person.full_name,
+                person.image
+            FROM
+                actors
+                INNER JOIN persons AS person
+                    ON (actors.person_id = person.id)
+            WHERE
+                actors.movie_id = %s
+            ORDER BY
+                actors.list_order NULLS LAST,
+                person.last_name
+        ''', [id])
+        cast_rows = cur.fetchall()
 
-    cur.execute('''
-        SELECT
-            review.id,
-            review.body,
-            review.rating,
-            author.id AS author_id,
-            author.name AS author_name,
-            author.image AS author_image
-        FROM
-            reviews AS review
-            INNER JOIN users AS author
-                ON (review.author_id = author.id)
-        WHERE
-            review.movie_id = %s
-        ORDER BY
-            review.creation_time DESC
-    ''', [id])
-    reviews_rows = cur.fetchall()
+        cur.execute('''
+            SELECT
+                review.id,
+                review.body,
+                review.rating,
+                author.id AS author_id,
+                author.name AS author_name,
+                author.image AS author_image
+            FROM
+                reviews AS review
+                INNER JOIN users AS author
+                    ON (review.author_id = author.id)
+            WHERE
+                review.movie_id = %s
+            ORDER BY
+                review.creation_time DESC
+        ''', [id])
+        reviews_rows = cur.fetchall()
 
     return json.dumps({
         'id': movie[0],
@@ -221,56 +222,56 @@ def get_movie(conn, id):
 
 
 def get_person(conn, id):
-    cur = conn.cursor()
-    cur.execute('''
-        SELECT
-            p.id,
-            p.full_name,
-            p.image,
-            p.bio
-        FROM
-            persons p
-        WHERE
-            p.id = %s;
-    ''', [id])
-    people_rows = cur.fetchall()
-    person = people_rows[0]
+    with conn.cursor() as cur:
+        cur.execute('''
+            SELECT
+                p.id,
+                p.full_name,
+                p.image,
+                p.bio
+            FROM
+                persons p
+            WHERE
+                p.id = %s;
+        ''', [id])
+        people_rows = cur.fetchall()
+        person = people_rows[0]
 
-    cur.execute('''
-        SELECT
-            movie.id,
-            movie.image,
-            movie.title,
-            movie.year,
-            movie.avg_rating
-        FROM
-            actors
-            INNER JOIN movies AS movie
-                ON (actors.movie_id = movie.id)
-        WHERE
-            actors.person_id = %s
-        ORDER BY
-            movie.year ASC, movie.title ASC
-    ''', [id])
-    acted_in_rows = cur.fetchall()
+        cur.execute('''
+            SELECT
+                movie.id,
+                movie.image,
+                movie.title,
+                movie.year,
+                movie.avg_rating
+            FROM
+                actors
+                INNER JOIN movies AS movie
+                    ON (actors.movie_id = movie.id)
+            WHERE
+                actors.person_id = %s
+            ORDER BY
+                movie.year ASC, movie.title ASC
+        ''', [id])
+        acted_in_rows = cur.fetchall()
 
-    cur.execute('''
-        SELECT
-            movie.id,
-            movie.image,
-            movie.title,
-            movie.year,
-            movie.avg_rating
-        FROM
-            directors
-            INNER JOIN movies AS movie
-                ON (directors.movie_id = movie.id)
-        WHERE
-            directors.person_id = %s
-        ORDER BY
-            movie.year ASC, movie.title ASC
-    ''', [id])
-    directed_rows = cur.fetchall()
+        cur.execute('''
+            SELECT
+                movie.id,
+                movie.image,
+                movie.title,
+                movie.year,
+                movie.avg_rating
+            FROM
+                directors
+                INNER JOIN movies AS movie
+                    ON (directors.movie_id = movie.id)
+            WHERE
+                directors.person_id = %s
+            ORDER BY
+                movie.year ASC, movie.title ASC
+        ''', [id])
+        directed_rows = cur.fetchall()
 
     return json.dumps({
         'id': person[0],
