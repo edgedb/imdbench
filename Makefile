@@ -1,5 +1,7 @@
-.PHONY: all load new-dataset go
-.PHONY: load-mongodb load-edgedb load-django load-sqlalchemy
+.PHONY: all load new-dataset go load-postgres-helpers reset-postgres
+.PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
+.PHONY: load-loopback load-typeorm load-sequelize
+.PHONY: load-hasura load-prisma load-postgraphile
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -120,6 +122,12 @@ load-prisma: load-postgres-helpers
 	sleep 5s
 	cd _prisma && prisma deploy
 
+load-postgraphile:
+	$(PSQL) -U postgres_bench -d postgres_bench \
+			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
+	cd _postgraphile && docker build -t postgraphile_bench:latest .
+	cd _postgraphile && ./run_postgraphile.sh
+
 load-loopback: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS lb_bench;"
@@ -161,7 +169,7 @@ load-sequelize: $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 	  load-loopback load-typeorm load-sequelize \
-	  load-hasura load-prisma
+	  load-hasura load-prisma load-postgraphile
 
 go:
 	make -C _edgedb_go
