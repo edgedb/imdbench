@@ -8,7 +8,7 @@ class ConnectionJSON {
     this.connection = connect({
       host: "localhost",
       port: 5656,
-      username: "edgedb",
+      user: "edgedb",
       database: "edgedb_bench",
       ...(opts || {})
     });
@@ -49,7 +49,7 @@ class ConnectionRepack {
     this.connection = connect({
       host: "localhost",
       port: 5656,
-      username: "edgedb",
+      user: "edgedb",
       database: "edgedb_bench",
       ...(opts || {})
     });

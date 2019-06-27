@@ -103,21 +103,19 @@ load-postgres-helpers:
 		"
 
 load-hasura: load-postgres-helpers
-	$(PSQL) -U postgres -tc \
-		"DROP ROLE IF EXISTS hasurauser;"
-	$(PSQL) -U postgres -tc \
-		"CREATE ROLE hasurauser WITH \
-			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL) -U postgres -d postgres_bench -tc \
+		"DROP SCHEMA IF EXISTS hdb_catalog CASCADE;"
+	$(PSQL) -U postgres -d postgres_bench -tc \
+		"DROP SCHEMA IF EXISTS hdb_views CASCADE;"
+	$(PSQL) -U postgres -d postgres_bench -tc \
 		"CREATE EXTENSION IF NOT EXISTS pgcrypto;"
-	$(PSQL) -U postgres -tc \
-		"ALTER USER hasurauser WITH SUPERUSER;"
 	_hasura/docker-run.sh
 	sleep 5s
 	cd _hasura && ./send-metadata.sh
 
 load-prisma: load-postgres-helpers
-	-docker stop prisma-bench && docker rm prisma-bench
+	[ "$(docker ps -q -f name=prisma-bench)" ] && docker stop prisma-bench \
+		&& docker rm prisma-bench || true
 	cd _prisma && docker-compose up -d
 	sleep 5s
 	cd _prisma && prisma deploy
@@ -133,7 +131,7 @@ load-loopback: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"CREATE DATABASE lb_bench WITH OWNER = lb_bench;"
 
-	node _loopback/server/loaddata.js $(BUILD)/dataset.json
+	cd _loopback && npm i && node server/loaddata.js $(BUILD)/dataset.json
 
 load-typeorm: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -146,7 +144,7 @@ load-typeorm: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"CREATE DATABASE typeorm_bench WITH OWNER = typeorm_bench;"
 
-	cd _typeorm && npm run loaddata $(BUILD)/dataset.json
+	cd _typeorm && npm i && npm run loaddata $(BUILD)/dataset.json
 
 load-sequelize: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -159,7 +157,7 @@ load-sequelize: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
 		"CREATE DATABASE sequelize_bench WITH OWNER = sequelize_bench;"
 
-	node _sequelize/loaddata.js $(BUILD)/dataset.json
+	cd _sequelize && npm i && node loaddata.js $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 	  load-loopback load-typeorm load-sequelize \
@@ -169,4 +167,4 @@ go:
 	make -C _edgedb_go
 
 ts:
-	cd _typeorm && tsc
+	cd _typeorm && npm i && tsc
