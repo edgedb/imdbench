@@ -12,4 +12,5 @@ __pycache__/
 docs/_build
 /*.html
 /*.json
+/.vscode
 node_modules
