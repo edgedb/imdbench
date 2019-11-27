@@ -9,7 +9,7 @@
 abstract type HasImage {
     # just a URL to the image
     required property image -> str;
-    index image_idx on (__subject__.image);
+    index on (__subject__.image);
 }
 
 
