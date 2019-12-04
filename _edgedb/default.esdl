@@ -6,6 +6,8 @@
 ##
 
 
+module default {
+
 abstract type HasImage {
     # just a URL to the image
     required property image -> str;
@@ -76,4 +78,6 @@ type Movie extending HasImage {
     multi link cast extending crew -> Person;
 
     property avg_rating := math::mean(.<movie[IS Review].rating);
+}
+
 }
