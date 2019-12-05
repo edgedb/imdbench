@@ -207,7 +207,7 @@ async def import_data(data: dict):
             rating := <int64>$rating,
             author := (SELECT User FILTER .image = <str>$uimage LIMIT 1),
             movie := (SELECT Movie FILTER .image = <str>$mimage LIMIT 1),
-            creation_time := <local_datetime>$creation_time,
+            creation_time := <cal::local_datetime>$creation_time,
         };
     '''
 

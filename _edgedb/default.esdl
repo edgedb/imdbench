@@ -30,8 +30,8 @@ type Review {
     required link author -> User;
     required link movie -> Movie;
 
-    required property creation_time -> local_datetime {
-        default := to_local_datetime(datetime_current(), 'UTC')
+    required property creation_time -> cal::local_datetime {
+        default := cal::to_local_datetime(datetime_current(), 'UTC')
     }
 }
 
