@@ -28,7 +28,7 @@ CREATE VIEW GraphQLPersonDetails := (
             SELECT Person.<cast[IS Movie]
         ),
         directed := (
-            SELECT Person.<directors
+            SELECT Person.<directors[IS Movie]
         ),
     }
 );
