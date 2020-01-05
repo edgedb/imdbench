@@ -63,14 +63,10 @@ if __name__ == '__main__':
     with open(base_path / 'default.esdl') as f:
         schema = f.read()
 
-    with open(base_path / 'default_setup.edgeql') as f:
-        setup = f.read()
-
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
     con.execute(f'''
         START TRANSACTION;
         CREATE MIGRATION d0 TO {{ {schema} }};
         COMMIT MIGRATION d0;
-        {setup}
         COMMIT;
     ''')

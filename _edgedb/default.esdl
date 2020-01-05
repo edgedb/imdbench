@@ -80,4 +80,36 @@ type Movie extending HasImage {
     property avg_rating := math::mean(.<movie[IS Review].rating);
 }
 
+alias GraphQLUserDetails := (
+    SELECT User {
+        latest_reviews := (
+            SELECT User.<author[IS Review]
+            ORDER BY .creation_time DESC
+        )
+    }
+);
+
+
+alias GraphQLPersonDetails := (
+    WITH MODULE default
+    SELECT Person {
+        acted_in := (
+            SELECT Person.<cast[IS Movie]
+        ),
+        directed := (
+            SELECT Person.<directors[IS Movie]
+        ),
+    }
+);
+
+
+alias GraphQLMovieDetails := (
+    WITH MODULE default
+    SELECT Movie {
+        reviews := (
+            SELECT Movie.<movie[IS Review]
+        ),
+    }
+);
+
 }
