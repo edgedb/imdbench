@@ -19,7 +19,7 @@ async def connect(ctx):
 
 
 async def close(ctx, conn):
-    await conn.close()
+    await conn.aclose()
 
 
 async def load_ids(ctx, conn):

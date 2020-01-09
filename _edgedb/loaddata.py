@@ -54,7 +54,7 @@ class Pool:
                 else:
                     self._results.put_nowait(True)
         finally:
-            await con.close()
+            await con.aclose()
 
     @classmethod
     async def map(cls, data, *, concurrency: int, label: str):
