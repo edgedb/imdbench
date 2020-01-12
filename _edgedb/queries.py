@@ -46,7 +46,7 @@ def get_user(conn, id):
             name,
             image,
             latest_reviews := (
-                WITH UserReviews := User.<author
+                WITH UserReviews := User.<author[IS Review]
                 SELECT UserReviews {
                     id,
                     body,
@@ -93,7 +93,7 @@ def get_movie(conn, id):
                 THEN Movie.cast.last_name,
 
             reviews := (
-                SELECT Movie.<movie {
+                SELECT Movie.<movie[IS Review] {
                     id,
                     body,
                     rating,
@@ -119,7 +119,7 @@ def get_person(conn, id):
             bio,
 
             acted_in := (
-                WITH M := Person.<cast
+                WITH M := Person.<cast[IS Movie]
                 SELECT M {
                     id,
                     image,
@@ -131,7 +131,7 @@ def get_person(conn, id):
             ),
 
             directed := (
-                WITH M := Person.<directors
+                WITH M := Person.<directors[IS Movie]
                 SELECT M {
                     id,
                     image,

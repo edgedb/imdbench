@@ -11,6 +11,6 @@
   "license": "UNLICENSED",
   "description": "_postgres",
   "dependencies": {
-    "pg": "^7.11.0"
+    "pg": "^7.17.1"
   }
 }

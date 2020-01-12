@@ -1,7 +1,7 @@
 .PHONY: all load new-dataset go load-postgres-helpers reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-loopback load-typeorm load-sequelize
-.PHONY: load-hasura load-prisma load-postgraphile
+.PHONY: load-graphql load-hasura load-prisma load-postgraphile
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -168,8 +168,9 @@ load-sequelize: $(BUILD)/dataset.json
 	cd _sequelize && npm i && node loaddata.js $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
-	  load-loopback load-typeorm load-sequelize \
-	  load-hasura load-prisma load-postgraphile
+	  load-loopback load-typeorm load-sequelize
+
+load-graphql: load-hasura load-prisma load-postgraphql
 
 go:
 	make -C _edgedb_go

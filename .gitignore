@@ -13,4 +13,5 @@ docs/_build
 /*.html
 /*.json
 /.vscode
+/.mypy_cache
 node_modules

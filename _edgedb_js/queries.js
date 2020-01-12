@@ -7,7 +7,7 @@ const queries = {
         name,
         image,
         latest_reviews := (
-            WITH UserReviews := User.<author
+            WITH UserReviews := User.<author[IS Review]
             SELECT UserReviews {
                 id,
                 body,
@@ -33,7 +33,7 @@ const queries = {
         bio,
 
         acted_in := (
-            WITH M := Person.<cast
+            WITH M := Person.<cast[IS Movie]
             SELECT M {
                 id,
                 image,
@@ -45,7 +45,7 @@ const queries = {
         ),
 
         directed := (
-            WITH M := Person.<directors
+            WITH M := Person.<directors[IS Movie]
             SELECT M {
                 id,
                 image,
@@ -84,7 +84,7 @@ const queries = {
             THEN Movie.cast.last_name,
 
         reviews := (
-            SELECT Movie.<movie {
+            SELECT Movie.<movie[IS Review] {
                 id,
                 body,
                 rating,
