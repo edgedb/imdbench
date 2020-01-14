@@ -13,8 +13,8 @@
   "description": "webapp-bench-js",
   "dependencies": {
     "argparse": "^1.0.10",
-    "edgedb": "^0.5.0-alpha",
-    "lodash": "^4.17.11",
+    "edgedb": "^0.7.0-alpha",
+    "lodash": "^4.17.15",
     "pg": "^7.11.0"
   }
 }
