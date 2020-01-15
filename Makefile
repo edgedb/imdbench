@@ -112,7 +112,7 @@ load-hasura: load-postgres-helpers
 	$(PSQL) -U postgres -d postgres_bench -tc \
 		"CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 	_hasura/docker-run.sh
-	sleep 5s
+	sleep 60s
 	cd _hasura && ./send-metadata.sh
 
 load-prisma: load-postgres-helpers
@@ -120,7 +120,7 @@ load-prisma: load-postgres-helpers
 		&& docker rm prisma-bench || true
 	cd _prisma && docker-compose up -d
 	sleep 5s
-	cd _prisma && prisma deploy
+	cd _prisma && ../node_modules/.bin/prisma deploy
 
 load-postgraphile:
 	$(PSQL) -U postgres_bench -d postgres_bench \
