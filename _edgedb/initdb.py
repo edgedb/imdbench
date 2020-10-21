@@ -66,7 +66,8 @@ if __name__ == '__main__':
     con = edgedb.connect(user='edgedb', database='edgedb_bench')
     con.execute(f'''
         START TRANSACTION;
-        CREATE MIGRATION d0 TO {{ {schema} }};
-        COMMIT MIGRATION d0;
+        START MIGRATION TO {{ {schema} }};
+        POPULATE MIGRATION;
+        COMMIT MIGRATION;
         COMMIT;
     ''')
