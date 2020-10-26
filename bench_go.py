@@ -41,7 +41,12 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__).parent
     exe = dirn / 'gobench'
 
+    protocol = 'http'
+    if benchmark == 'edgedb_json_go':
+        protocol = 'edgedb'
+
     # Hasura needs a special GraphQL API path, otherwise it should be ignored
+
     if 'hasura' in benchmark:
         path = '/v1/graphql'
     else:
@@ -53,7 +58,7 @@ def run_query(ctx, benchmark, queryname, querydata, port):
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
            '--port', port, '--path', path, '--ids-are-ints', int_ids,
-           '--nsamples', '10', '--', '-']
+           '--nsamples', '10', '--protocol', protocol, '--', '-']
 
     cmd = [str(c) for c in cmd]
 
@@ -107,8 +112,10 @@ def main():
     print()
 
     data = []
+
     for benchmark in ctx.benchmarks:
         bench_desc = _shared.BENCHMARKS[benchmark]
+
         if bench_desc.language != 'go':
             continue
 
@@ -121,8 +128,10 @@ def main():
 
     if ctx.json:
         json_data = []
+
         for results in data:
             json_results = []
+
             for r in results:
                 json_results.append({
                     'queryname': r.queryname,

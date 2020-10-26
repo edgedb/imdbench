@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/edgedb/edgedb-go/edgedb"
+	"github.com/edgedb/edgedb-go/edgedb/types"
 	"github.com/valyala/fasthttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -35,7 +38,7 @@ func http_worker(
 
 	var samples []string
 	samples_collected := int(0)
-	latency_stats := make([]int64, timeout/1000/10 + 1)
+	latency_stats := make([]int64, timeout/1000/10+1)
 	timeout_ns := timeout.Nanoseconds()
 	min_latency := int64(math.MaxInt64)
 	max_latency := int64(0)
@@ -119,6 +122,90 @@ func http_worker(
 	}
 }
 
+func edgedb_worker(
+	start time.Time, duration, timeout time.Duration,
+	query string, idStrings []string, wg *sync.WaitGroup,
+	report ReportFunc,
+) {
+	defer wg.Done()
+
+	var (
+		err         error
+		min_latency int64 = math.MaxInt64
+		max_latency int64 = 0
+		queries     int64 = 0
+	)
+
+	samples := make([]string, 0, *nsamples)
+	latency_stats := make([]int64, timeout/1000/10+1)
+	timeout_ns := timeout.Nanoseconds()
+
+	num_ids := len(idStrings)
+	ids := make([]types.UUID, num_ids)
+	for i := 0; i < len(idStrings); i++ {
+		ids[i], err = types.UUIDFromString(idStrings[i])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	ctx := context.TODO()
+	client, err := edgedb.Connect(ctx, edgedb.Options{
+		Host:     *host,
+		Port:     *port,
+		User:     "edgedb",
+		Database: "edgedb_bench",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer client.Close()
+
+	args := make(map[string]interface{}, 1)
+
+	for time.Since(start) < duration || duration == 0 {
+		args["id"] = ids[rand.Intn(num_ids)]
+
+		req_start := time.Now()
+		resp, err := client.QueryOneJSON(ctx, query, args)
+		req_time_ns := time.Since(req_start).Nanoseconds()
+
+		if err != nil {
+			fmt.Println(query)
+			log.Fatal(err)
+		}
+
+		req_time := req_time_ns / 1000 / 10
+		if req_time > max_latency {
+			max_latency = req_time
+		}
+
+		if req_time < min_latency {
+			min_latency = req_time
+		}
+
+		if req_time_ns > timeout_ns {
+			req_time = timeout_ns / 1000 / 10
+		}
+
+		latency_stats[req_time]++
+		queries++
+
+		if len(samples) < *nsamples {
+			samples = append(samples, string(resp))
+		}
+
+		if duration == 0 {
+			break
+		}
+	}
+
+	if report != nil {
+		report(queries, min_latency, max_latency, latency_stats, samples)
+	}
+}
+
 var (
 	app = kingpin.New(
 		"golang-edgedb-http-bench",
@@ -134,10 +221,14 @@ var (
 		"timeout", "server timeout in seconds").Default("2").Int()
 
 	warmup_time = app.Flag(
-		"warmup-time", "duration of warmup period for each benchmark in seconds").Default("5").Int()
+		"warmup-time",
+		"duration of warmup period for each benchmark in seconds",
+	).Default("5").Int()
 
 	output_format = app.Flag(
-		"output-format", "result output format").Default("text").Enum("text", "json")
+		"output-format",
+		"result output format",
+	).Default("text").Enum("text", "json")
 
 	host = app.Flag(
 		"host", "EdgeDB server host").Default("127.0.0.1").String()
@@ -152,10 +243,19 @@ var (
 		"nsamples", "Number of result samples to return").Default("10").Int()
 
 	ids_are_ints = app.Flag(
-		"ids-are-ints", "Whether or not ids are integers").Default("False").Enum("True", "False")
+		"ids-are-ints",
+		"Whether or not ids are integers",
+	).Default("False").Enum("True", "False")
+
+	protocol = app.Flag(
+		"protocol",
+		"application protocol to use: http or edgedb",
+	).Required().Enum("http", "edgedb")
 
 	queryfile = app.Arg(
-		"queryfile", "file to read benchmark query information from").Required().String()
+		"queryfile",
+		"file to read benchmark query information from",
+	).Required().String()
 )
 
 type QueryInfo struct {
@@ -201,7 +301,7 @@ func main() {
 	queries := int64(0)
 	min_latency := int64(math.MaxInt64)
 	max_latency := int64(0)
-	latency_stats := make([]int64, timeout/1000/10 + 1)
+	latency_stats := make([]int64, timeout/1000/10+1)
 	var samples []string
 
 	report := func(t_queries int64,
@@ -226,7 +326,12 @@ func main() {
 
 	var worker WorkerFunc
 
-	worker = http_worker
+	switch *protocol {
+	case "edgedb":
+		worker = edgedb_worker
+	case "http":
+		worker = http_worker
+	}
 
 	do_run := func(
 		worker WorkerFunc,

@@ -15,11 +15,12 @@ import typing
 from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
+from _edgedb_go import queries_edgedb as edgedb_json_golang
 from _edgedb_go import queries_graphql as edgedb_graphql_golang
 from _edgedb_go import queries_hasura as postgres_hasura_golang
 from _edgedb_go import queries_prisma as postgres_prisma_golang
 from _edgedb_go import queries_postgraphile as postgres_postgraphile_golang
-from _edgedb_go import queries_edgeql as edgedb_edgeql_golang
+from _edgedb_go import queries_http as edgedb_edgeql_golang
 from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
@@ -49,6 +50,9 @@ BENCHMARKS = {
 
     'edgedb_http_go':
         bench('go', 'EdgeDB EdgeQL+HTTP golang', edgedb_edgeql_golang),
+
+    'edgedb_json_go':
+        bench('go', 'EdgeDB GO JSON', edgedb_json_golang),
 
     'django':
         bench('python', 'Django ORM', django_queries),
@@ -175,6 +179,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
 
     if not args.queries:
         args.queries = QUERIES
+
     if 'all' in args.benchmarks:
         args.benchmarks = list(BENCHMARKS.keys())
 
