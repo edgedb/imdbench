@@ -3,6 +3,9 @@
 
 gobench: main.go
 	rm -rf "$(CURDIR)/_go" && mkdir "$(CURDIR)/_go"
+	mkdir -p "$(CURDIR)/_go/src/github.com/edgedb/edgedb-go"
+	git clone git@github.com:edgedb/edgedb-go.git \
+		"$(CURDIR)/_go/src/github.com/edgedb/edgedb-go"
 	GOPATH="$(CURDIR)/_go" go get gopkg.in/alecthomas/kingpin.v2 \
 								  github.com/valyala/fasthttp \
 								  github.com/edgedb/edgedb-go/edgedb
