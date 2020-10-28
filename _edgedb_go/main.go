@@ -1,381 +1,150 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
-	"os"
-	"strconv"
-	"sync"
 	"time"
-
-	"github.com/edgedb/edgedb-go/edgedb"
-	"github.com/edgedb/edgedb-go/edgedb/types"
-	"github.com/valyala/fasthttp"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-type ReportFunc func(int64, int64, int64, []int64, []string)
-type WorkerFunc func(time.Time, time.Duration, time.Duration,
-	string, []string,
-	*sync.WaitGroup, ReportFunc)
+type Exec func(string) (time.Duration, string)
 
-type Query struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables"`
+type Close func()
+
+type Worker func(args Args) (Exec, Close)
+
+type WorkResult struct {
+	Durations []time.Duration
+	Samples   []string
 }
 
-func http_worker(
-	start time.Time, duration time.Duration, timeout time.Duration,
-	query string, ids []string, wg *sync.WaitGroup,
-	report ReportFunc) {
-
-	defer wg.Done()
-
-	var samples []string
-	samples_collected := int(0)
-	latency_stats := make([]int64, timeout/1000/10+1)
-	timeout_ns := timeout.Nanoseconds()
-	min_latency := int64(math.MaxInt64)
-	max_latency := int64(0)
-	queries := int64(0)
-
-	num_ids := len(ids)
-
-	c := &fasthttp.Client{}
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	url := fmt.Sprintf("http://%s:%d%s", *host, *port, *path)
-
-	req.Header.SetMethod("POST")
-	req.Header.SetContentType("application/json")
-	req.SetRequestURI(url)
-
-	query_data := &Query{}
-	query_data.Query = query
-	query_data.Variables = make(map[string]interface{})
-
-	for time.Since(start) < duration || duration == 0 {
-		req_start := time.Now()
-
-		if *ids_are_ints == "True" {
-			rid, err := strconv.Atoi(ids[rand.Intn(num_ids)])
-			if err != nil {
-				log.Fatal(err)
-			}
-			query_data.Variables["id"] = rid
-		} else {
-			query_data.Variables["id"] = ids[rand.Intn(num_ids)]
-		}
-
-		json_data, err := json.Marshal(query_data)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req.SetBody(json_data)
-
-		err = c.Do(req, resp)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		resp_data := resp.Body()
-
-		req_time_ns := time.Since(req_start).Nanoseconds()
-		req_time := req_time_ns / 1000 / 10
-		if req_time > max_latency {
-			max_latency = req_time
-		}
-		if req_time < min_latency {
-			min_latency = req_time
-		}
-
-		if req_time_ns > timeout_ns {
-			req_time = timeout_ns / 1000 / 10
-		}
-		latency_stats[req_time] += 1
-
-		queries += 1
-
-		if samples_collected < *nsamples {
-			samples = append(samples, string(resp_data))
-			samples_collected += 1
-		}
-
-		if duration == 0 {
-			break
-		}
-	}
-
-	fasthttp.ReleaseResponse(resp)
-	fasthttp.ReleaseRequest(req)
-
-	if report != nil {
-		report(queries, min_latency, max_latency, latency_stats, samples)
-	}
+type Stats struct {
+	Queries       int64    `json:"nqueries"`
+	MinLatency    int64    `json:"min_latency"`
+	MaxLatency    int64    `json:"max_latency"`
+	LatencyCounts []int64  `json:"latency_stats"`
+	Duration      float64  `json:"duration"`
+	Samples       []string `json:"samples"`
 }
 
-func edgedb_worker(
-	start time.Time, duration, timeout time.Duration,
-	query string, idStrings []string, wg *sync.WaitGroup,
-	report ReportFunc,
+func doWork(
+	work Worker,
+	duration time.Duration,
+	args Args,
+	statsChan chan Stats,
 ) {
-	defer wg.Done()
+	exec, close := work(args)
+	defer close()
 
-	var (
-		err         error
-		min_latency int64 = math.MaxInt64
-		max_latency int64 = 0
-		queries     int64 = 0
-	)
-
-	samples := make([]string, 0, *nsamples)
-	latency_stats := make([]int64, timeout/1000/10+1)
-	timeout_ns := timeout.Nanoseconds()
-
-	num_ids := len(idStrings)
-	ids := make([]types.UUID, num_ids)
-	for i := 0; i < len(idStrings); i++ {
-		ids[i], err = types.UUIDFromString(idStrings[i])
-		if err != nil {
-			log.Fatal(err)
-		}
+	stats := Stats{
+		Queries:       0,
+		MinLatency:    math.MaxInt64,
+		MaxLatency:    0,
+		LatencyCounts: make([]int64, 1+args.Timeout.Nanoseconds()/10_000),
+		Samples:       make([]string, 0, args.NSamples),
 	}
 
-	ctx := context.TODO()
-	client, err := edgedb.Connect(ctx, edgedb.Options{
-		Host:     *host,
-		Port:     *port,
-		User:     "edgedb",
-		Database: "edgedb_bench",
-	})
-	if err != nil {
-		log.Fatal(err)
+	for i := 0; i < args.NSamples; i++ {
+		id := args.Ids[rand.Intn(len(args.Ids))]
+		_, sample := exec(id)
+		stats.Samples = append(stats.Samples, sample)
 	}
 
-	defer client.Close()
+	roundedTimeout := args.Timeout.Nanoseconds() / 10_000
+	start := time.Now()
+	for time.Since(start) < duration {
+		id := args.Ids[rand.Intn(len(args.Ids))]
+		reqTime, _ := exec(id)
 
-	args := make(map[string]interface{}, 1)
-
-	for time.Since(start) < duration || duration == 0 {
-		args["id"] = ids[rand.Intn(num_ids)]
-
-		req_start := time.Now()
-		resp, err := client.QueryOneJSON(ctx, query, args)
-		req_time_ns := time.Since(req_start).Nanoseconds()
-
-		if err != nil {
-			fmt.Println(query)
-			log.Fatal(err)
+		rounded := reqTime.Nanoseconds() / 10_000
+		if rounded > stats.MaxLatency {
+			stats.MaxLatency = rounded
 		}
 
-		req_time := req_time_ns / 1000 / 10
-		if req_time > max_latency {
-			max_latency = req_time
+		if rounded < stats.MinLatency {
+			stats.MinLatency = rounded
 		}
 
-		if req_time < min_latency {
-			min_latency = req_time
+		if rounded > roundedTimeout {
+			rounded = roundedTimeout
 		}
 
-		if req_time_ns > timeout_ns {
-			req_time = timeout_ns / 1000 / 10
-		}
-
-		latency_stats[req_time]++
-		queries++
-
-		if len(samples) < *nsamples {
-			samples = append(samples, string(resp))
-		}
-
-		if duration == 0 {
-			break
-		}
+		stats.LatencyCounts[rounded]++
+		stats.Queries++
 	}
 
-	if report != nil {
-		report(queries, min_latency, max_latency, latency_stats, samples)
-	}
+	statsChan <- stats
 }
 
-var (
-	app = kingpin.New(
-		"golang-edgedb-http-bench",
-		"EdgeDB HTTP benchmark runner.")
+func doConcurrentWork(
+	work Worker,
+	duration time.Duration,
+	args Args,
+) Stats {
+	statsChan := make(chan Stats, args.Concurrency)
 
-	concurrency = app.Flag(
-		"concurrency", "number of concurrent connections").Default("10").Int()
+	for i := 0; i < args.Concurrency; i++ {
+		go doWork(work, duration, args, statsChan)
+	}
 
-	duration = app.Flag(
-		"duration", "duration of test in seconds").Default("30").Int()
+	samples := make([]string, 0, args.NSamples*args.Concurrency)
+	stats := Stats{
+		Queries:       0,
+		MinLatency:    math.MaxInt64,
+		MaxLatency:    0,
+		LatencyCounts: make([]int64, 1+args.Timeout.Nanoseconds()/10_000),
+		Samples:       make([]string, 0, args.NSamples),
+		Duration:      duration.Seconds(),
+	}
 
-	timeout = app.Flag(
-		"timeout", "server timeout in seconds").Default("2").Int()
+	for i := 0; i < args.Concurrency; i++ {
+		tStats := <-statsChan
+		stats.Queries += tStats.Queries
+		samples = append(samples, tStats.Samples...)
 
-	warmup_time = app.Flag(
-		"warmup-time",
-		"duration of warmup period for each benchmark in seconds",
-	).Default("5").Int()
+		for i := 0; i < len(stats.LatencyCounts); i++ {
+			stats.LatencyCounts[i] += tStats.LatencyCounts[i]
+		}
 
-	output_format = app.Flag(
-		"output-format",
-		"result output format",
-	).Default("text").Enum("text", "json")
+		if tStats.MaxLatency > stats.MaxLatency {
+			stats.MaxLatency = tStats.MaxLatency
+		}
 
-	host = app.Flag(
-		"host", "EdgeDB server host").Default("127.0.0.1").String()
+		if tStats.MinLatency < stats.MinLatency {
+			stats.MinLatency = tStats.MinLatency
+		}
+	}
 
-	port = app.Flag(
-		"port", "EdgeDB server port").Default("8080").Int()
+	for i := 0; i < args.NSamples; i++ {
+		sample := samples[rand.Intn(args.NSamples)]
+		stats.Samples = append(stats.Samples, sample)
+	}
 
-	path = app.Flag(
-		"path", "GraphQL API path").Default("").String()
+	return stats
 
-	nsamples = app.Flag(
-		"nsamples", "Number of result samples to return").Default("10").Int()
-
-	ids_are_ints = app.Flag(
-		"ids-are-ints",
-		"Whether or not ids are integers",
-	).Default("False").Enum("True", "False")
-
-	protocol = app.Flag(
-		"protocol",
-		"application protocol to use: http or edgedb",
-	).Required().Enum("http", "edgedb")
-
-	queryfile = app.Arg(
-		"queryfile",
-		"file to read benchmark query information from",
-	).Required().String()
-)
-
-type QueryInfo struct {
-	Query string
-	Ids   []string
 }
 
 func main() {
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	args := parseArgs()
 
-	duration, err := time.ParseDuration(fmt.Sprintf("%vs", *duration))
-	if err != nil {
-		log.Fatal(err)
-	}
-	timeout, err := time.ParseDuration(fmt.Sprintf("%vs", *timeout))
-	if err != nil {
-		log.Fatal(err)
-	}
-	warmup_time, err := time.ParseDuration(fmt.Sprintf("%vs", *warmup_time))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var queryf *os.File
-
-	if *queryfile == "-" {
-		queryf = os.Stdin
+	var worker Worker
+	if args.Protocol == "http" {
+		worker = httpWorker
+	} else if args.Serialization == "json" {
+		worker = edgedbJSONWorker
 	} else {
-		queryf, err = os.Open(*queryfile)
-		if err != nil {
-			log.Fatal(err)
-		}
+		worker = edgedbRepackWorker
 	}
 
-	querydata_json, err := ioutil.ReadAll(queryf)
+	doConcurrentWork(worker, args.Warmup, args)
+	stats := doConcurrentWork(worker, args.Duration, args)
+
+	data, err := json.Marshal(stats)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var querydata QueryInfo
-	json.Unmarshal(querydata_json, &querydata)
-
-	queries := int64(0)
-	min_latency := int64(math.MaxInt64)
-	max_latency := int64(0)
-	latency_stats := make([]int64, timeout/1000/10+1)
-	var samples []string
-
-	report := func(t_queries int64,
-		t_min_latency int64, t_max_latency int64, t_latency_stats []int64,
-		t_samples []string) {
-
-		if t_min_latency < min_latency {
-			min_latency = t_min_latency
-		}
-
-		if t_max_latency > max_latency {
-			max_latency = t_max_latency
-		}
-
-		for i, elem := range t_latency_stats {
-			latency_stats[i] += elem
-		}
-
-		queries += t_queries
-		samples = t_samples
-	}
-
-	var worker WorkerFunc
-
-	switch *protocol {
-	case "edgedb":
-		worker = edgedb_worker
-	case "http":
-		worker = http_worker
-	}
-
-	do_run := func(
-		worker WorkerFunc,
-		query string,
-		query_args []string,
-		concurrency int,
-		run_duration time.Duration,
-		report ReportFunc) time.Duration {
-
-		var wg sync.WaitGroup
-		wg.Add(concurrency)
-
-		start := time.Now()
-
-		for i := 0; i < concurrency; i += 1 {
-			go worker(start, run_duration, timeout, query,
-				query_args, &wg, report)
-		}
-
-		wg.Wait()
-
-		return time.Since(start)
-	}
-
-	if warmup_time > 0 {
-		do_run(worker, querydata.Query, querydata.Ids, *concurrency,
-			warmup_time, nil)
-	}
-
-	duration = do_run(worker, querydata.Query, querydata.Ids, *concurrency,
-		duration, report)
-
-	data := make(map[string]interface{})
-	data["nqueries"] = queries
-	data["min_latency"] = min_latency
-	data["max_latency"] = max_latency
-	data["latency_stats"] = latency_stats
-	data["duration"] = duration.Seconds()
-	data["samples"] = samples
-
-	json, err := json.Marshal(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(string(json))
+	fmt.Println(string(data))
 }

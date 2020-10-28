@@ -42,8 +42,12 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     exe = dirn / 'gobench'
 
     protocol = 'http'
-    if benchmark == 'edgedb_json_go':
+    if benchmark in ['edgedb_repack_go', 'edgedb_json_go']:
         protocol = 'edgedb'
+
+    serialization = 'repack'
+    if benchmark == 'edgedb_json_go':
+        serialization = 'json'
 
     # Hasura needs a special GraphQL API path, otherwise it should be ignored
 
@@ -58,7 +62,8 @@ def run_query(ctx, benchmark, queryname, querydata, port):
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
            '--port', port, '--path', path, '--ids-are-ints', int_ids,
-           '--nsamples', '10', '--protocol', protocol, '--', '-']
+           '--nsamples', '10', '--protocol', protocol,
+           '--serialization', serialization, '--', '-']
 
     cmd = [str(c) for c in cmd]
 

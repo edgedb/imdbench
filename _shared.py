@@ -54,6 +54,9 @@ BENCHMARKS = {
     'edgedb_json_go':
         bench('go', 'EdgeDB GO JSON', edgedb_json_golang),
 
+    'edgedb_repack_go':
+        bench('go', 'EdgeDB GO Structs', edgedb_json_golang),
+
     'django':
         bench('python', 'Django ORM', django_queries),
 
