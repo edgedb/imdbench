@@ -59,7 +59,7 @@ func edgedbRepackWorker(args Args) (exec Exec, close Close) {
 		log.Fatal(err)
 	}
 
-	regex := regexp.MustCompile(`^Person|Movie|User`)
+	regex := regexp.MustCompile(`Person|Movie|User`)
 	queryType := regex.FindString(args.Query)
 
 	switch queryType {
