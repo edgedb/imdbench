@@ -37,19 +37,19 @@ class bench(typing.NamedTuple):
 
 BENCHMARKS = {
     'edgedb_json_sync':
-        bench('python', 'EdgeDB JSON', edgedb_queries),
+        bench('python', 'EdgeDB Python JSON', edgedb_queries),
 
     'edgedb_json_async':
-        bench('python', 'EdgeDB JSON (asyncio)', edgedb_queries_async),
+        bench('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
 
     'edgedb_repack_sync':
-        bench('python', 'EdgeDB', edgedb_queries_repack),
+        bench('python', 'EdgeDB Python Objects', edgedb_queries_repack),
 
     'edgedb_graphql_go':
-        bench('go', 'EdgeDB GraphQL+HTTP golang', edgedb_graphql_golang),
+        bench('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
 
     'edgedb_http_go':
-        bench('go', 'EdgeDB EdgeQL+HTTP golang', edgedb_edgeql_golang),
+        bench('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
 
     'edgedb_json_go':
         bench('go', 'EdgeDB GO JSON', edgedb_json_golang),
@@ -61,7 +61,7 @@ BENCHMARKS = {
         bench('python', 'Django Rest Framework', django_queries_restfw),
 
     'mongodb':
-        bench('python', 'MongoDB', mongodb_queries),
+        bench('python', 'MongoDB Python', mongodb_queries),
 
     'sqlalchemy':
         bench('python', 'SQLAlchemy', sqlalchemy_queries),
@@ -73,13 +73,13 @@ BENCHMARKS = {
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
 
     'postgres_hasura_go':
-        bench('go', 'Postgres+Hasura HTTP golang', postgres_hasura_golang),
+        bench('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
 
     'postgres_prisma_go':
-        bench('go', 'Postgres+Prisma HTTP golang', postgres_prisma_golang),
+        bench('go', 'Postgres+Prisma Go HTTP', postgres_prisma_golang),
 
     'postgres_postgraphile_go':
-        bench('go', 'Postgres+Postgraphile HTTP golang',
+        bench('go', 'Postgres+Postgraphile Go HTTP',
               postgres_postgraphile_golang),
 
     'edgedb_json_js':
