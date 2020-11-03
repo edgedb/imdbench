@@ -44,7 +44,7 @@ type Review struct {
 	Body   string     `json:"body" edgedb:"body"`
 	Rating int64      `json:"rating" edgedb:"rating"`
 	Movie  Movie      `json:"movie" edgedb:"movie"`
-	Author Person     `json:"author" edgedb:"author"`
+	Author User       `json:"author" edgedb:"author"`
 }
 
 func edgedbRepackWorker(args Args) (exec Exec, close Close) {
