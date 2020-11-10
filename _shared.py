@@ -15,12 +15,13 @@ import typing
 from _edgedb import queries as edgedb_queries
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
-from _edgedb_go import queries_edgedb as edgedb_json_golang
-from _edgedb_go import queries_graphql as edgedb_graphql_golang
-from _edgedb_go import queries_hasura as postgres_hasura_golang
-from _edgedb_go import queries_prisma as postgres_prisma_golang
-from _edgedb_go import queries_postgraphile as postgres_postgraphile_golang
-from _edgedb_go import queries_http as edgedb_edgeql_golang
+from _go.edgedb import queries_edgedb as edgedb_json_golang
+from _go.postgres import queries as postgres_golang
+from _go.http import queries_graphql as edgedb_graphql_golang
+from _go.http import queries_hasura as postgres_hasura_golang
+from _go.http import queries_prisma as postgres_prisma_golang
+from _go.http import queries_postgraphile as postgres_postgraphile_golang
+from _go.http import queries_http as edgedb_edgeql_golang
 from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
@@ -74,6 +75,9 @@ BENCHMARKS = {
 
     'postgres_psycopg':
         bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+
+    'postgres_pq':
+        bench('go', 'PostgreSQL pq', postgres_golang),
 
     'postgres_hasura_go':
         bench('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),

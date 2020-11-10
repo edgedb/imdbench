@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ func parseOrFatal(seconds int) time.Duration {
 	return duration
 }
 
-func parseArgs() Args {
+func ParseArgs() Args {
 	var (
 		app = kingpin.New(
 			"golang-edgedb-http-bench",
@@ -86,7 +86,7 @@ func parseArgs() Args {
 		protocol = app.Flag(
 			"protocol",
 			"application protocol to use: http or edgedb",
-		).Required().Enum("http", "edgedb")
+		).Required().Enum("http", "edgedb", "postgres")
 
 		queryfile = app.Arg(
 			"queryfile",

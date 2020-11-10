@@ -7,18 +7,13 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"github.com/edgedb/webapp-bench/_go/bench"
+	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/edgedb/webapp-bench/_go/edgedb"
+	"github.com/edgedb/webapp-bench/_go/http"
+	"github.com/edgedb/webapp-bench/_go/postgres"
 )
-
-type Exec func(string) (time.Duration, string)
-
-type Close func()
-
-type Worker func(args Args) (Exec, Close)
-
-type WorkResult struct {
-	Durations []time.Duration
-	Samples   []string
-}
 
 type Stats struct {
 	Queries       int64    `json:"nqueries"`
@@ -30,9 +25,9 @@ type Stats struct {
 }
 
 func doWork(
-	work Worker,
+	work bench.Worker,
 	duration time.Duration,
-	args Args,
+	args cli.Args,
 	statsChan chan Stats,
 ) {
 	exec, close := work(args)
@@ -79,9 +74,9 @@ func doWork(
 }
 
 func doConcurrentWork(
-	work Worker,
+	work bench.Worker,
 	duration time.Duration,
-	args Args,
+	args cli.Args,
 ) Stats {
 	statsChan := make(chan Stats, args.Concurrency)
 
@@ -127,18 +122,21 @@ func doConcurrentWork(
 }
 
 func main() {
-	args := parseArgs()
+	args := cli.ParseArgs()
 
-	var worker Worker
+	var worker bench.Worker
 	if args.Protocol == "http" {
-		worker = httpWorker
+		worker = http.HTTPWorker
+	} else if args.Protocol == "postgres" {
+		worker = postgres.PQWorker
 	} else if args.Serialization == "json" {
-		worker = edgedbJSONWorker
+		worker = edgedb.JSONWorker
 	} else {
-		worker = edgedbRepackWorker
+		worker = edgedb.RepackWorker
 	}
 
 	doConcurrentWork(worker, args.Warmup, args)
+
 	stats := doConcurrentWork(worker, args.Duration, args)
 
 	data, err := json.Marshal(stats)

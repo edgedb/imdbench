@@ -173,7 +173,7 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 load-graphql: load-hasura load-prisma load-postgraphql
 
 go:
-	make -C _edgedb_go
+	make -C _go
 
 ts:
 	cd _typeorm && npm i && tsc
