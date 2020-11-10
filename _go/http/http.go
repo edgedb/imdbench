@@ -1,4 +1,4 @@
-package main
+package http
 
 import (
 	"encoding/json"
@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/valyala/fasthttp"
+
+	"github.com/edgedb/webapp-bench/_go/bench"
+	"github.com/edgedb/webapp-bench/_go/cli"
 )
 
-func httpWorker(args Args) (Exec, Close) {
+func HTTPWorker(args cli.Args) (bench.Exec, bench.Close) {
 	url := fmt.Sprintf("http://%s:%d%s", args.Host, args.Port, args.Path)
 
 	client := &fasthttp.Client{}

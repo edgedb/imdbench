@@ -1,4 +1,4 @@
-package main
+package edgedb
 
 import (
 	"context"
@@ -9,6 +9,9 @@ import (
 
 	"github.com/edgedb/edgedb-go/edgedb"
 	"github.com/edgedb/edgedb-go/edgedb/types"
+
+	"github.com/edgedb/webapp-bench/_go/bench"
+	"github.com/edgedb/webapp-bench/_go/cli"
 )
 
 type User struct {
@@ -47,7 +50,7 @@ type Review struct {
 	Author User       `json:"author" edgedb:"author"`
 }
 
-func edgedbRepackWorker(args Args) (exec Exec, close Close) {
+func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	ctx := context.TODO()
 	client, err := edgedb.Connect(ctx, edgedb.Options{
 		Host:     args.Host,
@@ -83,7 +86,7 @@ func edgedbRepackWorker(args Args) (exec Exec, close Close) {
 	return exec, close
 }
 
-func execPerson(client *edgedb.Client, args Args) Exec {
+func execPerson(client *edgedb.Client, args cli.Args) bench.Exec {
 
 	var person Person
 	ctx := context.TODO()
@@ -112,7 +115,7 @@ func execPerson(client *edgedb.Client, args Args) Exec {
 	}
 }
 
-func execMovie(client *edgedb.Client, args Args) Exec {
+func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
 
 	var movie Movie
 	ctx := context.TODO()
@@ -141,7 +144,7 @@ func execMovie(client *edgedb.Client, args Args) Exec {
 	}
 }
 
-func execUser(client *edgedb.Client, args Args) Exec {
+func execUser(client *edgedb.Client, args cli.Args) bench.Exec {
 
 	var user User
 	ctx := context.TODO()
@@ -170,7 +173,7 @@ func execUser(client *edgedb.Client, args Args) Exec {
 	}
 }
 
-func edgedbJSONWorker(args Args) (Exec, Close) {
+func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	ctx := context.TODO()
 	client, err := edgedb.Connect(ctx, edgedb.Options{
 		Host:     args.Host,

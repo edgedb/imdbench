@@ -12,6 +12,7 @@ import json
 import pathlib
 import subprocess
 import typing
+import sys
 
 import _shared
 
@@ -38,12 +39,14 @@ def print_result(ctx, result: Result):
 
 
 def run_query(ctx, benchmark, queryname, querydata, port):
-    dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__).parent
-    exe = dirn / 'gobench'
+    dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__)
+    exe = dirn.parent.parent / 'gobench'
 
     protocol = 'http'
     if benchmark in ['edgedb_repack_go', 'edgedb_json_go']:
         protocol = 'edgedb'
+    elif benchmark in ['postgres_pq']:
+        protocol = 'postgres'
 
     serialization = 'repack'
     if benchmark == 'edgedb_json_go':
