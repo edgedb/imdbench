@@ -42,16 +42,6 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__)
     exe = dirn.parent.parent / 'gobench'
 
-    protocol = 'http'
-    if benchmark in ['edgedb_repack_go', 'edgedb_json_go']:
-        protocol = 'edgedb'
-    elif benchmark in ['postgres_pq']:
-        protocol = 'postgres'
-
-    serialization = 'repack'
-    if benchmark == 'edgedb_json_go':
-        serialization = 'json'
-
     # Hasura needs a special GraphQL API path, otherwise it should be ignored
 
     if 'hasura' in benchmark:
@@ -65,8 +55,8 @@ def run_query(ctx, benchmark, queryname, querydata, port):
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,
            '--port', port, '--path', path, '--ids-are-ints', int_ids,
-           '--nsamples', '10', '--protocol', protocol,
-           '--serialization', serialization, '--', '-']
+           '--nsamples', '10', '--benchmark', benchmark,
+           '--', '-']
 
     cmd = [str(c) for c in cmd]
 

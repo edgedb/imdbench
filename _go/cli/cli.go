@@ -12,19 +12,18 @@ import (
 )
 
 type Args struct {
-	Duration      time.Duration
-	Timeout       time.Duration
-	Warmup        time.Duration
-	Query         string
-	Ids           []string
-	Host          string
-	Port          int
-	Path          string
-	IdsAreInts    string
-	NSamples      int
-	Concurrency   int
-	Protocol      string
-	Serialization string
+	Duration    time.Duration
+	Timeout     time.Duration
+	Warmup      time.Duration
+	Query       string
+	Ids         []string
+	Host        string
+	Port        int
+	Path        string
+	IdsAreInts  string
+	NSamples    int
+	Concurrency int
+	Benchmark   string
 }
 
 func parseOrFatal(seconds int) time.Duration {
@@ -67,11 +66,6 @@ func ParseArgs() Args {
 		port = app.Flag(
 			"port", "EdgeDB server port").Default("8080").Int()
 
-		serialization = app.Flag(
-			"serialization",
-			"json or repack",
-		).Required().Enum("json", "repack")
-
 		path = app.Flag(
 			"path", "GraphQL API path").Default("").String()
 
@@ -83,10 +77,10 @@ func ParseArgs() Args {
 			"Whether or not ids are integers",
 		).Default("False").Enum("True", "False")
 
-		protocol = app.Flag(
-			"protocol",
+		benchmark = app.Flag(
+			"benchmark",
 			"application protocol to use: http or edgedb",
-		).Required().Enum("http", "edgedb", "postgres")
+		).Required().String()
 
 		queryfile = app.Arg(
 			"queryfile",
@@ -97,17 +91,16 @@ func ParseArgs() Args {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	args := Args{
-		Duration:      parseOrFatal(*duration),
-		Timeout:       parseOrFatal(*timeout),
-		Warmup:        parseOrFatal(*warmup),
-		Host:          *host,
-		Port:          *port,
-		Path:          *path,
-		IdsAreInts:    *idsAreInts,
-		NSamples:      *nsamples,
-		Concurrency:   *concurrency,
-		Protocol:      *protocol,
-		Serialization: *serialization,
+		Duration:    parseOrFatal(*duration),
+		Timeout:     parseOrFatal(*timeout),
+		Warmup:      parseOrFatal(*warmup),
+		Host:        *host,
+		Port:        *port,
+		Path:        *path,
+		IdsAreInts:  *idsAreInts,
+		NSamples:    *nsamples,
+		Concurrency: *concurrency,
+		Benchmark:   *benchmark,
 	}
 
 	file := os.Stdin

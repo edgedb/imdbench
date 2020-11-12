@@ -1,68 +1,61 @@
 package postgres
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"database/sql"
-
-	// import used by database/sql
-	_ "gopkg.in/go-on/pq.v2"
-
 	"github.com/edgedb/webapp-bench/_go/bench"
 	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func PQWorker(args cli.Args) (bench.Exec, bench.Close) {
-	db, err := sql.Open("postgres", "user=postgres_bench dbname=postgres_bench password=edgedbbenchmark")
+func PGXWorker(args cli.Args) (bench.Exec, bench.Close) {
+	url := fmt.Sprintf(
+		"postgresql://postgres_bench:edgedbbenchmark@%v:%v/postgres_bench",
+		args.Host,
+		args.Port,
+	)
+
+	pool, err := pgxpool.Connect(context.TODO(), url)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// the get movie query uses 4 at a time
-	db.SetMaxIdleConns(4 * args.Concurrency)
 
 	regex := regexp.MustCompile(`users|movie|person`)
 	queryType := regex.FindString(args.Query)
 
 	var exec bench.Exec
-
 	switch queryType {
 	case "movie":
-		exec = pqExecMovie(db, args)
+		exec = pgxExecMovie(pool, args)
 	case "person":
-		exec = pqExecPerson(db, args)
+		exec = pgxExecPerson(pool, args)
 	case "users":
-		exec = pqExecUser(db, args)
+		exec = pgxExecUser(pool, args)
 	default:
 		log.Fatalf("unknown query type: %q", queryType)
 	}
 
-	close := func() {
-		err := db.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	return exec, close
+	return exec, pool.Close
 }
 
-func pqExecMovie(db *sql.DB, args cli.Args) bench.Exec {
+func pgxExecMovie(pool *pgxpool.Pool, args cli.Args) bench.Exec {
 	var (
 		movie Movie
 		wg    sync.WaitGroup
 	)
 
 	queries := strings.Split(args.Query, ";")
-	m := pqGetMovie(db, queries[0], &movie)
-	d := pqGetDirectors(db, queries[1], &movie)
-	c := pqGetCast(db, queries[2], &movie)
-	r := pqGetReviews(db, queries[3], &movie)
+	m := pgxGetMovie(pool, queries[0], &movie)
+	d := pgxGetDirectors(pool, queries[1], &movie)
+	c := pgxGetCast(pool, queries[2], &movie)
+	r := pgxGetReviews(pool, queries[3], &movie)
 
 	return func(id string) (time.Duration, string) {
 		wg.Add(4)
@@ -83,21 +76,18 @@ func pqExecMovie(db *sql.DB, args cli.Args) bench.Exec {
 	}
 }
 
-func pqGetMovie(
-	db *sql.DB,
+func pgxGetMovie(
+	pool *pgxpool.Pool,
 	query string,
 	movie *Movie,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx := context.TODO()
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
-		row := stmt.QueryRow(id)
-		row.Scan(
+		row := pool.QueryRow(ctx, query, id)
+		err := row.Scan(
 			&movie.ID,
 			&movie.Image,
 			&movie.Title,
@@ -105,31 +95,25 @@ func pqGetMovie(
 			&movie.Description,
 			&movie.AvgRating,
 		)
-
-		err := row.Err()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 }
 
-func pqGetDirectors(
-	db *sql.DB,
+func pgxGetDirectors(
+	pool *pgxpool.Pool,
 	query string,
 	movie *Movie,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ctx := context.TODO()
 	var person MovieQueryPerson
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		movie.Directors = movie.Directors[:0]
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, query, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -150,23 +134,19 @@ func pqGetDirectors(
 	}
 }
 
-func pqGetCast(
-	db *sql.DB,
+func pgxGetCast(
+	pool *pgxpool.Pool,
 	query string,
 	movie *Movie,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ctx := context.TODO()
 	var person MovieQueryPerson
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		movie.Cast = movie.Cast[:0]
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, query, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -187,23 +167,19 @@ func pqGetCast(
 	}
 }
 
-func pqGetReviews(
-	db *sql.DB,
+func pgxGetReviews(
+	pool *pgxpool.Pool,
 	query string,
 	movie *Movie,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ctx := context.TODO()
 	var review MovieQueryReview
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		movie.Reviews = movie.Reviews[:0]
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, query, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -227,16 +203,16 @@ func pqGetReviews(
 	}
 }
 
-func pqExecPerson(db *sql.DB, args cli.Args) bench.Exec {
+func pgxExecPerson(pool *pgxpool.Pool, args cli.Args) bench.Exec {
 	var (
 		person Person
 		wg     sync.WaitGroup
 	)
 
 	queries := strings.Split(args.Query, ";")
-	p := pqGetPerson(db, queries[0], &person)
-	a := pqGetActedIn(db, queries[1], &person)
-	d := pqGetDirected(db, queries[2], &person)
+	p := pgxGetPerson(pool, queries[0], &person)
+	a := pgxGetActedIn(pool, queries[1], &person)
+	d := pgxGetDirected(pool, queries[2], &person)
 
 	return func(id string) (time.Duration, string) {
 		wg.Add(3)
@@ -256,51 +232,42 @@ func pqExecPerson(db *sql.DB, args cli.Args) bench.Exec {
 	}
 }
 
-func pqGetPerson(
-	db *sql.DB,
+func pgxGetPerson(
+	pool *pgxpool.Pool,
 	query string,
 	person *Person,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx := context.TODO()
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
-		row := stmt.QueryRow(id)
-		row.Scan(
+		row := pool.QueryRow(ctx, query, id)
+		err := row.Scan(
 			&person.ID,
 			&person.FullName,
 			&person.Image,
 			&person.Bio,
 		)
-
-		err := row.Err()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 }
 
-func pqGetActedIn(
-	db *sql.DB,
+func pgxGetActedIn(
+	pool *pgxpool.Pool,
 	query string,
 	person *Person,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ctx := context.TODO()
 	var movie PersonQueryMovie
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		person.ActedIn = person.ActedIn[:0]
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, query, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -323,23 +290,19 @@ func pqGetActedIn(
 	}
 }
 
-func pqGetDirected(
-	db *sql.DB,
+func pgxGetDirected(
+	pool *pgxpool.Pool,
 	query string,
 	person *Person,
 ) func(string, *sync.WaitGroup) {
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ctx := context.TODO()
 	var movie PersonQueryMovie
 
 	return func(id string, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		person.Directed = person.Directed[:0]
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, query, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -362,21 +325,17 @@ func pqGetDirected(
 	}
 }
 
-func pqExecUser(db *sql.DB, args cli.Args) bench.Exec {
+func pgxExecUser(pool *pgxpool.Pool, args cli.Args) bench.Exec {
 	var (
 		user   User
 		review UserQueryReview
+		ctx    context.Context = context.TODO()
 	)
-
-	stmt, err := db.Prepare(args.Query)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return func(id string) (time.Duration, string) {
 		start := time.Now()
 
-		rows, err := stmt.Query(id)
+		rows, err := pool.Query(ctx, args.Query, id)
 		if err != nil {
 			log.Fatal(err)
 		}

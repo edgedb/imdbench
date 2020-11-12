@@ -13,7 +13,7 @@ import (
 	"github.com/edgedb/webapp-bench/_go/cli"
 )
 
-func HTTPWorker(args cli.Args) (bench.Exec, bench.Close) {
+func Worker(args cli.Args) (bench.Exec, bench.Close) {
 	url := fmt.Sprintf("http://%s:%d%s", args.Host, args.Port, args.Path)
 
 	client := &fasthttp.Client{}
