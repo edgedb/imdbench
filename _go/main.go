@@ -123,16 +123,19 @@ func doConcurrentWork(
 
 func main() {
 	args := cli.ParseArgs()
-
 	var worker bench.Worker
-	if args.Protocol == "http" {
-		worker = http.HTTPWorker
-	} else if args.Protocol == "postgres" {
-		worker = postgres.PQWorker
-	} else if args.Serialization == "json" {
-		worker = edgedb.JSONWorker
-	} else {
+
+	switch args.Benchmark {
+	case "edgedb_repack_go":
 		worker = edgedb.RepackWorker
+	case "edgedb_json_go":
+		worker = edgedb.JSONWorker
+	case "postgres_pq":
+		worker = postgres.PQWorker
+	case "postgres_pgx":
+		worker = postgres.PGXWorker
+	default:
+		worker = http.Worker
 	}
 
 	doConcurrentWork(worker, args.Warmup, args)

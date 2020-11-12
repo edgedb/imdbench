@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/edgedb/edgedb-go/edgedb"
-	"github.com/edgedb/edgedb-go/edgedb/types"
+	"github.com/edgedb/edgedb-go"
+	"github.com/edgedb/edgedb-go/types"
 
 	"github.com/edgedb/webapp-bench/_go/bench"
 	"github.com/edgedb/webapp-bench/_go/cli"
