@@ -87,58 +87,68 @@ func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 }
 
 func execPerson(client *edgedb.Client, args cli.Args) bench.Exec {
-
-	var person Person
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
+	var (
+		person   Person
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
 	return func(id string) (time.Duration, string) {
-		var err error
 		params["id"], err = types.UUIDFromString(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		start := time.Now()
+		start = time.Now()
 		err = client.QueryOne(ctx, args.Query, &person, params)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		bts, err := json.Marshal(person)
+		bts, err = json.Marshal(person)
 		if err != nil {
 			log.Fatal(err)
 		}
-		duration := time.Since(start)
+		duration = time.Since(start)
 
 		return duration, string(bts)
 	}
 }
 
 func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
-
-	var movie Movie
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
+	var (
+		movie    Movie
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
 	return func(id string) (time.Duration, string) {
-		var err error
 		params["id"], err = types.UUIDFromString(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		start := time.Now()
+		start = time.Now()
 		err = client.QueryOne(ctx, args.Query, &movie, params)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		bts, err := json.Marshal(movie)
+		bts, err = json.Marshal(movie)
 		if err != nil {
 			log.Fatal(err)
 		}
-		duration := time.Since(start)
+		duration = time.Since(start)
 
 		return duration, string(bts)
 	}
@@ -146,28 +156,34 @@ func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
 
 func execUser(client *edgedb.Client, args cli.Args) bench.Exec {
 
-	var user User
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
+	var (
+		user     User
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
 	return func(id string) (time.Duration, string) {
-		var err error
 		params["id"], err = types.UUIDFromString(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		start := time.Now()
+		start = time.Now()
 		err = client.QueryOne(ctx, args.Query, &user, params)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		bts, err := json.Marshal(user)
+		bts, err = json.Marshal(user)
 		if err != nil {
 			log.Fatal(err)
 		}
-		duration := time.Since(start)
+		duration = time.Since(start)
 
 		return duration, string(bts)
 	}
@@ -187,15 +203,21 @@ func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 
 	params := make(map[string]interface{}, 1)
 
+	var (
+		rsp      []byte
+		start    time.Time
+		duration time.Duration
+	)
+
 	exec := func(id string) (time.Duration, string) {
 		params["id"], err = types.UUIDFromString(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		start := time.Now()
-		rsp, err := client.QueryOneJSON(ctx, args.Query, params)
-		duration := time.Since(start)
+		start = time.Now()
+		err = client.QueryOneJSON(ctx, args.Query, &rsp, params)
+		duration = time.Since(start)
 
 		if err != nil {
 			log.Fatal(err)
