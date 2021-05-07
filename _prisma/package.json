@@ -1,0 +1,16 @@
+{
+  "name": "_prisma",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "@prisma/client": "^2.23.0"
+  },
+  "devDependencies": {
+    "prisma": "2.23.0"
+  },
+  "scripts": {
+    "dev": "node ./app.js"
+  }
+}

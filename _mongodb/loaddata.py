@@ -6,9 +6,9 @@
 ##
 
 
+import argparse
+import json
 import pymongo
-
-import dataset
 
 
 def main(data: dict):
@@ -17,12 +17,12 @@ def main(data: dict):
 
     db = client.movies
 
-    ids_map = {}
+    ids_map = {'person': {}, 'user': {}, 'movie': {}}
 
-    users = data['users']
-    reviews = data['reviews']
-    movies = data['movies']
-    people = data['people']
+    users = data['user']
+    reviews = data['review']
+    movies = data['movie']
+    people = data['person']
 
     #############
     # people
@@ -30,19 +30,16 @@ def main(data: dict):
     print(
         f'populating "people" collection with {len(people)} records... ',
         end='', flush=True)
-    people_data = [
-        dict(
-            first_name=p.first_name,
-            middle_name=p.middle_name,
-            last_name=p.last_name,
-            image=p.image,
-            bio=p.bio
-        )
-        for p in people.values()
-    ]
+
+    people_data = []
+    for rec in people:
+        datum = dict(rec)
+        datum.pop('id')
+        people_data.append(datum)
+
     result = db.people.insert_many(people_data)
-    for p, id in zip(people.values(), result.inserted_ids):
-        ids_map[p.image] = id
+    for p, id in zip(people, result.inserted_ids):
+        ids_map['person'][p['id']] = id
     print('done')
 
     #############
@@ -50,16 +47,15 @@ def main(data: dict):
     print(
         f'populating "users" collection with {len(users)} records... ',
         end='', flush=True)
-    users_data = [
-        dict(
-            name=u.name,
-            image=u.image,
-        )
-        for u in users.values()
-    ]
+    users_data = []
+    for rec in users:
+        datum = dict(rec)
+        datum.pop('id')
+        users_data.append(datum)
+
     result = db.users.insert_many(users_data)
-    for u, id in zip(users.values(), result.inserted_ids):
-        ids_map[u.image] = id
+    for u, id in zip(users, result.inserted_ids):
+        ids_map['user'][u['id']] = id
     print('done')
 
     #############
@@ -69,18 +65,18 @@ def main(data: dict):
         end='', flush=True)
     movies_data = [
         dict(
-            title=m.title,
-            description=m.description,
-            year=m.year,
-            image=m.image,
-            directors=[ids_map[people[o].image] for o in m.directors],
-            cast=[ids_map[people[o].image] for o in m.cast],
+            title=m['title'],
+            description=m['description'],
+            year=m['year'],
+            image=m['image'],
+            directors=[ids_map['person'][o] for o in m['directors']],
+            cast=[ids_map['person'][o] for o in m['cast']],
         )
-        for m in movies.values()
+        for m in movies
     ]
     result = db.movies.insert_many(movies_data)
-    for m, id in zip(movies.values(), result.inserted_ids):
-        ids_map[m.image] = id
+    for m, id in zip(movies, result.inserted_ids):
+        ids_map['movie'][m['id']] = id
     print('done')
 
     #############
@@ -90,13 +86,13 @@ def main(data: dict):
         end='', flush=True)
     reviews_data = [
         dict(
-            body=r.body,
-            rating=r.rating,
-            author=ids_map[users[r.author_nid].image],
-            movie=ids_map[movies[r.movie_nid].image],
-            creation_time=r.creation_time,
+            body=r['body'],
+            rating=r['rating'],
+            author=ids_map['user'][r['author']],
+            movie=ids_map['movie'][r['movie']],
+            creation_time=r['creation_time'],
         )
-        for r in reviews.values()
+        for r in reviews
     ]
     db.reviews.insert_many(reviews_data)
     print('done')
@@ -119,4 +115,14 @@ def main(data: dict):
 
 
 if __name__ == '__main__':
-    main(dataset.load())
+    parser = argparse.ArgumentParser(
+        description='Load a specific fixture, old data will be purged.')
+    parser.add_argument('filename', type=str,
+                        help='The JSON dataset file')
+
+    args = parser.parse_args()
+
+    with open(args.filename, 'rt') as f:
+        records = json.load(f)
+
+    main(records)

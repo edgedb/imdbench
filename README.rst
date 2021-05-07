@@ -8,32 +8,35 @@ against different databases and ORMs.
 Installation and Use
 --------------------
 
-1. Make a Python 3.7 venv.
+1. Make a Python 3.8 venv (to be compatible with ``synth``).
 
 2. Install dependencies from ``requirements.txt``.
 
-3. Install EdgeDB, MongoDB, PostgreSQL 11, Golang toolchain.
+3. Install EdgeDB, MongoDB, PostgreSQL 13, Golang toolchain.
 
-4. Install NodeJS (at least v10.15.3) and TypeScript toolchains.
+4. Install NodeJS (at least v14.16.0) and TypeScript toolchains.
 
 5. Install docker and docker-compose (needed for Hasura and Prisma benchmarks).
 
-6. Install Prisma 1.26.4 (later versions don't work with timestamptz) via
-   ``npm i -g prisma@1.26.4``.
+6. Install Prisma (later versions don't work with timestamptz) via
+   ``npm install prisma -D``.
 
-7. Configure PostgreSQL similarly to EdgeDB:
+7. Install ``synth``.
+   https://openquery-io.github.io/synth/getting_started/installation
+
+8. Configure PostgreSQL similarly to EdgeDB:
 
    * ``shared_buffers``: 20% of RAM.
    * ``effective_cache_size``: 50% of RAM.
    * ``query_work_mem``: 6MB.
 
-8. Load data via ``$ make load``.
+9. Load data via ``$ make load``.
 
-9. Compile Go benchmarks: ``$ make go``
+10. Compile Go benchmarks: ``$ make go``
 
-10. Compile TypeScript benchmarks: ``$ make ts``
+11. Compile TypeScript benchmarks: ``$ make ts``
 
-11. Run benchmarks via ``bench.py``, for example:
+12. Run benchmarks via ``bench.py``, for example:
 
    .. code-block::
 

@@ -17,7 +17,7 @@ import (
 )
 
 func PQWorker(args cli.Args) (bench.Exec, bench.Close) {
-	db, err := sql.Open("postgres", "user=postgres_bench dbname=postgres_bench password=edgedbbenchmark")
+	db, err := sql.Open("postgres", "user=postgres_bench dbname=postgres_bench password=edgedbbenchmark sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}

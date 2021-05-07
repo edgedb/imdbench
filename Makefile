@@ -1,7 +1,7 @@
 .PHONY: all load new-dataset go load-postgres-helpers reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
-.PHONY: load-loopback load-typeorm load-sequelize
-.PHONY: load-graphql load-hasura load-prisma load-postgraphile
+.PHONY: load-loopback load-typeorm load-sequelize load-prisma
+.PHONY: load-graphql load-hasura load-postgraphile
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -15,23 +15,52 @@ BUILD=$(abspath dataset/build/)
 people?=100000
 users?=100000
 reviews?=500000
+# about 7% of people are going to be directors
+directors=$(shell expr ${people} \* 7 / 100)
+# there's some overlap between directors and actors
+directorsonly=$(shell expr ${people} \* 6 / 100)
+movies=$(shell expr ${people} / 4)
+moviesplus=$(shell expr ${movies} + 1)
 
 
 all:
 	@echo "pick a target"
 
-$(BUILD)/dataset.json: $(BUILD)/dataset.pickle.gz
-	$(PP) -m dataset.jsonser
+$(BUILD)/edbdataset.json:
+	cd dataset && $(PP) cleandata.py
+
+$(BUILD)/dataset.json:
+	cd dataset && $(PP) cleandata.py
 
 new-dataset:
-	$(PP) -m dataset $(people) $(users) $(reviews)
+	cd dataset && mkdir -p movies
+	cd dataset && cat templates/user.json \
+		| sed "s/%USERS%/$(users)/" > movies/user.json
+	cd dataset && cat templates/person.json \
+		| sed "s/%PEOPLE%/$(people)/" \
+		| sed "s/%STARTAT%/$(directorsonly)/" > movies/person.json
+	cd dataset && cat templates/director.json \
+		| sed "s/%DIRECTORS%/$(directors)/" > movies/director.json
+	cd dataset && cat templates/movie.json \
+		| sed "s/%MOVIES%/$(movies)/" > movies/movie.json
+	cd dataset && cat templates/review.json \
+		| sed "s/%REVIEWS%/$(reviews)/" \
+		| sed "s/%MOVIES%/$(moviesplus)/" > movies/review.json
+	cd dataset && synth generate movies > $(BUILD)/protodataset.json
+	cd dataset && $(PP) cleandata.py
 
-load-mongodb:
-	$(PP) -m _mongodb.loaddata
+load-mongodb: $(BUILD)/edbdataset.json
+	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
-load-edgedb:
-	$(PP) -m _edgedb.initdb
-	$(PP) -m _edgedb.loaddata
+load-edgedb: $(BUILD)/edbdataset.json
+	-cd _edgedb && edgedb project init
+	cd _edgedb && edgedb -c 'CREATE DATABASE temp'
+	cd _edgedb && edgedb -d temp -c 'DROP DATABASE edgedb'
+	cd _edgedb && edgedb -d temp -c 'CREATE DATABASE edgedb'
+	cd _edgedb && edgedb -c 'DROP DATABASE temp'
+	cd _edgedb && edgedb migrate
+	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+	cd _edgedb && edgedb server status --json edgedb_bench > bench_cfg.json
 
 load-django: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -70,7 +99,7 @@ load-postgres: reset-postgres $(BUILD)/dataset.json
 
 reset-postgres:
 	-docker stop hasura-bench
-	-docker stop prisma-bench && docker rm prisma-bench
+	-docker stop postgraphile-bench
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
@@ -116,30 +145,14 @@ load-hasura: load-postgres-helpers
 	cd _hasura && ./send-metadata.sh
 
 load-prisma: load-postgres-helpers
-	[ "$(docker ps -q -f name=prisma-bench)" ] && docker stop prisma-bench \
-		&& docker rm prisma-bench || true
-	cd _prisma && docker-compose up -d
-	sleep 5s
-	cd _prisma && ../node_modules/.bin/prisma deploy
+	cd _prisma && echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:5432/postgres_bench?schema=public"' > .env
+	cd _prisma && npx prisma generate && npm i
 
 load-postgraphile:
 	$(PSQL) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
 	cd _postgraphile && docker build -t postgraphile_bench:latest .
 	cd _postgraphile && ./run_postgraphile.sh
-
-load-loopback: $(BUILD)/dataset.json
-	$(PSQL) -U postgres -tc \
-		"DROP DATABASE IF EXISTS lb_bench;"
-	$(PSQL) -U postgres -tc \
-		"DROP ROLE IF EXISTS lb_bench;"
-	$(PSQL) -U postgres -tc \
-		"CREATE ROLE lb_bench WITH \
-			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
-		"CREATE DATABASE lb_bench WITH OWNER = lb_bench;"
-
-	cd _loopback && npm i && node server/loaddata.js $(BUILD)/dataset.json
 
 load-typeorm: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -170,7 +183,7 @@ load-sequelize: $(BUILD)/dataset.json
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 	  load-loopback load-typeorm load-sequelize
 
-load-graphql: load-hasura load-prisma load-postgraphql
+load-graphql: load-hasura load-postgraphile
 
 go:
 	make -C _go

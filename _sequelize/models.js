@@ -77,9 +77,9 @@ class App extends Sequelize {
         get: function() {
           let val =  (
             this.middle_name ?
-            this.first_name + ' ' + this.middle_name + ' ' + this.last_name
+            `${this.first_name} ${this.middle_name} ${this.last_name}`
             :
-            this.first_name + ' ' + this.last_name
+            `${this.first_name} ${this.last_name}`
           );
 
           return val;

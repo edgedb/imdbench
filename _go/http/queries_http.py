@@ -10,7 +10,7 @@ import edgedb
 
 
 def get_port(ctx):
-    return 8889
+    return ctx.edgedb_port
 
 
 def get_queries(ctx):
@@ -37,9 +37,7 @@ def get_queries(ctx):
 
 
 def connect(ctx):
-    return edgedb.connect(
-        user=ctx.edgedb_user, database='edgedb_bench',
-        host=ctx.db_host, port=ctx.edgedb_port)
+    return edgedb.connect('edgedb_bench')
 
 
 def close(ctx, conn):
@@ -72,7 +70,7 @@ EDGEQL_GET_USER = '''
         name,
         image,
         latest_reviews := (
-            WITH UserReviews := User.<author
+            WITH UserReviews := User.<author[IS Review]
             SELECT UserReviews {
                 id,
                 body,
@@ -117,7 +115,7 @@ EDGEQL_GET_MOVIE = '''
             THEN Movie.cast.last_name,
 
         reviews := (
-            SELECT Movie.<movie {
+            SELECT Movie.<movie[IS Review] {
                 id,
                 body,
                 rating,
@@ -142,7 +140,7 @@ EDGEQL_GET_PERSON = '''
         bio,
 
         acted_in := (
-            WITH M := Person.<cast
+            WITH M := Person.<cast[IS Movie]
             SELECT M {
                 id,
                 image,
@@ -154,7 +152,7 @@ EDGEQL_GET_PERSON = '''
         ),
 
         directed := (
-            WITH M := Person.<directors
+            WITH M := Person.<directors[IS Movie]
             SELECT M {
                 id,
                 image,

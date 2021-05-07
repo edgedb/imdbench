@@ -6,11 +6,11 @@
 ##
 
 
+import argparse
 import asyncio
 import edgedb
+import json
 import progress.bar
-
-import dataset
 
 
 class Pool:
@@ -36,8 +36,7 @@ class Pool:
                 asyncio.create_task(self._worker()))
 
     async def _worker(self):
-        con = await edgedb.async_connect(
-            user='edgedb', database='edgedb_bench')
+        con = await edgedb.async_connect('edgedb_bench')
 
         try:
             while True:
@@ -80,10 +79,14 @@ class Pool:
 async def import_data(data: dict):
     concurrency = 32
 
-    users = data['users']
-    reviews = data['reviews']
-    movies = data['movies']
-    people = data['people']
+    users = data['user']
+    reviews = data['review']
+    movies = data['movie']
+    people = data['person']
+
+    id2image_maps = {}
+    for cat in ['user', 'person', 'movie']:
+        id2image_maps[cat] = {r['id']: r['image'] for r in data[cat]}
 
     ppl_insert_query = r'''
         INSERT Person {
@@ -99,13 +102,13 @@ async def import_data(data: dict):
         (
             (ppl_insert_query,),
             dict(
-                first_name=p.first_name,
-                middle_name=p.middle_name,
-                last_name=p.last_name,
-                image=p.image,
-                bio=p.bio
+                first_name=p['first_name'],
+                middle_name=p['middle_name'],
+                last_name=p['last_name'],
+                image=p['image'],
+                bio=p['bio']
             )
-        ) for p in people.values()
+        ) for p in people
     ]
 
     users_insert_query = r'''
@@ -119,10 +122,10 @@ async def import_data(data: dict):
         (
             (users_insert_query,),
             dict(
-                name=u.name,
-                image=u.image,
+                name=u['name'],
+                image=u['image'],
             )
-        ) for u in users.values()
+        ) for u in users
     ]
 
     movies_ord_insert_query = r'''
@@ -188,17 +191,17 @@ async def import_data(data: dict):
         (
             (
                 (movies_ord_insert_query
-                    if m.nid % 10 else movies_unord_insert_query),
+                    if m['id'] % 10 else movies_unord_insert_query),
             ),
             dict(
-                title=m.title,
-                description=m.description,
-                year=m.year,
-                image=m.image,
-                directors=nid2image(people, m.directors),
-                cast=nid2image(people, m.cast),
+                title=m['title'],
+                description=m['description'],
+                year=m['year'],
+                image=m['image'],
+                directors=id2image(id2image_maps['person'], m['directors']),
+                cast=id2image(id2image_maps['person'], m['cast']),
             )
-        ) for m in movies.values()
+        ) for m in movies
     ]
 
     reviews_insert_query = r'''
@@ -207,7 +210,7 @@ async def import_data(data: dict):
             rating := <int64>$rating,
             author := (SELECT User FILTER .image = <str>$uimage LIMIT 1),
             movie := (SELECT Movie FILTER .image = <str>$mimage LIMIT 1),
-            creation_time := <cal::local_datetime>$creation_time,
+            creation_time := <cal::local_datetime><str>$creation_time,
         };
     '''
 
@@ -215,13 +218,13 @@ async def import_data(data: dict):
         (
             (reviews_insert_query,),
             dict(
-                body=r.body,
-                rating=r.rating,
-                uimage=users[r.author_nid].image,
-                mimage=movies[r.movie_nid].image,
-                creation_time=r.creation_time,
+                body=r['body'],
+                rating=r['rating'],
+                uimage=id2image_maps['user'][r['author']],
+                mimage=id2image_maps['movie'][r['movie']],
+                creation_time=r['creation_time'][:-6],
             )
-        ) for r in reviews.values()
+        ) for r in reviews
     ]
 
     await Pool.map(people_data, concurrency=concurrency, label='people')
@@ -230,13 +233,17 @@ async def import_data(data: dict):
     await Pool.map(reviews_data, concurrency=concurrency, label='reviews')
 
 
-def nid2image(items, nids):
-    result = []
-    for nid in nids:
-        result.append(items[nid].image)
-
-    return result
+def id2image(idmap, ids):
+    return [idmap[val] for val in ids]
 
 
 if __name__ == '__main__':
-    asyncio.run(import_data(dataset.load()))
+    parser = argparse.ArgumentParser(description='Load EdgeDB dataset.')
+    parser.add_argument('filename', type=str,
+                        help='The JSON dataset file')
+    args = parser.parse_args()
+
+    with open(args.filename, 'rt') as f:
+        records = json.load(f)
+
+    asyncio.run(import_data(records))

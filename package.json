@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=6"
+    "node": ">=14"
   },
   "repository": {
     "type": "",
@@ -12,10 +12,13 @@
   "license": "UNLICENSED",
   "description": "webapp-bench-js",
   "dependencies": {
-    "argparse": "^1.0.10",
-    "edgedb": "^0.7.4",
+    "@prisma/client": "^2.23.0",
+    "argparse": "^2.0.1",
+    "edgedb": "^0.14.0",
     "lodash": "^4.17.15",
-    "pg": "^7.11.0",
-    "prisma": "~1.26.6"
+    "pg": "^8.6.0"
+  },
+  "devDependencies": {
+    "prisma": "^2.23.0"
   }
 }

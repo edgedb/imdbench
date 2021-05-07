@@ -46,6 +46,17 @@ def run_query(ctx, benchmark, queryname):
     else:
         port = ctx.pg_port
 
+    # If we're running Prisma benchmark we need to update the `.env`
+    # file with the pool size and timeout info.
+    if benchmark == 'postgres_prisma_js':
+        with open('_prisma/.env', 'wt') as f:
+            f.write(
+                f'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@'
+                f'localhost:5432/postgres_bench'
+                f'?schema=public'
+                f'&connection_limit={ctx.concurrency}'
+                f'&pool_timeout={ctx.timeout}"')
+
     cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
            '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
            '--output-format', 'json', '--host', ctx.db_host,

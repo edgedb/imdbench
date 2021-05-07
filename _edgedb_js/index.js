@@ -5,13 +5,7 @@ const queries = require("./queries");
 
 class ConnectionJSON {
   constructor(opts) {
-    this.connection = connect({
-      host: "localhost",
-      port: 5656,
-      user: "edgedb",
-      database: "edgedb_bench",
-      ...(opts || {})
-    });
+    this.connection = connect("edgedb_bench");
   }
 
   async connect() {
@@ -21,15 +15,15 @@ class ConnectionJSON {
   }
 
   async userDetails(id) {
-    return await this.connection.fetchOneJSON(queries.user, { id: id });
+    return await this.connection.queryOneJSON(queries.user, { id: id });
   }
 
   async personDetails(id) {
-    return await this.connection.fetchOneJSON(queries.person, { id: id });
+    return await this.connection.queryOneJSON(queries.person, { id: id });
   }
 
   async movieDetails(id) {
-    return await this.connection.fetchOneJSON(queries.movie, { id: id });
+    return await this.connection.queryOneJSON(queries.movie, { id: id });
   }
 
   async benchQuery(query, id) {
@@ -46,13 +40,7 @@ module.exports.ConnectionJSON = ConnectionJSON;
 
 class ConnectionRepack {
   constructor(opts) {
-    this.connection = connect({
-      host: "localhost",
-      port: 5656,
-      user: "edgedb",
-      database: "edgedb_bench",
-      ...(opts || {})
-    });
+    this.connection = connect("edgedb_bench");
   }
 
   async connect() {
@@ -63,19 +51,19 @@ class ConnectionRepack {
 
   async userDetails(id) {
     return JSON.stringify(
-      await this.connection.fetchOne(queries.user, { id: id })
+      await this.connection.queryOne(queries.user, { id: id })
     );
   }
 
   async personDetails(id) {
     return JSON.stringify(
-      await this.connection.fetchOne(queries.person, { id: id })
+      await this.connection.queryOne(queries.person, { id: id })
     );
   }
 
   async movieDetails(id) {
     return JSON.stringify(
-      await this.connection.fetchOne(queries.movie, { id: id })
+      await this.connection.queryOne(queries.movie, { id: id })
     );
   }
 
@@ -107,14 +95,7 @@ class App {
     }
 
     for (let i = 0; i < pool; i++) {
-      this.pool.push(
-        new Connection({
-          host: host,
-          port: port,
-          username: "edgedb",
-          database: "edgedb_bench"
-        })
-      );
+      this.pool.push(new Connection());
     }
   }
 
@@ -127,7 +108,7 @@ class App {
   }
 
   async getIDs() {
-    var ids = await this.pool[0].connection.fetchOne(`
+    var ids = await this.pool[0].connection.queryOne(`
       WITH
           U := User {id, r := random()},
           M := Movie {id, r := random()},

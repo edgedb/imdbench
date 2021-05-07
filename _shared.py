@@ -7,6 +7,7 @@
 
 
 import argparse
+import json
 import sys
 import types
 import typing
@@ -20,7 +21,6 @@ from _go.postgres import queries_pq as postgres_pq_golang
 from _go.postgres import queries_pgx as postgres_pgx_golang
 from _go.http import queries_graphql as edgedb_graphql_golang
 from _go.http import queries_hasura as postgres_hasura_golang
-from _go.http import queries_prisma as postgres_prisma_golang
 from _go.http import queries_postgraphile as postgres_postgraphile_golang
 from _go.http import queries_http as edgedb_edgeql_golang
 from _django import queries as django_queries
@@ -86,9 +86,6 @@ BENCHMARKS = {
     'postgres_hasura_go':
         bench('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
 
-    'postgres_prisma_go':
-        bench('go', 'Postgres+Prisma Go HTTP', postgres_prisma_golang),
-
     'postgres_postgraphile_go':
         bench('go', 'Postgres+Postgraphile Go HTTP',
               postgres_postgraphile_golang),
@@ -99,9 +96,6 @@ BENCHMARKS = {
     'edgedb_repack_js':
         bench('js', 'EdgeDB NodeJS Objects', None),
 
-    'loopback':
-        bench('js', 'Loopback', None),
-
     'typeorm':
         bench('js', 'Typeorm', None),
 
@@ -110,6 +104,9 @@ BENCHMARKS = {
 
     'postgres_js':
         bench('js', 'PostgreSQL NodeJS', None),
+
+    'postgres_prisma_js':
+        bench('js', 'Postgres+Prisma NodeJS', None),
 }
 
 
@@ -149,11 +146,8 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='PostgreSQL server port')
 
     parser.add_argument(
-        '--edgedb-port', type=int, default=5656,
+        '--edgedb-port', type=int, default=None,
         help='EdgeDB server port')
-    parser.add_argument(
-        '--edgedb-graphql-port', type=int, default=8888,
-        help='EdgeDB GraphQL port')
     parser.add_argument(
         '--edgedb-user', type=str, default='edgedb',
         help='PostgreSQL server user')
@@ -187,6 +181,12 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
 
     args = parser.parse_args()
     argv = sys.argv[1:]
+
+    if args.edgedb_port is None:
+        # read the port from the `_edgedb/bench_cfg.json`
+        with open('_edgedb/bench_cfg.json', 'rt') as f:
+            edgedbcfg = json.load(f)
+            args.edgedb_port = edgedbcfg['port']
 
     if not args.queries:
         args.queries = QUERIES
