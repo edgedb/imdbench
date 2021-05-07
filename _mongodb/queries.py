@@ -168,7 +168,10 @@ def get_movie(db, id):
         {
             '$group': {
                 '_id': "$_id",
+                'title': {'$first': "$title"},
+                'year': {'$first': "$year"},
                 'image': {'$first': "$image"},
+                'description': {'$first': "$description"},
                 'cast': {'$first': "$cast"},
                 'directors': {'$first': "$directors"},
                 'reviews': {'$push': "$reviews"}
@@ -241,6 +244,9 @@ def get_movie(db, id):
                 },
                 'reviews': 1,
                 'image': 1,
+                'title': 1,
+                'year': 1,
+                'description': 1,
                 'avg_rating': {'$avg': '$reviews.rating'}
             }
         }

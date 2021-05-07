@@ -29,6 +29,9 @@ async function bulk_insert(conn, data, Model) {
             _.forEach(raw, (val, key) => {
                 if (_.endsWith(key, '_id')) {
                     model[key.slice(0, -3)] = {id: val};
+                } else if (key == 'list_order' && val == null) {
+                    // default list_order to '0' instead of 'null'
+                    model[key] = 0;
                 } else {
                     model[key] = val;
                 }

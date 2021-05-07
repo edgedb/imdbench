@@ -11,25 +11,17 @@
 const argparse = require("argparse");
 const _ = require("lodash");
 const process = require("process");
-const loopbackapp = require("./_loopback/server/bench");
 const typeormapp = require("./_typeorm/build/index");
 const sequelizeapp = require("./_sequelize/index");
 const pgapp = require("./_postgres/index");
 const edgedbapp = require("./_edgedb_js/index");
+const prismaapp = require("./_prisma/index");
 
 async function getApp(args) {
   var app;
   var ncon = args.concurrency;
 
-  if (args.orm == "loopback") {
-    app = loopbackapp;
-    await app.boot({
-      host: args.host,
-      port: args.port,
-      min: ncon,
-      max: ncon
-    });
-  } else if (args.orm == "typeorm") {
+  if (args.orm == "typeorm") {
     app = new typeormapp.App({
       host: args.host,
       port: args.port,
@@ -45,6 +37,8 @@ async function getApp(args) {
         max: ncon
       }
     });
+  } else if (args.orm == "postgres_prisma_js") {
+    app = new prismaapp.App();
   } else if (args.orm == "postgres_js") {
     app = new pgapp.App({
       host: args.host,
@@ -225,79 +219,79 @@ async function runner(args) {
 
 async function main() {
   let parser = argparse.ArgumentParser({
-    addHelp: true,
+    add_help: true,
     description: "async pg driver benchmark [concurrent]"
   });
 
-  parser.addArgument("--concurrency", {
+  parser.add_argument("--concurrency", {
     type: Number,
-    defaultValue: 10,
+    default: 10,
     help: "number of concurrent connections"
   });
-  parser.addArgument("--duration", {
+  parser.add_argument("--duration", {
     type: Number,
-    defaultValue: 30,
+    default: 30,
     help: "duration of test in seconds"
   });
-  parser.addArgument("--timeout", {
+  parser.add_argument("--timeout", {
     type: Number,
-    defaultValue: 2,
+    default: 2,
     help: "server timeout in seconds"
   });
-  parser.addArgument("--warmup-time", {
+  parser.add_argument("--warmup-time", {
     type: Number,
-    defaultValue: 5,
+    default: 5,
     help: "duration of warmup period for each benchmark in seconds"
   });
-  parser.addArgument("--output-format", {
+  parser.add_argument("--output-format", {
     type: String,
-    defaultValue: "text",
+    default: "text",
     help: "output format",
     choices: ["text", "json"]
   });
-  parser.addArgument("--host", {
+  parser.add_argument("--host", {
     type: String,
-    defaultValue: "127.0.0.1",
+    default: "127.0.0.1",
     help: "PostgreSQL server host"
   });
-  parser.addArgument("--port", {
+  parser.add_argument("--port", {
     type: Number,
-    defaultValue: 5432,
+    default: 5432,
     help: "PostgreSQL server port"
   });
-  parser.addArgument("--user", {
+  parser.add_argument("--user", {
     type: String,
     help: "PostgreSQL server user"
   });
-  parser.addArgument("--nsamples", {
+  parser.add_argument("--nsamples", {
     type: Number,
-    defaultValue: 0,
+    default: 0,
     help: "number of result samples to return"
   });
-  parser.addArgument("--number-of-ids", {
+  parser.add_argument("--number-of-ids", {
     type: Number,
-    defaultValue: 250,
+    default: 250,
     help: "number of random IDs to fetch data with in benchmarks"
   });
-  parser.addArgument("--query", {
+  parser.add_argument("--query", {
     type: String,
     help: "specific query to run",
     choices: ["get_movie", "get_person", "get_user"]
   });
-  parser.addArgument("orm", {
+  parser.add_argument("orm", {
     type: String,
     help: "ORM implementation to use",
     choices: [
-      "loopback",
       "typeorm",
       "sequelize",
       "postgres_js",
+      "postgres_prisma_js",
       "edgedb_json_js",
       "edgedb_repack_js"
     ]
   });
 
-  let args = parser.parseArgs();
+  let args = parser.parse_args();
   await runner(args);
 }
 

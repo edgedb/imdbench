@@ -2,7 +2,7 @@
   "name": "_edgedb_js",
   "version": "1.0.0",
   "engines": {
-    "node": ">=6"
+    "node": ">=14"
   },
   "repository": {
     "type": "",
@@ -11,6 +11,6 @@
   "license": "UNLICENSED",
   "description": "_edgedb_js",
   "dependencies": {
-    "edgedb": "^0.7.4"
+    "edgedb": "^0.14.0"
   }
 }

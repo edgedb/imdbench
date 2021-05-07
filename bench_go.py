@@ -46,6 +46,10 @@ def run_query(ctx, benchmark, queryname, querydata, port):
 
     if 'hasura' in benchmark:
         path = '/v1/graphql'
+    elif 'edgedb_graphql_go' == benchmark:
+        path = "/db/edgedb/graphql"
+    elif 'edgedb_http_go' == benchmark:
+        path = "/db/edgedb/edgeql"
     else:
         path = "/"
 

@@ -14,8 +14,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/edgedb/edgedb-go v0.0.0-20201118172942-0f862e1f4784 h1:VmcEis7tMhI2D4xCjkrWQKfoWbdaYgYOtssVsKpg244=
-github.com/edgedb/edgedb-go v0.0.0-20201118172942-0f862e1f4784/go.mod h1:ripKL5CKHSokscK3u7efWVq+DmjL1vJI0EJuv1wARDU=
+github.com/edgedb/edgedb-go v0.6.0 h1:0G1dUku1JnG+yOFHguYbMVDeaQ5lnW/iaNdODeG92P0=
+github.com/edgedb/edgedb-go v0.6.0/go.mod h1:BFQ/NTBzghRUxddvF7HnY4YQbYL4Ywdenb/XBnaHaD4=
 github.com/fatih/pool v3.0.0+incompatible h1:3xXzI/t5o6aEU/R+xe7ed44CTw41lV3oB0gB5pNXS5U=
 github.com/fatih/pool v3.0.0+incompatible/go.mod h1:v+kkrv3f2oJ1P9NHaKArMYdTVtNCwfR0DlXwnhA2L4k=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=

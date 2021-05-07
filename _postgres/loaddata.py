@@ -6,12 +6,13 @@
 ##
 
 
+import argparse
 import asyncio
-import progress.bar
-
 import asyncpg
-
-import dataset
+import collections
+import datetime
+import json
+import progress.bar
 
 
 class Pool:
@@ -84,49 +85,49 @@ class Pool:
 async def import_data(data: dict):
     concurrency = 32
 
-    users = data['users']
-    reviews = data['reviews']
-    movies = data['movies']
-    people = data['people']
+    users = data['user']
+    reviews = data['review']
+    movies = data['movie']
+    people = data['person']
 
     users_data = [
         (
-            lambda id, image=u.image: map_image(id, image),
+            lambda realid, origid=u['id']: map_ids(realid, origid, 'user'),
             '''
             INSERT INTO users(name, image) VALUES ($1, $2) RETURNING id;
             ''',
-            u.name,
-            u.image,
-        ) for u in users.values()
+            u['name'],
+            u['image'],
+        ) for u in users
     ]
 
     movies_data = [
         (
-            lambda id, image=m.image: map_image(id, image),
+            lambda realid, origid=m['id']: map_ids(realid, origid, 'movie'),
             '''
             INSERT INTO movies(image, title, year, description)
             VALUES ($1, $2, $3, $4) RETURNING id;
             ''',
-            m.image,
-            m.title,
-            m.year,
-            m.description,
-        ) for m in movies.values()
+            m['image'],
+            m['title'],
+            m['year'],
+            m['description'],
+        ) for m in movies
     ]
 
     people_data = [
         (
-            lambda id, image=p.image: map_image(id, image),
+            lambda realid, origid=p['id']: map_ids(realid, origid, 'person'),
             '''
             INSERT INTO persons(first_name, middle_name, last_name, image, bio)
             VALUES ($1, $2, $3, $4, $5) RETURNING id;
             ''',
-            p.first_name,
-            p.middle_name,
-            p.last_name,
-            p.image,
-            p.bio
-        ) for p in people.values()
+            p['first_name'],
+            p['middle_name'],
+            p['last_name'],
+            p['image'],
+            p['bio'],
+        ) for p in people
     ]
 
     await Pool.map(users_data, concurrency=concurrency, label='users')
@@ -140,10 +141,10 @@ async def import_data(data: dict):
             INSERT INTO directors(list_order, person_id, movie_id)
             VALUES ($1, $2, $3);
             ''',
-            None,
-            image2id[people[d].image],
-            image2id[m.image],
-        ) for m in movies.values() for d in m.directors
+            d['list_order'],
+            ids_map['person'][d['person_id']],
+            ids_map['movie'][d['movie_id']],
+        ) for d in data['directors']
     ]
 
     actors_data = [
@@ -153,10 +154,10 @@ async def import_data(data: dict):
             INSERT INTO actors(list_order, person_id, movie_id)
             VALUES ($1, $2, $3);
             ''',
-            ci if m.nid % 10 else None,
-            image2id[people[c].image],
-            image2id[m.image],
-        ) for m in movies.values() for ci, c in enumerate(m.cast)
+            c.get('list_order', None),
+            ids_map['person'][c['person_id']],
+            ids_map['movie'][c['movie_id']],
+        ) for c in data['cast']
     ]
 
     await Pool.map(directors_data, concurrency=concurrency, label='directors')
@@ -170,24 +171,47 @@ async def import_data(data: dict):
                 reviews(body, rating, creation_time, author_id, movie_id)
             VALUES ($1, $2, $3, $4, $5);
             ''',
-            r.body,
-            r.rating,
-            r.creation_time,
-            image2id[users[r.author_nid].image],
-            image2id[movies[r.movie_nid].image],
-        ) for r in reviews.values()
+            r['body'],
+            r['rating'],
+            r['creation_time'],
+            ids_map['user'][r['author_id']],
+            ids_map['movie'][r['movie_id']],
+        ) for r in reviews
     ]
 
     await Pool.map(reviews_data, concurrency=concurrency, label='reviews')
 
 
-image2id = {}
+ids_map = {'person': {}, 'user': {}, 'movie': {}}
 
 
-def map_image(id, image):
-    assert image not in image2id
-    image2id[image] = id
+def map_ids(realid, origid, cat):
+    assert origid not in ids_map[cat]
+    ids_map[cat][origid] = realid
 
 
 if __name__ == '__main__':
-    asyncio.run(import_data(dataset.load()))
+    parser = argparse.ArgumentParser(
+        description='Load a specific fixture, old data will be purged.')
+    parser.add_argument('filename', type=str,
+                        help='The JSON dataset file')
+
+    args = parser.parse_args()
+
+    with open(args.filename, 'rt') as f:
+        records = json.load(f)
+
+    data = collections.defaultdict(list)
+    for rec in records:
+        rtype = rec['model'].split('.')[-1]
+        datum = rec['fields']
+        if 'pk' in rec:
+            datum['id'] = rec['pk']
+        # convert datetime
+        if rtype == 'review':
+            datum['creation_time'] = datetime.datetime.fromisoformat(
+                datum['creation_time'])
+
+        data[rtype].append(datum)
+
+    asyncio.run(import_data(data))

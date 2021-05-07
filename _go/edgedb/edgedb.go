@@ -8,21 +8,20 @@ import (
 	"time"
 
 	"github.com/edgedb/edgedb-go"
-	"github.com/edgedb/edgedb-go/types"
 
 	"github.com/edgedb/webapp-bench/_go/bench"
 	"github.com/edgedb/webapp-bench/_go/cli"
 )
 
 type User struct {
-	ID            types.UUID `json:"id" edgedb:"id"`
+	ID            edgedb.UUID `json:"id" edgedb:"id"`
 	Name          string     `json:"name" edgedb:"name"`
 	Image         string     `json:"image" edgedb:"image"`
 	LatestReviews []Review   `json:"latest_reviews" edgedb:"latest_reviews"`
 }
 
 type Movie struct {
-	ID          types.UUID `json:"id" edgedb:"id"`
+	ID          edgedb.UUID `json:"id" edgedb:"id"`
 	Image       string     `json:"image" edgedb:"image"`
 	Title       string     `json:"title" edgedb:"title"`
 	Year        int64      `json:"year" edgedb:"year"`
@@ -34,7 +33,7 @@ type Movie struct {
 }
 
 type Person struct {
-	ID       types.UUID `json:"id" edgedb:"id"`
+	ID       edgedb.UUID `json:"id" edgedb:"id"`
 	FullName string     `json:"full_name" edgedb:"full_name"`
 	Image    string     `json:"image" edgedb:"image"`
 	Bio      string     `json:"bio" edgedb:"bio"`
@@ -43,7 +42,7 @@ type Person struct {
 }
 
 type Review struct {
-	ID     types.UUID `json:"id" edgedb:"id"`
+	ID     edgedb.UUID `json:"id" edgedb:"id"`
 	Body   string     `json:"body" edgedb:"body"`
 	Rating int64      `json:"rating" edgedb:"rating"`
 	Movie  Movie      `json:"movie" edgedb:"movie"`
@@ -52,12 +51,7 @@ type Review struct {
 
 func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	ctx := context.TODO()
-	client, err := edgedb.Connect(ctx, edgedb.Options{
-		Host:     args.Host,
-		Port:     args.Port,
-		User:     "edgedb",
-		Database: "edgedb_bench",
-	})
+	pool, err := edgedb.ConnectDSN(ctx, "edgedb_bench", edgedb.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,17 +61,17 @@ func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 
 	switch queryType {
 	case "Person":
-		exec = execPerson(client, args)
+		exec = execPerson(pool, args)
 	case "Movie":
-		exec = execMovie(client, args)
+		exec = execMovie(pool, args)
 	case "User":
-		exec = execUser(client, args)
+		exec = execUser(pool, args)
 	default:
 		log.Fatalf("unknown query type %q", queryType)
 	}
 
 	close = func() {
-		err := client.Close()
+		err := pool.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -86,7 +80,7 @@ func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	return exec, close
 }
 
-func execPerson(client *edgedb.Client, args cli.Args) bench.Exec {
+func execPerson(pool *edgedb.Pool, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
@@ -99,13 +93,13 @@ func execPerson(client *edgedb.Client, args cli.Args) bench.Exec {
 	)
 
 	return func(id string) (time.Duration, string) {
-		params["id"], err = types.UUIDFromString(id)
+		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		start = time.Now()
-		err = client.QueryOne(ctx, args.Query, &person, params)
+		err = pool.QueryOne(ctx, args.Query, &person, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -120,7 +114,7 @@ func execPerson(client *edgedb.Client, args cli.Args) bench.Exec {
 	}
 }
 
-func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
+func execMovie(pool *edgedb.Pool, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
@@ -133,13 +127,13 @@ func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
 	)
 
 	return func(id string) (time.Duration, string) {
-		params["id"], err = types.UUIDFromString(id)
+		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		start = time.Now()
-		err = client.QueryOne(ctx, args.Query, &movie, params)
+		err = pool.QueryOne(ctx, args.Query, &movie, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -154,7 +148,7 @@ func execMovie(client *edgedb.Client, args cli.Args) bench.Exec {
 	}
 }
 
-func execUser(client *edgedb.Client, args cli.Args) bench.Exec {
+func execUser(pool *edgedb.Pool, args cli.Args) bench.Exec {
 
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
@@ -168,13 +162,13 @@ func execUser(client *edgedb.Client, args cli.Args) bench.Exec {
 	)
 
 	return func(id string) (time.Duration, string) {
-		params["id"], err = types.UUIDFromString(id)
+		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		start = time.Now()
-		err = client.QueryOne(ctx, args.Query, &user, params)
+		err = pool.QueryOne(ctx, args.Query, &user, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -191,12 +185,7 @@ func execUser(client *edgedb.Client, args cli.Args) bench.Exec {
 
 func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	ctx := context.TODO()
-	client, err := edgedb.Connect(ctx, edgedb.Options{
-		Host:     args.Host,
-		Port:     args.Port,
-		User:     "edgedb",
-		Database: "edgedb_bench",
-	})
+	pool, err := edgedb.ConnectDSN(ctx, "edgedb_bench", edgedb.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -210,13 +199,13 @@ func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	)
 
 	exec := func(id string) (time.Duration, string) {
-		params["id"], err = types.UUIDFromString(id)
+		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		start = time.Now()
-		err = client.QueryOneJSON(ctx, args.Query, &rsp, params)
+		err = pool.QueryOneJSON(ctx, args.Query, &rsp, params)
 		duration = time.Since(start)
 
 		if err != nil {
@@ -227,7 +216,7 @@ func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	}
 
 	close := func() {
-		err := client.Close()
+		err := pool.Close()
 		if err != nil {
 			log.Fatal(err)
 		}

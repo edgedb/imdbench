@@ -10,9 +10,7 @@ import edgedb
 
 
 def connect(ctx):
-    return edgedb.connect(
-        user=ctx.edgedb_user, database='edgedb_bench',
-        host=ctx.db_host, port=ctx.edgedb_port)
+    return edgedb.connect('edgedb_bench')
 
 
 def close(ctx, conn):

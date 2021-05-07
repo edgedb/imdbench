@@ -3,16 +3,15 @@
    "version": "0.0.1",
    "description": "Awesome project developed with TypeORM.",
    "devDependencies": {
-      "ts-node": "3.3.0",
       "@types/node": "^8.0.29",
-      "typescript": "3.3.3333"
+      "ts-node": "^10.0.0"
    },
    "dependencies": {
       "lodash": "^4.17.15",
-      "pg": "^7.17.1",
+      "pg": "^8.6.0",
       "progress": "^2.0.3",
       "reflect-metadata": "^0.1.10",
-      "typeorm": "0.2.22"
+      "typeorm": "0.2.32"
    },
    "scripts": {
       "start": "ts-node src/index.ts",

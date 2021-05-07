@@ -29,7 +29,7 @@ class User(Base):
         cascade='all, delete, delete-orphan')
     latest_reviews = orm.relationship(
         'Review', order_by=lambda: Review.creation_time.desc(),
-        lazy='dynamic', bake_queries=True)
+        lazy='dynamic', bake_queries=True, viewonly=True)
 
 
 class Directors(Base):
@@ -77,11 +77,13 @@ class Person(Base):
         'Movie',
         secondary=Directors.__table__,
         backref='directors',
+        viewonly=True,
     )
     acted_in = orm.relationship(
         'Movie',
         secondary=Cast.__table__,
         backref='cast',
+        viewonly=True,
     )
 
     directed_rel = orm.relationship(
@@ -141,5 +143,5 @@ class Movie(Base):
             [func.avg(Review.rating)]
         ).where(
             Review.movie_id == id
-        ).correlate_except(Review)
+        ).correlate_except(Review).scalar_subquery()
     )

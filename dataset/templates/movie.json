@@ -1,0 +1,152 @@
+{
+    "type": "array",
+    "length": {
+        "type": "number",
+        "subtype": "u64",
+        "constant": %MOVIES%
+    },
+    "content": {
+        "type": "object",
+        "id": {
+            "type": "number",
+            "subtype": "u64",
+            "id": {
+                "start_at": 0
+            }
+        },
+        "image": {
+            "type": "string",
+            "pattern": "m[a-z][0-9]{12}\\.jpeg"
+        },
+        "year": {
+            "type": "number",
+            "subtype": "u64",
+            "range": {
+                "high": 2015,
+                "low": 1950,
+                "step": 1
+            }
+        },
+        "title": {
+            "type": "string",
+            "faker": {
+                "generator": "sentence",
+                "nb_words": 3
+            }
+        },
+        "description": {
+            "type": "string",
+            "faker": {
+                "generator": "paragraph",
+                "nb_sentences": 20
+            }
+        },
+        "directors": {
+            "type": "array",
+            "length": {
+                "type": "one_of",
+                "variants": [ {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                }, {
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 2
+                } ]
+            },
+            "content": {
+                "type": "same_as",
+                "ref": "director.content.id"
+            }
+        },
+        "cast": {
+            "type": "array",
+            "length": {
+                "type": "number",
+                "subtype": "u64",
+                "range": {
+                    "high": 55,
+                    "low": 10,
+                    "step": 1
+                }
+            },
+            "content": {
+                "type": "same_as",
+                "ref": "person.content.id"
+            }
+        }
+    }
+}
