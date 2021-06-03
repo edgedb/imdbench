@@ -74,7 +74,7 @@ function _now() {
   return s * 1000000 + Math.round(ns / 1000);
 }
 
-async function runner(args) {
+async function runner(args, app) {
   var timeoutInMicroSecs = args.timeout * 1000000;
 
   var reported = 0;
@@ -85,7 +85,6 @@ async function runner(args) {
   var data = null;
   var samples = [];
 
-  var app = await getApp(args);
   var ids = (await app.getIDs())[args.query];
   if (ids.length > args.numner_of_ids) {
     ids = ids.slice(0, args.numner_of_ids);
@@ -292,7 +291,15 @@ async function main() {
   });
 
   let args = parser.parse_args();
-  await runner(args);
+  let app = await getApp(args);
+
+  try {
+    await runner(args, app);
+  } finally {
+    if (args.orm == "postgres_prisma_js") {
+      await app.$disconnect()
+    }
+  }
 }
 
 main()
