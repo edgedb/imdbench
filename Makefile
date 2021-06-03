@@ -1,6 +1,6 @@
 .PHONY: all load new-dataset go load-postgres-helpers reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
-.PHONY: load-loopback load-typeorm load-sequelize load-prisma
+.PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -53,7 +53,7 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json
-	-cd _edgedb && edgedb project init
+	-cd _edgedb && edgedb project init --server-instance edgedb_bench
 	cd _edgedb && edgedb -c 'CREATE DATABASE temp'
 	cd _edgedb && edgedb -d temp -c 'DROP DATABASE edgedb'
 	cd _edgedb && edgedb -d temp -c 'CREATE DATABASE edgedb'
@@ -181,7 +181,7 @@ load-sequelize: $(BUILD)/dataset.json
 	cd _sequelize && npm i && node loaddata.js $(BUILD)/dataset.json
 
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
-	  load-loopback load-typeorm load-sequelize
+	  load-typeorm load-sequelize load-prisma load-graphql
 
 load-graphql: load-hasura load-postgraphile
 
