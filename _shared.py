@@ -107,6 +107,9 @@ BENCHMARKS = {
 
     'postgres_prisma_js':
         bench('js', 'Postgres+Prisma NodeJS', None),
+
+    'postgres_prisma_tuned_js':
+        bench('js', 'Postgres+Prisma Tuned NodeJS', None),
 }
 
 
