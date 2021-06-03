@@ -16,21 +16,22 @@ Installation and Use
 
 4. Install NodeJS (at least v14.16.0) and TypeScript toolchains.
 
-5. Install docker and docker-compose (needed for Hasura and Prisma benchmarks).
+5. Install docker and docker-compose (needed for Hasura).
 
-6. Install Prisma (later versions don't work with timestamptz) via
-   ``npm install prisma -D``.
+6. Install Prisma via ``npm install prisma -D``.
 
 7. Install ``synth``.
    https://openquery-io.github.io/synth/getting_started/installation
 
-8. Configure PostgreSQL similarly to EdgeDB:
+8. Create the benchmark data via ``$ make new-dataset``.
 
-   * ``shared_buffers``: 20% of RAM.
-   * ``effective_cache_size``: 50% of RAM.
-   * ``query_work_mem``: 6MB.
-
-9. Load data via ``$ make load``.
+9. Load data via ``$ make load``. When prompted to pick a name for the
+   EdgeDB instance, please keep the default ``edgedb_bench`` name as
+   not all the EdgeDB-related benchmarks run from the EdgeDB project
+   directory. Also, for HTTP benchmarks (GraphQL as well as EdgeQL
+   over HTTP) it is important to know the port where the benchmark
+   instance is setup and this information is looked up using the
+   instance name.
 
 10. Compile Go benchmarks: ``$ make go``
 

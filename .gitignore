@@ -3,11 +3,11 @@
 *~
 .#*
 .DS_Store
-/build
+build/
 __pycache__/
 /*.egg
 /*.egg-info
-/dist
+dist/
 /.cache
 docs/_build
 /*.html
