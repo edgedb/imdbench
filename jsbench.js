@@ -39,6 +39,8 @@ async function getApp(args) {
     });
   } else if (args.orm == "postgres_prisma_js") {
     app = new prismaapp.App();
+  } else if (args.orm == "postgres_prisma_tuned_js") {
+    app = new prismaapp.TunedApp();
   } else if (args.orm == "postgres_js") {
     app = new pgapp.App({
       host: args.host,
@@ -285,6 +287,7 @@ async function main() {
       "sequelize",
       "postgres_js",
       "postgres_prisma_js",
+      "postgres_prisma_tuned_js",
       "edgedb_json_js",
       "edgedb_repack_js"
     ]
@@ -296,7 +299,8 @@ async function main() {
   try {
     await runner(args, app);
   } finally {
-    if (args.orm == "postgres_prisma_js") {
+    if (args.orm == "postgres_prisma_js" ||
+        args.orm == "postgres_prisma_tuned_js") {
       await app.$disconnect()
     }
   }
