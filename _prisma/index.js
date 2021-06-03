@@ -15,14 +15,6 @@ function get_full_name(person) {
 }
 
 
-function get_avg_rating(movie) {
-  return (
-    movie.reviews.reduce((total, r) => total + r.rating, 0) /
-    movie.reviews.length
-  );
-}
-
-
 class App extends PrismaClient {
   async userDetails(id) {
     let result = await this.users.findUnique({
@@ -47,11 +39,6 @@ class App extends PrismaClient {
                 id: true,
                 image: true,
                 title: true,
-                reviews: {
-                  select: {
-                    rating: true,
-                  },
-                },
               },
             },
           },
@@ -59,9 +46,26 @@ class App extends PrismaClient {
       },
     });
 
+    let avgRatings = await this.reviews.groupBy({
+      by: ['movie_id'],
+      where: {
+        movie_id: {
+          in: result.reviews.map((r) => r.movie.id),
+        },
+      },
+      _avg: {
+        rating: true,
+      }
+    })
+
+    let avgRatingsMap = {};
+
+    for (let m of avgRatings) {
+      avgRatingsMap[m.movie_id] = m._avg.rating;
+    }
+
     for (let r of result.reviews) {
-      r.movie.avg_rating = get_avg_rating(r.movie);
-      delete r.movie.reviews;
+      r.movie.avg_rating = avgRatingsMap[r.movie.id];
     }
     result.latest_reviews = result.reviews;
     delete result.reviews;
@@ -97,6 +101,18 @@ class App extends PrismaClient {
               }
             },
           },
+          orderBy: [
+            {
+              movie: {
+                year: 'asc',
+              },
+            },
+            {
+              movie: {
+                title: 'asc',
+              },
+            },
+          ],
         },
         directed: {
           select: {
@@ -114,6 +130,18 @@ class App extends PrismaClient {
               }
             },
           },
+          orderBy: [
+            {
+              movie: {
+                year: 'asc',
+              },
+            },
+            {
+              movie: {
+                title: 'asc',
+              },
+            },
+          ],
         },
       },
     });
@@ -123,36 +151,11 @@ class App extends PrismaClient {
     delete result.middle_name;
     delete result.last_name;
 
-    for (let fname of ["acted_in", "directed"]) {
-      for (let r of result[fname]) {
-        r.movie.avg_rating = get_avg_rating(r.movie);
-        delete r.movie.reviews;
-      }
-      // clean up
-      result[fname] = result[fname].map(rel => {
-        return rel.movie;
-      });
-      // sort by year and title
-      result[fname].sort((a, b) => {
-        if (a.year < b.year) {
-          return -1;
-        } else if (a.year > b.year) {
-          return 1;
-        } else if (a.title < b.title) {
-          return -1;
-        } else if (a.title > b.title) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-    }
-
     return JSON.stringify(result);
   }
 
   async movieDetails(id) {
-    let result = await this.movies.findUnique({
+    let movie = this.movies.findUnique({
       where: {
         id: id
       },
@@ -176,6 +179,16 @@ class App extends PrismaClient {
               }
             }
           },
+          orderBy: [
+            {
+              list_order: 'asc',
+            },
+            {
+              person: {
+                last_name: 'asc',
+              },
+            },
+          ],
         },
         cast: {
           select: {
@@ -190,6 +203,16 @@ class App extends PrismaClient {
               }
             }
           },
+          orderBy: [
+            {
+              list_order: 'asc',
+            },
+            {
+              person: {
+                last_name: 'asc',
+              },
+            },
+          ],
         },
 
         reviews: {
@@ -212,34 +235,25 @@ class App extends PrismaClient {
       },
     });
 
-    result.avg_rating = get_avg_rating(result);
+    let avgRating = this.reviews.aggregate({
+      _avg: {
+        rating: true,
+      },
+      where: {
+        movie: {
+          id: id,
+        },
+      },
+    })
 
-    for (let fname of ["directors", "cast"]) {
-      // sort by list_order and last_name
-      result[fname].sort((a, b) => {
-        if (a.list_order < b.list_order) {
-          return -1;
-        } else if (a.list_order > b.list_order) {
-          return 1;
-        } else if (a.person.last_name < b.person.last_name) {
-          return -1;
-        } else if (a.person.last_name > b.person.last_name) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-      // clean up
-      result[fname] = result[fname].map(rel => {
-        return {
-          id: rel.person.id,
-          full_name: get_full_name(rel.person),
-          image: rel.person.image
-        };
-      });
-    }
+    let result = await Promise.all([
+      movie,
+      avgRating,
+    ])
 
-    return JSON.stringify(result);
+    result[0].avg_rating = result[1]._avg.rating
+
+    return JSON.stringify(result[0]);
   }
 
   async benchQuery(query, id) {

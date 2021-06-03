@@ -75,6 +75,7 @@ CREATE TABLE reviews (
 
 CREATE INDEX review_author_index ON reviews(author_id);
 CREATE INDEX review_movie_index ON reviews(movie_id);
+CREATE INDEX creation_time_index ON reviews(creation_time);
 
 
 CREATE OR REPLACE FUNCTION avg_rating(m movies) RETURNS numeric AS $$

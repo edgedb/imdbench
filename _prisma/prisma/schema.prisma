@@ -66,6 +66,7 @@ model reviews {
 
   @@index([author_id], name: "review_author_index")
   @@index([movie_id], name: "review_movie_index")
+  @@index([creation_time], name: "creation_time_index")
 }
 
 model users {
