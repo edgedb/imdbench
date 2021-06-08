@@ -1,4 +1,5 @@
-.PHONY: all load new-dataset go load-postgres-helpers reset-postgres
+.PHONY: all load new-dataset go load-postgres-helpers
+.PHONY:	stop-docker reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
@@ -91,15 +92,17 @@ load-sqlalchemy: $(BUILD)/dataset.json
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
-load-postgres: reset-postgres $(BUILD)/dataset.json
+load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
 	$(PSQL) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
 
-reset-postgres:
+stop-docker:
 	-docker stop hasura-bench
 	-docker stop postgraphile-bench
+
+reset-postgres:
 	$(PSQL) -U postgres -tc \
 		"DROP DATABASE IF EXISTS postgres_bench;"
 	$(PSQL) -U postgres -tc \
