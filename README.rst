@@ -20,8 +20,13 @@ Installation and Use
 
 6. Install Prisma via ``npm install prisma -D``.
 
-7. Install ``synth``.
-   https://openquery-io.github.io/synth/getting_started/installation
+7. Install ``synth``. (https://getsynth.github.io/)
+
+     **Note:**
+     Synth v0.5.0 replaces python faker with fake-rs, and loses
+     support for some generators used by this project.
+     The previous supported version, Synth v0.4.7, can be installed
+     from https://github.com/getsynth/synth/releases/tag/v0.4.7
 
 8. Create the benchmark data via ``$ make new-dataset``.
 
