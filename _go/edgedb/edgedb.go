@@ -17,7 +17,21 @@ type User struct {
 	ID            edgedb.UUID `json:"id" edgedb:"id"`
 	Name          string     `json:"name" edgedb:"name"`
 	Image         string     `json:"image" edgedb:"image"`
-	LatestReviews []Review   `json:"latest_reviews" edgedb:"latest_reviews"`
+	LatestReviews []UReview   `json:"latest_reviews" edgedb:"latest_reviews"`
+}
+
+type UReview struct {
+	ID     edgedb.UUID `json:"id" edgedb:"id"`
+	Body   string     `json:"body" edgedb:"body"`
+	Rating int64      `json:"rating" edgedb:"rating"`
+	Movie  RMovie      `json:"movie" edgedb:"movie"`
+}
+
+type RMovie struct {
+	ID          edgedb.UUID `json:"id" edgedb:"id"`
+	Image       string     `json:"image" edgedb:"image"`
+	Title       string     `json:"title" edgedb:"title"`
+	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
 }
 
 type Movie struct {
@@ -27,26 +41,45 @@ type Movie struct {
 	Year        int64      `json:"year" edgedb:"year"`
 	Description string     `json:"description" edgedb:"description"`
 	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
-	Directors   []Person   `json:"directors" edgedb:"directors"`
-	Cast        []Person   `json:"cast" edgedb:"cast"`
-	Reviews     []Review   `json:"reviews" edgedb:"reviews"`
+	Directors   []MPerson   `json:"directors" edgedb:"directors"`
+	Cast        []MPerson   `json:"cast" edgedb:"cast"`
+	Reviews     []MReview   `json:"reviews" edgedb:"reviews"`
+}
+
+type MPerson struct {
+	ID       edgedb.UUID `json:"id" edgedb:"id"`
+	FullName string     `json:"full_name" edgedb:"full_name"`
+	Image    string     `json:"image" edgedb:"image"`
+}
+
+type MReview struct {
+	ID     edgedb.UUID `json:"id" edgedb:"id"`
+	Body   string     `json:"body" edgedb:"body"`
+	Rating int64      `json:"rating" edgedb:"rating"`
+	Author RUser       `json:"author" edgedb:"author"`
+}
+
+type RUser struct {
+	ID            edgedb.UUID `json:"id" edgedb:"id"`
+	Name          string     `json:"name" edgedb:"name"`
+	Image         string     `json:"image" edgedb:"image"`
 }
 
 type Person struct {
 	ID       edgedb.UUID `json:"id" edgedb:"id"`
 	FullName string     `json:"full_name" edgedb:"full_name"`
 	Image    string     `json:"image" edgedb:"image"`
-	Bio      string     `json:"bio" edgedb:"bio"`
-	ActedIn  []Movie    `json:"acted_in" edgedb:"acted_in"`
-	Directed []Movie    `json:"directed" edgedb:"directed"`
+	Bio      edgedb.OptionalStr     `json:"bio" edgedb:"bio"`
+	ActedIn  []PMovie    `json:"acted_in" edgedb:"acted_in"`
+	Directed []PMovie    `json:"directed" edgedb:"directed"`
 }
 
-type Review struct {
-	ID     edgedb.UUID `json:"id" edgedb:"id"`
-	Body   string     `json:"body" edgedb:"body"`
-	Rating int64      `json:"rating" edgedb:"rating"`
-	Movie  Movie      `json:"movie" edgedb:"movie"`
-	Author User       `json:"author" edgedb:"author"`
+type PMovie struct {
+	ID          edgedb.UUID `json:"id" edgedb:"id"`
+	Image       string     `json:"image" edgedb:"image"`
+	Title       string     `json:"title" edgedb:"title"`
+	Year        int64      `json:"year" edgedb:"year"`
+	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
 }
 
 func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {

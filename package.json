@@ -19,6 +19,6 @@
     "pg": "^8.6.0"
   },
   "devDependencies": {
-    "prisma": "^2.24.1"
+    "prisma": "^2.30.3"
   }
 }
