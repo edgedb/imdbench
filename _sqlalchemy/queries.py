@@ -10,7 +10,7 @@ import json
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
-import sqlalchemy.ext as ext
+from sqlalchemy.ext import baked
 
 import _sqlalchemy.models as m
 
@@ -19,7 +19,7 @@ engine = None
 session_factory = None
 
 
-bakery = ext.baked.bakery()
+bakery = baked.bakery()
 
 
 def connect(ctx):

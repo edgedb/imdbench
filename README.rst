@@ -20,7 +20,7 @@ Installation and Use
 
 6. Install Prisma via ``npm install prisma -D``.
 
-7. Install ``synth``. (https://getsynth.github.io/)
+7. Install ``synth``. (https://www.getsynth.com)
 
      **Note:**
      Synth v0.5.0 replaces python faker with fake-rs, and loses
