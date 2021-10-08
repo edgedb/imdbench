@@ -13,7 +13,7 @@ ASYNC = True
 
 
 async def connect(ctx):
-    return await edgedb.async_connect('edgedb_bench')
+    return await edgedb.async_connect()
 
 
 async def close(ctx, conn):

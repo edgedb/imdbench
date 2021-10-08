@@ -5,7 +5,7 @@ const queries = require("./queries");
 
 class ConnectionJSON {
   constructor(opts) {
-    this.connection = connect("edgedb_bench");
+    this.connection = connect();
   }
 
   async connect() {
@@ -15,15 +15,15 @@ class ConnectionJSON {
   }
 
   async userDetails(id) {
-    return await this.connection.queryOneJSON(queries.user, { id: id });
+    return await this.connection.querySingleJSON(queries.user, { id: id });
   }
 
   async personDetails(id) {
-    return await this.connection.queryOneJSON(queries.person, { id: id });
+    return await this.connection.querySingleJSON(queries.person, { id: id });
   }
 
   async movieDetails(id) {
-    return await this.connection.queryOneJSON(queries.movie, { id: id });
+    return await this.connection.querySingleJSON(queries.movie, { id: id });
   }
 
   async benchQuery(query, id) {
@@ -40,7 +40,7 @@ module.exports.ConnectionJSON = ConnectionJSON;
 
 class ConnectionRepack {
   constructor(opts) {
-    this.connection = connect("edgedb_bench");
+    this.connection = connect();
   }
 
   async connect() {
@@ -51,19 +51,19 @@ class ConnectionRepack {
 
   async userDetails(id) {
     return JSON.stringify(
-      await this.connection.queryOne(queries.user, { id: id })
+      await this.connection.querySingle(queries.user, { id: id })
     );
   }
 
   async personDetails(id) {
     return JSON.stringify(
-      await this.connection.queryOne(queries.person, { id: id })
+      await this.connection.querySingle(queries.person, { id: id })
     );
   }
 
   async movieDetails(id) {
     return JSON.stringify(
-      await this.connection.queryOne(queries.movie, { id: id })
+      await this.connection.querySingle(queries.movie, { id: id })
     );
   }
 
@@ -108,7 +108,7 @@ class App {
   }
 
   async getIDs() {
-    var ids = await this.pool[0].connection.queryOne(`
+    var ids = await this.pool[0].connection.querySingle(`
       WITH
           U := User {id, r := random()},
           M := Movie {id, r := random()},

@@ -11,6 +11,7 @@
 import datetime
 import json
 import math
+import os
 import os.path
 import platform
 import random
@@ -201,9 +202,9 @@ def run_benchmarks(args, argv):
 
     try:
         agg_data = []
-        for args in lang_args.values():
+        for cmd in lang_args.values():
             subprocess.run(
-                args, stdout=sys.stdout, stderr=sys.stderr, check=True)
+                cmd, stdout=sys.stdout, stderr=sys.stderr, check=True)
 
             with open('__tmp.json', 'rt') as f:
                 data = process_results(f.read())
@@ -220,6 +221,48 @@ def main():
         prog_desc='EdgeDB Databases Benchmark',
         out_to_html=True,
         out_to_json=True)
+
+    if any(b.startswith('edgedb') for b in args.benchmarks):
+        proj_path = os.path.join(os.path.dirname(__file__), '_edgedb')
+        project_info_proc = subprocess.run(
+            ["edgedb", "project", "info", "--json"],
+            cwd=proj_path,
+            text=True,
+            capture_output=True,
+        )
+        if project_info_proc.returncode != 0:
+            print(
+                f"`edgedb project` in ./_edgedb/ returned"
+                f" {project_info_proc.returncode}. Please run"
+                f" `make load-edgedb`, or initialize the EdgeDB"
+                f" project in ./_edgedb/ directly",
+                file=sys.stderr,
+            )
+            return 1
+
+        project_info = json.loads(project_info_proc.stdout)
+        args.edgedb_instance = project_info["instance-name"]
+        os.environ["EDGEDB_INSTANCE"] = args.edgedb_instance
+
+        instance_status_proc = subprocess.run(
+            ["edgedb", "instance", "status", "--json", args.edgedb_instance],
+            cwd=proj_path,
+            text=True,
+            capture_output=True,
+        )
+        if instance_status_proc.returncode != 0:
+            print(
+                f"`edgedb instance status` in ./_edgedb/ returned"
+                f" {instance_status_proc.returncode}. Please run"
+                f" `make load-edgedb`, or initialize the EdgeDB"
+                f" project in ./_edgedb/ directly",
+                file=sys.stderr,
+            )
+            return 1
+
+        instance_status = json.loads(instance_status_proc.stdout)
+        args.edgedb_port = int(instance_status["port"])
+        argv.extend(("--edgedb-port", str(args.edgedb_port)))
 
     benchmarks_data = run_benchmarks(args, argv)
 
@@ -241,6 +284,8 @@ def main():
         with open(args.json, 'wt') as f:
             f.write(json.dumps(report_data))
 
+    return 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

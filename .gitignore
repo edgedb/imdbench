@@ -16,4 +16,3 @@ docs/_build
 node_modules
 /dataset/movies
 /_prisma/.env
-bench_cfg.json
