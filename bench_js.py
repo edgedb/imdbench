@@ -41,10 +41,22 @@ def run_query(ctx, benchmark, queryname):
     dirn = pathlib.Path(__file__).resolve().parent
     exe = dirn / 'jsbench.js'
 
+    opts = [
+        '--concurrency', ctx.concurrency,
+        '--duration', ctx.duration,
+        '--timeout', ctx.timeout,
+        '--warmup-time', ctx.warmup_time,
+        '--output-format', 'json',
+        '--host', ctx.db_host,
+        '--nsamples', 10,
+        '--number-of-ids', ctx.number_of_ids,
+        '--query', queryname,
+    ]
+
     if benchmark.startswith('edgedb'):
-        port = ctx.edgedb_port
+        opts.extend(('--port', ctx.edgedb_port))
     else:
-        port = ctx.pg_port
+        opts.extend(('--port', ctx.pg_port))
 
     # If we're running Prisma benchmark we need to update the `.env`
     # file with the pool size and timeout info.
@@ -57,13 +69,7 @@ def run_query(ctx, benchmark, queryname):
                 f'&connection_limit={ctx.concurrency}'
                 f'&pool_timeout={ctx.timeout}"')
 
-    cmd = [exe, '--concurrency', ctx.concurrency, '--duration', ctx.duration,
-           '--timeout', ctx.timeout, '--warmup-time', ctx.warmup_time,
-           '--output-format', 'json', '--host', ctx.db_host,
-           '--port', port, '--nsamples', 10, '--number-of-ids', ctx.number_of_ids,
-           '--query', queryname, benchmark]
-
-    cmd = [str(c) for c in cmd]
+    cmd = [str(c) for c in [exe] + opts + [benchmark]]
 
     try:
         proc = subprocess.run(

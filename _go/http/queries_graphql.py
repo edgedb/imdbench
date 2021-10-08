@@ -37,7 +37,7 @@ def get_queries(ctx):
 
 
 def connect(ctx):
-    return edgedb.connect('edgedb_bench')
+    return edgedb.connect()
 
 
 def close(ctx, conn):

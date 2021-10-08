@@ -7,7 +7,7 @@
 
 
 import argparse
-import json
+import os
 import sys
 import types
 import typing
@@ -151,9 +151,6 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--edgedb-port', type=int, default=None,
         help='EdgeDB server port')
-    parser.add_argument(
-        '--edgedb-user', type=str, default='edgedb',
-        help='PostgreSQL server user')
 
     parser.add_argument(
         '--mongodb-port', type=int, default=27017,
@@ -184,12 +181,6 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
 
     args = parser.parse_args()
     argv = sys.argv[1:]
-
-    if args.edgedb_port is None:
-        # read the port from the `_edgedb/bench_cfg.json`
-        with open('_edgedb/bench_cfg.json', 'rt') as f:
-            edgedbcfg = json.load(f)
-            args.edgedb_port = edgedbcfg['port']
 
     if not args.queries:
         args.queries = QUERIES

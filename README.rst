@@ -30,13 +30,7 @@ Installation and Use
 
 8. Create the benchmark data via ``$ make new-dataset``.
 
-9. Load data via ``$ make load``. When prompted to pick a name for the
-   EdgeDB instance, please keep the default ``edgedb_bench`` name as
-   not all the EdgeDB-related benchmarks run from the EdgeDB project
-   directory. Also, for HTTP benchmarks (GraphQL as well as EdgeQL
-   over HTTP) it is important to know the port where the benchmark
-   instance is setup and this information is looked up using the
-   instance name.
+9. Load data via ``$ make load``.
 
 10. Compile Go benchmarks: ``$ make go``
 

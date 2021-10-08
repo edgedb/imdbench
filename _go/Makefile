@@ -2,6 +2,7 @@
 
 
 gobench: clean build main.go
+	test -d "$(CURDIR)/_go" && chmod -R u+w "$(CURDIR)/_go" || :
 	rm -rf "$(CURDIR)/_go"
 
 build:
@@ -9,4 +10,5 @@ build:
 
 clean:
 	rm -f "$(CURDIR)/gobench"
+	test -d "$(CURDIR)/_go" && chmod -R u+w "$(CURDIR)/_go" || :
 	rm -rf "$(CURDIR)/_go"

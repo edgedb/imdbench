@@ -1,3 +1,6 @@
+.ONESHELL:
+.SHELLFLAGS += -Ee -o pipefail
+
 .PHONY: all load new-dataset go load-postgres-helpers
 .PHONY:	stop-docker reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
@@ -34,34 +37,35 @@ $(BUILD)/dataset.json:
 	cd dataset && $(PP) cleandata.py
 
 new-dataset:
-	cd dataset && mkdir -p movies
-	cd dataset && cat templates/user.json \
+	cd dataset
+	mkdir -p movies
+	cat templates/user.json \
 		| sed "s/%USERS%/$(users)/" > movies/user.json
-	cd dataset && cat templates/person.json \
+	cat templates/person.json \
 		| sed "s/%PEOPLE%/$(people)/" \
 		| sed "s/%STARTAT%/$(directorsonly)/" > movies/person.json
-	cd dataset && cat templates/director.json \
+	cat templates/director.json \
 		| sed "s/%DIRECTORS%/$(directors)/" > movies/director.json
-	cd dataset && cat templates/movie.json \
+	cat templates/movie.json \
 		| sed "s/%MOVIES%/$(movies)/" > movies/movie.json
-	cd dataset && cat templates/review.json \
+	cat templates/review.json \
 		| sed "s/%REVIEWS%/$(reviews)/" \
 		| sed "s/%MOVIES%/$(moviesplus)/" > movies/review.json
-	cd dataset && synth generate movies > $(BUILD)/protodataset.json
-	cd dataset && $(PP) cleandata.py
+	synth generate movies > $(BUILD)/protodataset.json
+	$(PP) cleandata.py
 
 load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json
-	-cd _edgedb && edgedb project init --server-instance edgedb_bench
-	cd _edgedb && edgedb -c 'CREATE DATABASE temp'
-	cd _edgedb && edgedb -d temp -c 'DROP DATABASE edgedb'
-	cd _edgedb && edgedb -d temp -c 'CREATE DATABASE edgedb'
-	cd _edgedb && edgedb -c 'DROP DATABASE temp'
-	cd _edgedb && edgedb migrate
+	cd _edgedb
+	edgedb project info || edgedb project init --server-instance edgedb_bench
+	edgedb query 'CREATE DATABASE temp'
+	edgedb -d temp query 'DROP DATABASE edgedb'
+	edgedb -d temp query 'CREATE DATABASE edgedb'
+	edgedb query 'DROP DATABASE temp'
+	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
-	cd _edgedb && edgedb server status --json edgedb_bench > bench_cfg.json
 
 load-django: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
@@ -145,17 +149,19 @@ load-hasura: load-postgres-helpers
 		"CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 	_hasura/docker-run.sh
 	sleep 60s
-	cd _hasura && ./send-metadata.sh
+	(cd _hasura && ./send-metadata.sh)
 
 load-prisma: load-postgres-helpers
-	cd _prisma && echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:5432/postgres_bench?schema=public"' > .env
-	cd _prisma && npx prisma generate && npm i
+	cd _prisma
+	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:5432/postgres_bench?schema=public"' > .env
+	npx prisma generate && npm i
 
 load-postgraphile:
+	cd _postgraphile
 	$(PSQL) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
-	cd _postgraphile && docker build -t postgraphile_bench:latest .
-	cd _postgraphile && ./run_postgraphile.sh
+	docker build -t postgraphile_bench:latest .
+	./run_postgraphile.sh
 
 load-typeorm: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \

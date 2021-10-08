@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import edgedb
 import json
+
 import progress.bar
 
 
@@ -36,7 +37,7 @@ class Pool:
                 asyncio.create_task(self._worker()))
 
     async def _worker(self):
-        con = await edgedb.async_connect('edgedb_bench')
+        con = await edgedb.async_connect()
 
         try:
             while True:
@@ -47,7 +48,7 @@ class Pool:
 
                 args, kwargs = piece
                 try:
-                    await con.fetchall(*args, **kwargs)
+                    await con.query(*args, **kwargs)
                 except Exception as e:
                     self._results.put_nowait(e)
                 else:

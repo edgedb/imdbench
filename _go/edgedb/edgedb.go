@@ -15,32 +15,32 @@ import (
 
 type User struct {
 	ID            edgedb.UUID `json:"id" edgedb:"id"`
-	Name          string     `json:"name" edgedb:"name"`
-	Image         string     `json:"image" edgedb:"image"`
+	Name          string      `json:"name" edgedb:"name"`
+	Image         string      `json:"image" edgedb:"image"`
 	LatestReviews []UReview   `json:"latest_reviews" edgedb:"latest_reviews"`
 }
 
 type UReview struct {
 	ID     edgedb.UUID `json:"id" edgedb:"id"`
-	Body   string     `json:"body" edgedb:"body"`
-	Rating int64      `json:"rating" edgedb:"rating"`
+	Body   string      `json:"body" edgedb:"body"`
+	Rating int64       `json:"rating" edgedb:"rating"`
 	Movie  RMovie      `json:"movie" edgedb:"movie"`
 }
 
 type RMovie struct {
-	ID          edgedb.UUID `json:"id" edgedb:"id"`
-	Image       string     `json:"image" edgedb:"image"`
-	Title       string     `json:"title" edgedb:"title"`
-	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
+	ID        edgedb.UUID `json:"id" edgedb:"id"`
+	Image     string      `json:"image" edgedb:"image"`
+	Title     string      `json:"title" edgedb:"title"`
+	AvgRating float64     `json:"avg_rating" edgedb:"avg_rating"`
 }
 
 type Movie struct {
 	ID          edgedb.UUID `json:"id" edgedb:"id"`
-	Image       string     `json:"image" edgedb:"image"`
-	Title       string     `json:"title" edgedb:"title"`
-	Year        int64      `json:"year" edgedb:"year"`
-	Description string     `json:"description" edgedb:"description"`
-	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
+	Image       string      `json:"image" edgedb:"image"`
+	Title       string      `json:"title" edgedb:"title"`
+	Year        int64       `json:"year" edgedb:"year"`
+	Description string      `json:"description" edgedb:"description"`
+	AvgRating   float64     `json:"avg_rating" edgedb:"avg_rating"`
 	Directors   []MPerson   `json:"directors" edgedb:"directors"`
 	Cast        []MPerson   `json:"cast" edgedb:"cast"`
 	Reviews     []MReview   `json:"reviews" edgedb:"reviews"`
@@ -48,43 +48,43 @@ type Movie struct {
 
 type MPerson struct {
 	ID       edgedb.UUID `json:"id" edgedb:"id"`
-	FullName string     `json:"full_name" edgedb:"full_name"`
-	Image    string     `json:"image" edgedb:"image"`
+	FullName string      `json:"full_name" edgedb:"full_name"`
+	Image    string      `json:"image" edgedb:"image"`
 }
 
 type MReview struct {
 	ID     edgedb.UUID `json:"id" edgedb:"id"`
-	Body   string     `json:"body" edgedb:"body"`
-	Rating int64      `json:"rating" edgedb:"rating"`
+	Body   string      `json:"body" edgedb:"body"`
+	Rating int64       `json:"rating" edgedb:"rating"`
 	Author RUser       `json:"author" edgedb:"author"`
 }
 
 type RUser struct {
-	ID            edgedb.UUID `json:"id" edgedb:"id"`
-	Name          string     `json:"name" edgedb:"name"`
-	Image         string     `json:"image" edgedb:"image"`
+	ID    edgedb.UUID `json:"id" edgedb:"id"`
+	Name  string      `json:"name" edgedb:"name"`
+	Image string      `json:"image" edgedb:"image"`
 }
 
 type Person struct {
-	ID       edgedb.UUID `json:"id" edgedb:"id"`
-	FullName string     `json:"full_name" edgedb:"full_name"`
-	Image    string     `json:"image" edgedb:"image"`
-	Bio      edgedb.OptionalStr     `json:"bio" edgedb:"bio"`
-	ActedIn  []PMovie    `json:"acted_in" edgedb:"acted_in"`
-	Directed []PMovie    `json:"directed" edgedb:"directed"`
+	ID       edgedb.UUID        `json:"id" edgedb:"id"`
+	FullName string             `json:"full_name" edgedb:"full_name"`
+	Image    string             `json:"image" edgedb:"image"`
+	Bio      edgedb.OptionalStr `json:"bio" edgedb:"bio"`
+	ActedIn  []PMovie           `json:"acted_in" edgedb:"acted_in"`
+	Directed []PMovie           `json:"directed" edgedb:"directed"`
 }
 
 type PMovie struct {
-	ID          edgedb.UUID `json:"id" edgedb:"id"`
-	Image       string     `json:"image" edgedb:"image"`
-	Title       string     `json:"title" edgedb:"title"`
-	Year        int64      `json:"year" edgedb:"year"`
-	AvgRating   float64    `json:"avg_rating" edgedb:"avg_rating"`
+	ID        edgedb.UUID `json:"id" edgedb:"id"`
+	Image     string      `json:"image" edgedb:"image"`
+	Title     string      `json:"title" edgedb:"title"`
+	Year      int64       `json:"year" edgedb:"year"`
+	AvgRating float64     `json:"avg_rating" edgedb:"avg_rating"`
 }
 
 func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.ConnectDSN(ctx, "edgedb_bench", edgedb.Options{})
+	pool, err := edgedb.Connect(ctx, edgedb.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -218,7 +218,7 @@ func execUser(pool *edgedb.Pool, args cli.Args) bench.Exec {
 
 func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.ConnectDSN(ctx, "edgedb_bench", edgedb.Options{})
+	pool, err := edgedb.Connect(ctx, edgedb.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
