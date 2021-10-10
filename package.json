@@ -12,13 +12,13 @@
   "license": "UNLICENSED",
   "description": "webapp-bench-js",
   "dependencies": {
-    "@prisma/client": "^2.23.0",
+    "@prisma/client": "^3.2.1",
     "argparse": "^2.0.1",
-    "edgedb": "^0.14.0",
-    "lodash": "^4.17.15",
-    "pg": "^8.6.0"
+    "edgedb": "^0.15.2",
+    "lodash": "^4.17.21",
+    "pg": "^8.7.1"
   },
   "devDependencies": {
-    "prisma": "^2.30.3"
+    "prisma": "^3.2.1"
   }
 }
