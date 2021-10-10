@@ -5,10 +5,10 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@prisma/client": "^2.23.0"
+    "@prisma/client": "^3.2.1"
   },
   "devDependencies": {
-    "prisma": "2.23.0"
+    "prisma": "3.2.1"
   },
   "scripts": {
     "dev": "node ./app.js"

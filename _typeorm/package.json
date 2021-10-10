@@ -1,20 +1,20 @@
 {
-   "name": "_typeorm",
-   "version": "0.0.1",
-   "description": "Awesome project developed with TypeORM.",
-   "devDependencies": {
-      "@types/node": "^8.0.29",
-      "ts-node": "^10.0.0"
-   },
-   "dependencies": {
-      "lodash": "^4.17.15",
-      "pg": "^8.6.0",
-      "progress": "^2.0.3",
-      "reflect-metadata": "^0.1.10",
-      "typeorm": "0.2.32"
-   },
-   "scripts": {
-      "start": "ts-node src/index.ts",
-      "loaddata": "ts-node src/loaddata.ts"
-   }
+  "name": "_typeorm",
+  "version": "0.0.1",
+  "description": "Awesome project developed with TypeORM.",
+  "devDependencies": {
+    "@types/node": "^16.10.3",
+    "ts-node": "^10.2.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "pg": "^8.7.1",
+    "progress": "^2.0.3",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "0.2.38"
+  },
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "loaddata": "ts-node src/loaddata.ts"
+  }
 }
