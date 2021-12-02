@@ -1,4 +1,5 @@
 .ONESHELL:
+SHELL = /bin/bash
 .SHELLFLAGS += -Ee -o pipefail
 
 .PHONY: all load new-dataset go load-postgres-helpers
