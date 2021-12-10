@@ -15,6 +15,6 @@
     "pg-hstore": "^2.3.4",
     "pg-native": "^3.0.0",
     "progress": "^2.0.3",
-    "sequelize": "^6.7.0"
+    "sequelize": "^6.11.0"
   }
 }

@@ -84,7 +84,8 @@ type PMovie struct {
 
 func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.Connect(ctx, edgedb.Options{})
+	pool, err := edgedb.CreateClientDSN(
+		ctx, "edgedb_bench", edgedb.Options{Concurrency: 1})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,7 +114,7 @@ func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	return exec, close
 }
 
-func execPerson(pool *edgedb.Pool, args cli.Args) bench.Exec {
+func execPerson(pool *edgedb.Client, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
@@ -132,7 +133,7 @@ func execPerson(pool *edgedb.Pool, args cli.Args) bench.Exec {
 		}
 
 		start = time.Now()
-		err = pool.QueryOne(ctx, args.Query, &person, params)
+		err = pool.QuerySingle(ctx, args.Query, &person, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -147,7 +148,7 @@ func execPerson(pool *edgedb.Pool, args cli.Args) bench.Exec {
 	}
 }
 
-func execMovie(pool *edgedb.Pool, args cli.Args) bench.Exec {
+func execMovie(pool *edgedb.Client, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
@@ -166,7 +167,7 @@ func execMovie(pool *edgedb.Pool, args cli.Args) bench.Exec {
 		}
 
 		start = time.Now()
-		err = pool.QueryOne(ctx, args.Query, &movie, params)
+		err = pool.QuerySingle(ctx, args.Query, &movie, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -181,7 +182,7 @@ func execMovie(pool *edgedb.Pool, args cli.Args) bench.Exec {
 	}
 }
 
-func execUser(pool *edgedb.Pool, args cli.Args) bench.Exec {
+func execUser(pool *edgedb.Client, args cli.Args) bench.Exec {
 
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
@@ -201,7 +202,7 @@ func execUser(pool *edgedb.Pool, args cli.Args) bench.Exec {
 		}
 
 		start = time.Now()
-		err = pool.QueryOne(ctx, args.Query, &user, params)
+		err = pool.QuerySingle(ctx, args.Query, &user, params)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -218,7 +219,8 @@ func execUser(pool *edgedb.Pool, args cli.Args) bench.Exec {
 
 func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.Connect(ctx, edgedb.Options{})
+	pool, err := edgedb.CreateClientDSN(
+		ctx, "edgedb_bench", edgedb.Options{Concurrency: 1})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -238,7 +240,7 @@ func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 		}
 
 		start = time.Now()
-		err = pool.QueryOneJSON(ctx, args.Query, &rsp, params)
+		err = pool.QuerySingleJSON(ctx, args.Query, &rsp, params)
 		duration = time.Since(start)
 
 		if err != nil {

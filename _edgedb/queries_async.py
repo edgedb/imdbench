@@ -10,10 +10,16 @@ import edgedb
 
 
 ASYNC = True
+client = None
 
 
 async def connect(ctx):
-    return await edgedb.async_connect()
+    global client
+
+    if client is None:
+        client = edgedb.create_async_client(
+            'edgedb_bench', concurrency=ctx.async_concurrency)
+    return client
 
 
 async def close(ctx, conn):
@@ -21,7 +27,7 @@ async def close(ctx, conn):
 
 
 async def load_ids(ctx, conn):
-    d = await conn.fetchone('''
+    d = await conn.query_single('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},
@@ -41,7 +47,7 @@ async def load_ids(ctx, conn):
 
 
 async def get_user(conn, id):
-    return await conn.fetchone_json('''
+    return await conn.query_single_json('''
         SELECT User {
             id,
             name,
@@ -68,7 +74,7 @@ async def get_user(conn, id):
 
 
 async def get_movie(conn, id):
-    return await conn.fetchone_json('''
+    return await conn.query_single_json('''
         SELECT Movie {
             id,
             image,
@@ -112,7 +118,7 @@ async def get_movie(conn, id):
 
 
 async def get_person(conn, id):
-    return await conn.fetchone_json('''
+    return await conn.query_single_json('''
         SELECT Person {
             id,
             full_name,

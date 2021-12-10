@@ -18,7 +18,7 @@ def close(ctx, conn):
 
 
 def load_ids(ctx, conn):
-    d = conn.fetchone('''
+    d = conn.query_single('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},
@@ -38,7 +38,7 @@ def load_ids(ctx, conn):
 
 
 def get_user(conn, id):
-    return conn.fetchone_json('''
+    return conn.query_single_json('''
         SELECT User {
             id,
             name,
@@ -65,7 +65,7 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    return conn.fetchone_json('''
+    return conn.query_single_json('''
         SELECT Movie {
             id,
             image,
@@ -109,7 +109,7 @@ def get_movie(conn, id):
 
 
 def get_person(conn, id):
-    return conn.fetchone_json('''
+    return conn.query_single_json('''
         SELECT Person {
             id,
             full_name,
