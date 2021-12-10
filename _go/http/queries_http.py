@@ -45,7 +45,7 @@ def close(ctx, conn):
 
 
 def load_ids(ctx, conn):
-    d = conn.fetchone('''
+    d = conn.query_single('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},

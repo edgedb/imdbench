@@ -11,6 +11,6 @@
   "license": "UNLICENSED",
   "description": "_edgedb_js",
   "dependencies": {
-    "edgedb": "^0.15.2"
+    "edgedb": "^0.17.0"
   }
 }

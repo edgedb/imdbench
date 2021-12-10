@@ -1,29 +1,30 @@
 "use strict";
 
-const connect = require("edgedb").default;
+const edgedb = require("edgedb");
 const queries = require("./queries");
 
 class ConnectionJSON {
   constructor(opts) {
-    this.connection = connect();
+    this.client = edgedb.createClient({
+      dsn: "edgedb_bench",
+      concurrency: opts.pool,
+    });
   }
 
   async connect() {
-    if (this.connection instanceof Promise) {
-      this.connection = await this.connection;
-    }
+    await this.client.ensureConnected();
   }
 
   async userDetails(id) {
-    return await this.connection.querySingleJSON(queries.user, { id: id });
+    return await this.client.querySingleJSON(queries.user, { id: id });
   }
 
   async personDetails(id) {
-    return await this.connection.querySingleJSON(queries.person, { id: id });
+    return await this.client.querySingleJSON(queries.person, { id: id });
   }
 
   async movieDetails(id) {
-    return await this.connection.querySingleJSON(queries.movie, { id: id });
+    return await this.client.querySingleJSON(queries.movie, { id: id });
   }
 
   async benchQuery(query, id) {
@@ -40,30 +41,31 @@ module.exports.ConnectionJSON = ConnectionJSON;
 
 class ConnectionRepack {
   constructor(opts) {
-    this.connection = connect();
+    this.client = edgedb.createClient({
+      dsn: "edgedb_bench",
+      concurrency: opts.pool,
+    });
   }
 
   async connect() {
-    if (this.connection instanceof Promise) {
-      this.connection = await this.connection;
-    }
+    await this.client.ensureConnected();
   }
 
   async userDetails(id) {
     return JSON.stringify(
-      await this.connection.querySingle(queries.user, { id: id })
+      await this.client.querySingle(queries.user, { id: id })
     );
   }
 
   async personDetails(id) {
     return JSON.stringify(
-      await this.connection.querySingle(queries.person, { id: id })
+      await this.client.querySingle(queries.person, { id: id })
     );
   }
 
   async movieDetails(id) {
     return JSON.stringify(
-      await this.connection.querySingle(queries.movie, { id: id })
+      await this.client.querySingle(queries.movie, { id: id })
     );
   }
 
@@ -81,7 +83,7 @@ module.exports.ConnectionRepack = ConnectionRepack;
 
 class App {
   constructor({ host = "localhost", port = 5656, pool = 1, style = "json" }) {
-    this.pool = [];
+    this.conn = null;
 
     let Connection;
     if (style === "json") {
@@ -94,21 +96,15 @@ class App {
       );
     }
 
-    for (let i = 0; i < pool; i++) {
-      this.pool.push(new Connection());
-    }
+    this.conn = new Connection({pool: pool});
   }
 
   async initPool() {
-    await Promise.all(
-      this.pool.map(C => {
-        return C.connect();
-      })
-    );
+    await this.conn.connect();
   }
 
   async getIDs() {
-    var ids = await this.pool[0].connection.querySingle(`
+    var ids = await this.conn.client.querySingle(`
       WITH
           U := User {id, r := random()},
           M := Movie {id, r := random()},
@@ -128,7 +124,7 @@ class App {
   }
 
   getConnection(i) {
-    return this.pool[i];
+    return this.conn;
   }
 }
 module.exports.App = App;

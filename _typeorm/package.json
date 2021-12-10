@@ -11,7 +11,7 @@
     "pg": "^8.7.1",
     "progress": "^2.0.3",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "0.2.38"
+    "typeorm": "0.2.41"
   },
   "scripts": {
     "start": "ts-node src/index.ts",

@@ -10,7 +10,6 @@ import argparse
 import asyncio
 import edgedb
 import json
-
 import progress.bar
 
 
@@ -20,6 +19,8 @@ class Pool:
 
     def __init__(self, data, *, concurrency: int):
         self._concurrency = concurrency
+        self.client = edgedb.create_async_client(
+            'edgedb_bench', concurrency=concurrency)
 
         self._results = asyncio.Queue()
 
@@ -37,8 +38,6 @@ class Pool:
                 asyncio.create_task(self._worker()))
 
     async def _worker(self):
-        con = await edgedb.async_connect()
-
         try:
             while True:
                 piece = await self._queue.get()
@@ -48,13 +47,13 @@ class Pool:
 
                 args, kwargs = piece
                 try:
-                    await con.query(*args, **kwargs)
+                    await self.client.query(*args, **kwargs)
                 except Exception as e:
                     self._results.put_nowait(e)
                 else:
                     self._results.put_nowait(True)
         finally:
-            await con.aclose()
+            pass
 
     @classmethod
     async def map(cls, data, *, concurrency: int, label: str):
@@ -75,6 +74,8 @@ class Pool:
                 raise piece
             else:
                 bar.next()
+
+        await pool.client.aclose()
 
 
 async def import_data(data: dict):
