@@ -173,3 +173,21 @@ class UserDetailsViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects
     serializer_class = serializers.UserDetailsSerializer
     default_order = 'name'
+
+
+class MovieUpdateViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows to view a detailed movie info.
+    """
+    queryset = models.Movie.objects
+    serializer_class = serializers.MovieUpdateSerializer
+    default_order = 'title'
+
+
+class UserInsertViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows to view a detailed user info.
+    """
+    queryset = models.User.objects
+    serializer_class = serializers.UserSerializer
+    default_order = 'name'

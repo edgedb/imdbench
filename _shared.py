@@ -7,7 +7,6 @@
 
 
 import argparse
-import os
 import sys
 import types
 import typing
@@ -113,7 +112,8 @@ BENCHMARKS = {
 }
 
 
-QUERIES = ['get_movie', 'get_person', 'get_user']
+QUERIES = ['get_movie', 'get_person', 'get_user',
+           'update_movie', 'insert_user']
 
 
 def parse_args(*, prog_desc: str, out_to_json: bool = False,
@@ -127,8 +127,8 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='number of concurrent connections')
 
     parser.add_argument(
-        '-A', '--async-concurrency', type=int, default=1,
-        help='number of concurrent async connections in a process')
+        '--async-split', type=int, default=1,
+        help='number of processes to split Python async connections')
 
     parser.add_argument(
         '--db-host', type=str, default='127.0.0.1',
@@ -184,6 +184,10 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
 
     if not args.queries:
         args.queries = QUERIES
+
+    if args.concurrency % args.async_split != 0:
+        raise Exception(
+            "'--concurrency' must be an integer multiple of '--async-split'")
 
     if 'all' in args.benchmarks:
         args.benchmarks = list(BENCHMARKS.keys())

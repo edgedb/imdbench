@@ -157,6 +157,31 @@ class BenchApp extends App {
     return JSON.stringify(result);
   }
 
+  async updateMovie(val) {
+    const Movie = this.models.Movie;
+    var result = await Movie.update({
+      title: val.title
+    }, {
+      where: {id: val.id},
+      returning: ["id", "title"],
+    });
+
+    return JSON.stringify(result[1][0]);
+  }
+
+  async insertUser(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    const User = this.models.User;
+    var result = await User.create({
+      // using the automatic id sequence from cast as a matter of convenience
+      id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+      name: val + num,
+      image: 'image_' + val + num,
+    });
+
+    return JSON.stringify(result);
+  }
+
   async benchQuery(query, id) {
     if (query == "get_user") {
       return await this.userDetails(id);
@@ -164,6 +189,10 @@ class BenchApp extends App {
       return await this.personDetails(id);
     } else if (query == "get_movie") {
       return this.movieDetails(id);
+    } else if (query == "update_movie") {
+      return this.updateMovie(id);
+    } else if (query == "insert_user") {
+      return this.insertUser(id);
     }
   }
 
@@ -171,14 +200,48 @@ class BenchApp extends App {
     var ids = await Promise.all([
       this.models.User.findAll({ attributes: ["id"] }),
       this.models.Person.findAll({ attributes: ["id"] }),
-      this.models.Movie.findAll({ attributes: ["id"] })
+      this.models.Movie.findAll({ attributes: ["id", "title"] })
     ]);
 
     return {
       get_user: ids[0].map(x => x.id),
       get_person: ids[1].map(x => x.id),
-      get_movie: ids[2].map(x => x.id)
+      get_movie: ids[2].map(x => x.id),
+      // re-use user IDs for update tests
+      update_movie: ids[2].map(
+        x => ({id: x.id, title: x.title + '---' + x.id})),
+      // generate as many insert stubs as "concurrency" to
+      // accommodate concurrent inserts
+      insert_user: Array(1000).fill('insert_test__'),
     };
+  }
+
+  async setup(query) {
+    if (query == "update_movie") {
+      // don't care about using proper Sequelize machinery for this
+      return await this.query(`
+        UPDATE
+            "Movie"
+        SET
+            "title" = split_part("Movie"."title", '---', 1)
+        WHERE
+            "Movie"."title" LIKE '%---%';
+      `);
+    } else if (query == "insert_user") {
+      return await this.query(`
+        DELETE FROM
+            "User"
+        WHERE
+            "User"."name" LIKE 'insert_test__%';
+      `);
+    }
+  }
+
+  async cleanup(query) {
+    if (query == "update_movie" || query == "insert_user") {
+      // The clean up is the same as setup for mutation benchmarks
+      return await this.setup(query);
+    }
   }
 
   getConnection(i) {

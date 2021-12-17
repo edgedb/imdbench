@@ -9,6 +9,9 @@
 import edgedb
 
 
+INSERT_PREFIX = 'insert_test__'
+
+
 def get_port(ctx):
     return ctx.edgedb_port
 
@@ -32,6 +35,14 @@ def get_queries(ctx):
         'get_person': {
             'query': EDGEQL_GET_PERSON,
             'ids': ids['get_person'],
+        },
+        'update_movie': {
+            'query': EDGEQL_UPDATE_MOVIE,
+            'ids': ids['update_movie'],
+        },
+        'insert_user': {
+            'query': EDGEQL_INSERT_USER,
+            'text': ids['insert_user'],
         },
     }
 
@@ -61,7 +72,34 @@ def load_ids(ctx, conn):
         get_user=[str(v) for v in d.users],
         get_movie=[str(v) for v in d.movies],
         get_person=[str(v) for v in d.people],
+        # re-use user IDs for update tests
+        update_movie=[str(v) for v in d.movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        conn.execute('''
+            update Movie
+            filter contains(.title, '---')
+            set {
+                title := str_split(.title, '---')[0]
+            };
+        ''')
+    elif queryname == 'insert_user':
+        conn.query('''
+            delete User
+            filter .name LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}%')
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)
 
 
 EDGEQL_GET_USER = '''
@@ -164,4 +202,33 @@ EDGEQL_GET_PERSON = '''
         ),
     }
     FILTER .id = <uuid>$id
+'''
+
+
+EDGEQL_UPDATE_MOVIE = '''
+    WITH id := <uuid>$id
+    SELECT (
+        UPDATE Movie
+        FILTER .id = id
+        SET {
+            title := .title ++ '---' ++ (<str>id)[:8]
+        }
+    ) {
+        id,
+        title
+    }
+'''
+
+
+EDGEQL_INSERT_USER = '''
+    SELECT (
+        INSERT User {
+            name := <str>$name,
+            image := <str>$image,
+        }
+    ) {
+        id,
+        name,
+        image,
+    }
 '''

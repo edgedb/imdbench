@@ -183,11 +183,17 @@ async function runner(args, app) {
       // done with this run
     }
 
+    // Potentially setup the benchmark state
+    await app.setup(query);
+
     var concurrent = [];
     for (var i = 0; i < concurrency; i += 1) {
       concurrent.push(queryRunner(app.getConnection(i)));
     }
     await Promise.all(concurrent);
+
+    // Potentially clean up after the benchmarks
+    await app.cleanup(query);
   }
 
   async function run() {
@@ -277,7 +283,8 @@ async function main() {
   parser.add_argument("--query", {
     type: String,
     help: "specific query to run",
-    choices: ["get_movie", "get_person", "get_user"]
+    choices: ["get_movie", "get_person", "get_user",
+              "update_movie", "insert_user"]
   });
   parser.add_argument("orm", {
     type: String,

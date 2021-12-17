@@ -7,23 +7,28 @@
 
 
 import edgedb
+import random
+import threading
 
 
 ASYNC = True
-client = None
+INSERT_PREFIX = 'insert_test__'
+thread_data = threading.local()
 
 
 async def connect(ctx):
-    global client
-
+    client = getattr(thread_data, 'client', None)
     if client is None:
         client = edgedb.create_async_client(
-            'edgedb_bench', concurrency=ctx.async_concurrency)
+            'edgedb_bench', concurrency=ctx.concurrency)
+
     return client
 
 
 async def close(ctx, conn):
-    await conn.aclose()
+    # Don't bother closing individual pool connections, they'll be
+    # closed automatically.
+    pass
 
 
 async def load_ids(ctx, conn):
@@ -43,6 +48,11 @@ async def load_ids(ctx, conn):
         get_user=list(d.users),
         get_movie=list(d.movies),
         get_person=list(d.people),
+        # re-use user IDs for update tests
+        update_movie=list(d.movies),
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -151,3 +161,56 @@ async def get_person(conn, id):
         }
         FILTER .id = <uuid>$id
     ''', id=id)
+
+
+async def update_movie(conn, id):
+    return await conn.query_single_json('''
+        SELECT (
+            UPDATE Movie
+            FILTER .id = <uuid>$id
+            SET {
+                title := .title ++ '---' ++ <str>$suffix
+            }
+        ) {
+            id,
+            title
+        }
+    ''', id=id, suffix=str(id)[:8])
+
+
+async def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    return await conn.query_single_json('''
+        SELECT (
+            INSERT User {
+                name := <str>$name,
+                image := <str>$image,
+            }
+        ) {
+            id,
+            name,
+            image,
+        }
+    ''', name=f'{val}{num}', image=f'image_{val}{num}')
+
+
+async def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        await conn.execute('''
+            update Movie
+            filter contains(.title, '---')
+            set {
+                title := str_split(.title, '---')[0]
+            }
+        ''')
+    elif queryname == 'insert_user':
+        await conn.query('''
+            delete User
+            filter .name LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}%')
+
+
+async def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        await setup(ctx, conn, queryname)

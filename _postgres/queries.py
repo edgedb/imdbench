@@ -8,9 +8,11 @@
 
 import asyncpg
 import json
+import random
 
 
 ASYNC = True
+INSERT_PREFIX = 'insert_test__'
 
 
 async def connect(ctx):
@@ -43,6 +45,11 @@ async def load_ids(ctx, conn):
         get_user=[u['id'] for u in users],
         get_movie=[m['id'] for m in movies],
         get_person=[p['id'] for p in people],
+        # re-use user IDs for update tests
+        update_movie=[u['id'] for u in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -328,3 +335,62 @@ async def get_person(conn, id):
             } for mov in person['directed']
         ]
     })
+
+
+async def update_movie(conn, id):
+    rows = await conn.fetch('''
+        UPDATE
+            movies
+        SET
+            title = movies.title || $2
+        WHERE
+            movies.id = $1
+        RETURNING
+            movies.id, movies.title
+    ''', id, f'---{str(id)[:8]}')
+
+    return json.dumps({
+        'id': rows[0]['id'],
+        'title': rows[0]['title'],
+    })
+
+
+async def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    rows = await conn.fetch('''
+        INSERT INTO users (name, image) VALUES
+            ($1, $2)
+        RETURNING
+            users.id, users.name, users.image
+    ''', f'{val}{num}', f'image_{val}{num}')
+
+    return json.dumps({
+        'id': rows[0]['id'],
+        'name': rows[0]['name'],
+        'image': rows[0]['image'],
+    })
+
+
+async def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        await conn.execute('''
+            UPDATE
+                movies
+            SET
+                title = split_part(movies.title, '---', 1)
+            WHERE
+                movies.title LIKE '%---%'
+        ''')
+    elif queryname == 'insert_user':
+        await conn.fetch('''
+            DELETE FROM
+                users
+            WHERE
+                users.name LIKE $1
+        ''', f'{INSERT_PREFIX}%')
+
+
+async def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        await setup(ctx, conn, queryname)

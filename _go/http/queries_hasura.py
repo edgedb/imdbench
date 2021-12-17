@@ -9,6 +9,9 @@
 import psycopg2
 
 
+INSERT_PREFIX = 'insert_test__'
+
+
 def get_port(ctx):
     return 8080
 
@@ -32,6 +35,15 @@ def get_queries(ctx):
         'get_person': {
             'query': GRAPHQL_GET_PERSON,
             'ids': ids['get_person'],
+        },
+        'update_movie': {
+            'query': GRAPHQL_UPDATE_MOVIE,
+            'ids': [v[0] for v in ids['update_movie']],
+            'text': [v[1] for v in ids['update_movie']],
+        },
+        'insert_user': {
+            'query': GRAPHQL_INSERT_USER,
+            'text': ids['insert_user'],
         },
     }
 
@@ -59,8 +71,14 @@ def load_ids(ctx, conn):
     users = cur.fetchall()
 
     cur.execute(
-        'SELECT m.id::text FROM movies m ORDER BY random() LIMIT %s',
-        [ctx.number_of_ids])
+        '''
+        SELECT
+            m.id::text, m.title || '---' || m.id::text
+        FROM
+            movies m ORDER BY random() LIMIT %s
+        ''',
+        [ctx.number_of_ids]
+    )
     movies = cur.fetchall()
 
     cur.execute(
@@ -72,7 +90,41 @@ def load_ids(ctx, conn):
         get_user=[u[0] for u in users],
         get_movie=[m[0] for m in movies],
         get_person=[p[0] for p in people],
+        # re-use user IDs for update tests
+        update_movie=list(movies),
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        cur = conn.cursor()
+        cur.execute('''
+            UPDATE
+                movies
+            SET
+                title = split_part(movies.title, '---', 1)
+            WHERE
+                movies.title LIKE '%---%';
+        ''')
+        conn.commit()
+    elif queryname == 'insert_user':
+        cur = conn.cursor()
+        cur.execute('''
+            DELETE FROM
+                users
+            WHERE
+                users.name LIKE %s
+        ''', [f'{INSERT_PREFIX}%'])
+        conn.commit()
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)
 
 
 GRAPHQL_GET_USER = '''
@@ -190,5 +242,36 @@ GRAPHQL_GET_PERSON = '''
           }
         }
       }
+    }
+'''
+
+
+GRAPHQL_UPDATE_MOVIE = '''
+    mutation update_movie($id: Int!, $title: String!) {
+        movie: update_movies_by_pk(
+            _set: {
+                title: $title
+            },
+            pk_columns: {id: $id}
+        ) {
+            id
+            title
+        }
+    }
+'''
+
+
+GRAPHQL_INSERT_USER = '''
+    mutation insert_user($name: String!, $image: String!) {
+        user: insert_users_one(
+            object: {
+                name: $name,
+                image: $image,
+            }
+        ) {
+            id
+            name
+            image
+        }
     }
 '''

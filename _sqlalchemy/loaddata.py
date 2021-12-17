@@ -96,3 +96,19 @@ if __name__ == '__main__':
 
     # bulk create all the cast
     bulk_insert(db, 'cast', data['cast'], m.Cast)
+
+    # reconcile the autoincrementing indexes with the actual indexes
+    db.execute('''
+        SELECT setval('cast_id_seq',
+            (SELECT id FROM "cast" ORDER BY id DESC LIMIT 1));
+        SELECT setval('directors_id_seq',
+            (SELECT id FROM "directors" ORDER BY id DESC LIMIT 1));
+        SELECT setval('movie_id_seq',
+            (SELECT id FROM "movie" ORDER BY id DESC LIMIT 1));
+        SELECT setval('person_id_seq',
+            (SELECT id FROM "person" ORDER BY id DESC LIMIT 1));
+        SELECT setval('review_id_seq',
+            (SELECT id FROM "review" ORDER BY id DESC LIMIT 1));
+        SELECT setval('user_id_seq',
+            (SELECT id FROM "user" ORDER BY id DESC LIMIT 1));
+    ''')

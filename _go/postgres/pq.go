@@ -3,7 +3,8 @@ package postgres
 import (
 	"encoding/json"
 	"log"
-	"regexp"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,20 +24,21 @@ func PQWorker(args cli.Args) (bench.Exec, bench.Close) {
 	}
 	db.SetMaxIdleConns(args.Concurrency)
 
-	regex := regexp.MustCompile(`users|movie|person`)
-	queryType := regex.FindString(args.Query)
-
 	var exec bench.Exec
 
-	switch queryType {
-	case "movie":
+	switch args.QueryName {
+	case "get_movie":
 		exec = pqExecMovie(db, args)
-	case "person":
+	case "get_person":
 		exec = pqExecPerson(db, args)
-	case "users":
+	case "get_user":
 		exec = pqExecUser(db, args)
+	case "update_movie":
+		exec = pqUpdateMovie(db, args)
+	case "insert_user":
+		exec = pqInsertUser(db, args)
 	default:
-		log.Fatalf("unknown query type: %q", queryType)
+		log.Fatalf("unknown query type: %q", args.QueryName)
 	}
 
 	close := func() {
@@ -79,7 +81,7 @@ func pqExecMovie(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		tx, err := db.Begin()
@@ -200,7 +202,7 @@ func pqExecPerson(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		tx, err := db.Begin()
@@ -287,7 +289,7 @@ func pqExecUser(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		rows, err := stmt.Query(id)
@@ -311,6 +313,81 @@ func pqExecUser(db *sql.DB, args cli.Args) bench.Exec {
 			)
 
 			user.LatestReviews = append(user.LatestReviews, review)
+		}
+
+		serial, err := json.Marshal(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pqUpdateMovie(db *sql.DB, args cli.Args) bench.Exec {
+	var (
+		movie    PersonQueryMovie
+	)
+
+	stmt, err := db.Prepare(args.Query)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(id string, text string) (time.Duration, string) {
+		start := time.Now()
+
+		rows, err := stmt.Query(id, "---" + id)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for rows.Next() {
+			rows.Scan(
+				&movie.ID,
+				&movie.Title,
+			)
+		}
+
+		serial, err := json.Marshal(movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pqInsertUser(db *sql.DB, args cli.Args) bench.Exec {
+	var (
+		user   User
+	)
+
+	stmt, err := db.Prepare(args.Query)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(id string, text string) (time.Duration, string) {
+		start := time.Now()
+
+		num := rand.Intn(1_000_000)
+		name := text + strconv.Itoa(num)
+		image := "image_" + text + strconv.Itoa(num)
+
+		rows, err := stmt.Query(name, image)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for rows.Next() {
+			rows.Scan(
+				&user.ID,
+				&user.Name,
+				&user.Image,
+			)
 		}
 
 		serial, err := json.Marshal(user)

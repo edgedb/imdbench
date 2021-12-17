@@ -35,6 +35,20 @@ class Result(typing.NamedTuple):
     samples: typing.List[str]
 
 
+class LoopingValues:
+    def __init__(self, values):
+        self.values = list(values)
+        random.shuffle(self.values)
+        self.i = 0
+        self.len = len(self.values)
+
+    def get_next(self):
+        # advance
+        self.i += 1
+        self.i %= self.len
+        return self.values[self.i]
+
+
 def run_benchmark_method(ctx, benchname, ids, queryname):
     queries_mod = _shared.BENCHMARKS[benchname].module
     if hasattr(queries_mod, 'init'):
@@ -42,6 +56,10 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
     method = getattr(queries_mod, queryname)
     conn = queries_mod.connect(ctx)
+    # This is used to loop over input IDs in such a way as to avoid
+    # repeating the same ID too closely to itself. This avoid
+    # conflicts when concurrently updating the same object.
+    id_loop = LoopingValues(ids)
 
     try:
         samples = []
@@ -53,11 +71,11 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
         duration = ctx.warmup_time
         start = time.monotonic()
         while time.monotonic() - start < duration:
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             method(conn, rid)
 
         for _ in range(10):
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             s = method(conn, rid)
             if isinstance(s, bytes):
                 s = s.decode()
@@ -67,7 +85,7 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
         start = time.monotonic()
         max_req_time = len(latency_stats) - 1
         while time.monotonic() - start < duration:
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             req_start = time.monotonic_ns()
             method(conn, rid)
             req_time = (time.monotonic_ns() - req_start) // 10000
@@ -95,6 +113,10 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
 
     method = getattr(queries_mod, queryname)
     conn = await queries_mod.connect(ctx)
+    # This is used to loop over input IDs in such a way as to avoid
+    # repeating the same ID too closely to itself. This avoid
+    # conflicts when concurrently updating the same object.
+    id_loop = LoopingValues(ids)
 
     try:
         samples = []
@@ -106,11 +128,11 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
         duration = ctx.warmup_time
         start = time.monotonic()
         while time.monotonic() - start < duration:
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             await method(conn, rid)
 
         for _ in range(10):
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             s = await method(conn, rid)
             if isinstance(s, bytes):
                 s = s.decode()
@@ -120,7 +142,7 @@ async def run_async_benchmark_method(ctx, benchname, ids, queryname):
         start = time.monotonic()
         max_req_time = len(latency_stats) - 1
         while time.monotonic() - start < duration:
-            rid = random.choice(ids)
+            rid = id_loop.get_next()
             req_start = time.monotonic_ns()
             await method(conn, rid)
             req_time = (time.monotonic_ns() - req_start) // 10000
@@ -175,7 +197,9 @@ def agg_results(results, benchname, queryname, duration) -> Result:
 
 def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
     method_ids = ids[queryname]
-
+    # We want to split the input ids into separate chunks, so that we
+    # avoid concurrent mutations of the same object.
+    chunk_len = math.ceil(len(method_ids) / ctx.concurrency)
     with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
         tasks = []
         for i in range(ctx.concurrency):
@@ -183,7 +207,7 @@ def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
                 run_benchmark_method,
                 ctx,
                 benchname,
-                method_ids,
+                method_ids[chunk_len*i:chunk_len*(i+1)],
                 queryname)
             tasks.append(task)
 
@@ -192,35 +216,46 @@ def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
     return agg_results(results, benchname, queryname, ctx.duration)
 
 
-def do_run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
+def do_run_benchmark_async(ctx, benchname, ids, iproc, queryname) -> Result:
     method_ids = ids[queryname]
+    # We want to split the input ids into separate chunks, so that we
+    # avoid concurrent mutations of the same object.
+    proc_chunk_len = math.ceil(len(method_ids) / ctx.async_split)
+    method_ids = method_ids[proc_chunk_len*iproc:proc_chunk_len*(iproc+1)]
+    chunk_len = math.ceil(
+        len(method_ids) / (ctx.concurrency // ctx.async_split)
+    )
+
+    uvloop.install()
 
     async def run():
         tasks = []
-        for i in range(ctx.async_concurrency):
+        for i in range(ctx.concurrency // ctx.async_split):
             task = asyncio.create_task(
                 run_async_benchmark_method(
                     ctx,
                     benchname,
-                    method_ids,
+                    method_ids[chunk_len*i:chunk_len*(i+1)],
                     queryname))
             tasks.append(task)
 
         return await asyncio.gather(*tasks)
 
-    uvloop.install()
     return asyncio.run(run())
 
 
 def run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
-    with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
+    # We want to split the input ids into separate chunks, so that we
+    # avoid concurrent mutations of the same object.
+    with futures.ProcessPoolExecutor(max_workers=ctx.async_split) as e:
         tasks = []
-        for i in range(ctx.concurrency):
+        for i in range(ctx.async_split):
             task = e.submit(
                 do_run_benchmark_async,
                 ctx,
                 benchname,
                 ids,
+                i,
                 queryname)
             tasks.append(task)
 
@@ -236,15 +271,24 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
     if hasattr(queries_mod, 'init'):
         queries_mod.init(ctx)
     idconn = queries_mod.connect(ctx)
-    try:
-        ids = queries_mod.load_ids(ctx, idconn)
-    finally:
-        queries_mod.close(ctx, idconn)
+    ids = queries_mod.load_ids(ctx, idconn)
+    queries_mod.close(ctx, idconn)
 
     for queryname in ctx.queries:
+        # Potentially setup the benchmark state
+        conn = queries_mod.connect(ctx)
+        queries_mod.setup(ctx, conn, queryname)
+        queries_mod.close(ctx, conn)
+
         res = run_benchmark_sync(ctx, benchname, ids, queryname)
         results.append(res)
         print_result(ctx, res)
+        queries_mod.close(ctx, conn)
+
+        # Potentially clean up after the benchmarks
+        conn = queries_mod.connect(ctx)
+        queries_mod.cleanup(ctx, conn, queryname)
+        queries_mod.close(ctx, conn)
 
     return results
 
@@ -256,18 +300,43 @@ def run_async(ctx, benchname) -> typing.List[Result]:
     async def fetch_ids():
         if hasattr(queries_mod, 'init'):
             queries_mod.init(ctx)
-        idconn = await queries_mod.connect(ctx)
+        conn = await queries_mod.connect(ctx)
         try:
-            return await queries_mod.load_ids(ctx, idconn)
+            return await queries_mod.load_ids(ctx, conn)
         finally:
-            await queries_mod.close(ctx, idconn)
+            await queries_mod.close(ctx, conn)
 
+    async def setup():
+        if not hasattr(queries_mod, 'setup'):
+            return
+        conn = await queries_mod.connect(ctx)
+        try:
+            return await queries_mod.setup(ctx, conn, queryname)
+        finally:
+            await queries_mod.close(ctx, conn)
+
+    async def cleanup():
+        if not hasattr(queries_mod, 'cleanup'):
+            return
+        conn = await queries_mod.connect(ctx)
+        try:
+            return await queries_mod.cleanup(ctx, conn, queryname)
+        finally:
+            await queries_mod.close(ctx, conn)
+
+    uvloop.install()
     ids = asyncio.run(fetch_ids())
 
     for queryname in ctx.queries:
+        # Potentially setup the benchmark state
+        asyncio.run(setup())
+
         res = run_benchmark_async(ctx, benchname, ids, queryname)
         results.append(res)
         print_result(ctx, res)
+
+        # Potentially clean up after the benchmarks
+        asyncio.run(cleanup())
 
     return results
 
@@ -297,8 +366,7 @@ def main():
         out_to_json=True)
 
     print('============ Python ============')
-    print(f'concurrency:\t{ctx.concurrency} '
-          f'(x{ctx.async_concurrency} for async)')
+    print(f'concurrency:\t{ctx.concurrency}')
     print(f'warmup time:\t{ctx.warmup_time} seconds')
     print(f'duration:\t{ctx.duration} seconds')
     print(f'queries:\t{", ".join(q for q in ctx.queries)}')

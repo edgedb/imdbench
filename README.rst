@@ -40,7 +40,7 @@ Installation and Use
 
    .. code-block::
 
-      python bench.py --html out.html --concurrency 10 -A 2  -D 10 all
+      python bench.py --html out.html --concurrency 10 -D 10 all
 
 
 Dataset

@@ -9,6 +9,9 @@
 import edgedb
 
 
+INSERT_PREFIX = 'insert_test__'
+
+
 def get_port(ctx):
     return ctx.edgedb_port
 
@@ -33,6 +36,15 @@ def get_queries(ctx):
             'query': GRAPHQL_GET_PERSON,
             'ids': ids['get_person'],
         },
+        'update_movie': {
+            'query': GRAPHQL_UPDATE_MOVIE,
+            'ids': [v['id'] for v in ids['update_movie']],
+            'text': [v['text'] for v in ids['update_movie']],
+        },
+        'insert_user': {
+            'query': GRAPHQL_INSERT_USER,
+            'text': ids['insert_user'],
+        },
     }
 
 
@@ -52,16 +64,46 @@ def load_ids(ctx, conn):
             P := Person {id, r := random()}
         SELECT (
             users := array_agg((SELECT U ORDER BY U.r LIMIT <int64>$lim).id),
-            movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim).id),
+            movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim){
+                id,
+                title := '---' ++ (<str>.id)[:8],
+            }),
             people := array_agg((SELECT P ORDER BY P.r LIMIT <int64>$lim).id),
         );
     ''', lim=ctx.number_of_ids)
 
     return dict(
         get_user=[str(v) for v in d.users],
-        get_movie=[str(v) for v in d.movies],
+        get_movie=[str(v.id) for v in d.movies],
         get_person=[str(v) for v in d.people],
+        # re-use user IDs for update tests
+        update_movie=[{'id': str(v.id), 'text': v.title} for v in d.movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        conn.execute('''
+            update Movie
+            filter contains(.title, '---')
+            set {
+                title := str_split(.title, '---')[0]
+            };
+        ''')
+    elif queryname == 'insert_user':
+        conn.query('''
+            delete User
+            filter .name LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}%')
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)
 
 
 GRAPHQL_GET_USER = '''
@@ -142,6 +184,37 @@ GRAPHQL_GET_PERSON = '''
             year
             avg_rating
         }
+        }
+    }
+'''
+
+
+GRAPHQL_UPDATE_MOVIE = '''
+    mutation update_movie($id: ID!, $title: String!) {
+        movie: update_Movie(
+            data: {
+                title: {append: $title}
+            },
+            filter: {id: {eq: $id}}
+        ) {
+            id
+            title
+        }
+    }
+'''
+
+
+GRAPHQL_INSERT_USER = '''
+    mutation insert_user($name: String!, $image: String!) {
+        user: insert_User(
+            data: {
+                name: $name,
+                image: $image,
+            }
+        ) {
+            id
+            name
+            image
         }
     }
 '''

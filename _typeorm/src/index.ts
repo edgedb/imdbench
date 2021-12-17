@@ -20,6 +20,9 @@ var defaultOptions: ConnectionOptions = {
 };
 
 export class App extends Connection {
+  concurrency: number;
+
+
   constructor(options: ConnectionOptions) {
     var opts: ConnectionOptions = {
       ...defaultOptions
@@ -27,9 +30,11 @@ export class App extends Connection {
     Object.assign(opts, options || {});
 
     super(opts);
+
+    this.concurrency = options.extra.max;
   }
 
-  async benchQuery(query: string, id) {
+  async benchQuery(query: string, val) {
     var method;
 
     if (query == "get_user") {
@@ -38,23 +43,61 @@ export class App extends Connection {
       method = personDetails.bind(this);
     } else if (query == "get_movie") {
       method = movieDetails.bind(this);
+    } else if (query == "update_movie") {
+      method = updateMovie.bind(this);
+    } else if (query == "insert_user") {
+      method = insertUser.bind(this);
     }
 
-    return await method(id);
+    return await method(val);
   }
 
   async getIDs() {
     var ids = await Promise.all([
       this.getRepository(User).find({ select: ["id"] }),
       this.getRepository(Person).find({ select: ["id"] }),
-      this.getRepository(Movie).find({ select: ["id"] })
+      this.getRepository(Movie).find({ select: ["id", "title"] })
     ]);
 
     return {
-      get_user: ids[0].map(x => x.id),
-      get_person: ids[1].map(x => x.id),
-      get_movie: ids[2].map(x => x.id)
+      get_user: ids[0].map(x => ({id: x.id})),
+      get_person: ids[1].map(x => ({id: x.id})),
+      get_movie: ids[2].map(x => ({id: x.id})),
+      // re-use user IDs for update tests
+      update_movie: ids[2].map(
+        x => ({id: x.id, title: x.title + '---' + x.id})),
+      // generate as many insert stubs as "concurrency" to
+      // accommodate concurrent inserts
+      insert_user: Array(this.concurrency).fill('insert_test__'),
     };
+  }
+
+  async setup(query) {
+    if (query == "update_movie") {
+      // don't care about using proper Sequelize machinery for this
+      return await this.query(`
+        UPDATE
+            "movie"
+        SET
+            "title" = split_part("movie"."title", '---', 1)
+        WHERE
+            "movie"."title" LIKE '%---%';
+      `);
+    } else if (query == "insert_user") {
+      return await this.query(`
+        DELETE FROM
+            "user"
+        WHERE
+            "user"."name" LIKE 'insert_test__%';
+      `);
+    }
+  }
+
+  async cleanup(query) {
+    if (query == "update_movie" || query == "insert_user") {
+      // The clean up is the same as setup for mutation benchmarks
+      return await this.setup(query);
+    }
   }
 
   getConnection(i: number) {
@@ -62,7 +105,10 @@ export class App extends Connection {
   }
 }
 
-export async function userDetails(this, id: number): Promise<string> {
+export async function userDetails(
+    this,
+    val: {id: number; title?: string}
+): Promise<string> {
   var user = await this.createQueryBuilder(User, "user")
     .select(["user", "review.id", "review.body", "review.rating"])
     .leftJoin("user.reviews", "review")
@@ -72,7 +118,7 @@ export async function userDetails(this, id: number): Promise<string> {
       "movie",
       "movie.id = review.movie_id"
     )
-    .where("user.id = :id", { id: id })
+    .where("user.id = :id", { id: val.id })
     .orderBy("review.creation_time", "DESC")
     .getOne();
 
@@ -92,7 +138,10 @@ export async function userDetails(this, id: number): Promise<string> {
   return JSON.stringify(result);
 }
 
-export async function personDetails(this, id: number): Promise<string> {
+export async function personDetails(
+    this,
+    val: {id: number; title?: string}
+): Promise<string> {
   var person = await this.createQueryBuilder(Person, "person")
     .leftJoinAndSelect("person.directed", "directors")
     .leftJoinAndMapOne(
@@ -108,7 +157,7 @@ export async function personDetails(this, id: number): Promise<string> {
       "cmovie",
       "cmovie.id = cast.movie_id"
     )
-    .where("person.id = :id", { id: id })
+    .where("person.id = :id", { id: val.id })
     .orderBy("dmovie.year", "ASC")
     .addOrderBy("cmovie.year", "ASC")
     .getOne();
@@ -137,7 +186,10 @@ export async function personDetails(this, id: number): Promise<string> {
   return JSON.stringify(result);
 }
 
-export async function movieDetails(this, id: number): Promise<string> {
+export async function movieDetails(
+    this,
+    val: {id: number; title?: string}
+): Promise<string> {
   var movie = await this.createQueryBuilder(Movie, "movie")
     .select([
       "movie.id",
@@ -170,7 +222,7 @@ export async function movieDetails(this, id: number): Promise<string> {
     .leftJoinAndSelect("cast.person", "cperson")
     .leftJoinAndSelect("movie.reviews", "review")
     .leftJoinAndSelect("review.author", "user")
-    .where("movie.id = :id", { id: id })
+    .where("movie.id = :id", { id: val.id })
     .orderBy("directors.list_order", "ASC")
     .addOrderBy("dperson.last_name", "ASC")
     .addOrderBy("cast.list_order", "ASC")
@@ -198,4 +250,38 @@ export async function movieDetails(this, id: number): Promise<string> {
   var result = movie;
 
   return JSON.stringify(result);
+}
+
+export async function updateMovie(
+    this,
+    val: {id: number; title?: string}
+): Promise<string> {
+  var result = await this.createQueryBuilder(Movie, "movie")
+    .update()
+    .set({title: val.title})
+    .where("movie.id = :id", { id: val.id })
+    .returning(["id", "title"])
+    .execute();
+
+  return JSON.stringify(result.raw[0]);
+}
+
+export async function insertUser(
+    this,
+    val: string
+): Promise<string> {
+  var num = Math.floor(Math.random() * 1000000);
+  var result = await this.createQueryBuilder()
+    .insert()
+    .into(User)
+    .values([{
+      // using the automatic id sequence from cast as a matter of convenience
+      id: () => "nextval('cast_id_seq')",
+      name: val + num,
+      image: 'image_' + val + num,
+    }])
+    .returning(["id", "name", "image"])
+    .execute();
+
+  return JSON.stringify(result.raw[0]);
 }

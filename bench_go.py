@@ -12,7 +12,6 @@ import json
 import pathlib
 import subprocess
 import typing
-import sys
 
 import _shared
 
@@ -60,7 +59,7 @@ def run_query(ctx, benchmark, queryname, querydata, port):
            '--output-format', 'json', '--host', ctx.db_host,
            '--port', port, '--path', path, '--ids-are-ints', int_ids,
            '--nsamples', '10', '--benchmark', benchmark,
-           '--', '-']
+           '--queryname', queryname, '--', '-']
 
     cmd = [str(c) for c in cmd]
 
@@ -87,15 +86,27 @@ def run_query(ctx, benchmark, queryname, querydata, port):
     )
 
 
-def run_bench(ctx, benchmark, queries, port):
+def run_bench(ctx, benchmark, queries_mod):
     results = []
+    queries = queries_mod.get_queries(ctx)
+    port = queries_mod.get_port(ctx)
 
     for queryname in ctx.queries:
         querydata = queries[queryname]
 
+        # Potentially setup the benchmark state
+        conn = queries_mod.connect(ctx)
+        queries_mod.setup(ctx, conn, queryname)
+        queries_mod.close(ctx, conn)
+
         res = run_query(ctx, benchmark, queryname, querydata, port)
         results.append(res)
         print_result(ctx, res)
+
+        # Potentially clean up after the benchmarks
+        conn = queries_mod.connect(ctx)
+        queries_mod.cleanup(ctx, conn, queryname)
+        queries_mod.close(ctx, conn)
 
     return results
 
@@ -122,10 +133,7 @@ def main():
             continue
 
         queries_mod = _shared.BENCHMARKS[benchmark].module
-        queries = queries_mod.get_queries(ctx)
-        port = queries_mod.get_port(ctx)
-
-        res = run_bench(ctx, benchmark, queries, port)
+        res = run_bench(ctx, benchmark, queries_mod)
         data.append(res)
 
     if ctx.json:

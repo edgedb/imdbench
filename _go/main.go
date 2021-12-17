@@ -15,6 +15,11 @@ import (
 	"github.com/edgedb/webapp-bench/_go/postgres"
 )
 
+type Slice struct {
+	Start 	int
+	End 	int
+}
+
 type Stats struct {
 	Queries       int64    `json:"nqueries"`
 	MinLatency    int64    `json:"min_latency"`
@@ -24,10 +29,26 @@ type Stats struct {
 	Samples       []string `json:"samples"`
 }
 
+func safeSlice(
+	array 	[]string,
+	slice 	Slice,
+) []string {
+	l := len(array)
+
+	if l < slice.Start {
+		return array[l:l];
+	} else if l < slice.End {
+		return array[slice.Start:l];
+	} else {
+		return array[slice.Start:slice.End];
+	}
+}
+
 func doWork(
 	work bench.Worker,
 	duration time.Duration,
 	args cli.Args,
+	slice Slice,
 	statsChan chan Stats,
 ) {
 	exec, close := work(args)
@@ -41,17 +62,50 @@ func doWork(
 		Samples:       make([]string, 0, args.NSamples),
 	}
 
+	var (
+		id 		string
+		text 	string
+		lenArgs	int
+	)
+
+	// To avoid concurrent modification of the same objects separate
+	// the inputs into non-overlapping chunks.
+	Ids := safeSlice(args.Ids, slice)
+	Text := safeSlice(args.Text, slice)
+
+	if len(Text) < len(Ids) {
+		lenArgs = len(Ids)
+	} else {
+		lenArgs = len(Text)
+	}
+
 	for i := 0; i < args.NSamples; i++ {
-		id := args.Ids[rand.Intn(len(args.Ids))]
-		_, sample := exec(id)
+		index := rand.Intn(lenArgs)
+
+		if len(Ids) > 0 {
+			id = Ids[index]
+		}
+		if len(Text) > 0 {
+			text = Text[index]
+		}
+
+		_, sample := exec(id, text)
 		stats.Samples = append(stats.Samples, sample)
 	}
 
 	roundedTimeout := args.Timeout.Nanoseconds() / 10_000
 	start := time.Now()
 	for time.Since(start) < duration {
-		id := args.Ids[rand.Intn(len(args.Ids))]
-		reqTime, _ := exec(id)
+		index := rand.Intn(lenArgs)
+
+		if len(Ids) > 0 {
+			id = Ids[index]
+		}
+		if len(Text) > 0 {
+			text = Text[index]
+		}
+
+		reqTime, _ := exec(id, text)
 
 		rounded := reqTime.Nanoseconds() / 10_000
 		if rounded > stats.MaxLatency {
@@ -79,9 +133,18 @@ func doConcurrentWork(
 	args cli.Args,
 ) Stats {
 	statsChan := make(chan Stats, args.Concurrency)
+    // We want to split the input ids into separate chunks, so that we
+    // avoid concurrent mutations of the same object.
+    var chunk_len int
+	if len(args.Ids) > 0 {
+	    chunk_len = (len(args.Ids) + args.Concurrency - 1) / args.Concurrency
+	} else if len(args.Text) > 0 {
+	    chunk_len = (len(args.Text) + args.Concurrency - 1) / args.Concurrency
+	}
 
 	for i := 0; i < args.Concurrency; i++ {
-		go doWork(work, duration, args, statsChan)
+		slice := Slice{Start: chunk_len*i, End: chunk_len*(i+1)}
+		go doWork(work, duration, args, slice, statsChan)
 	}
 
 	samples := make([]string, 0, args.NSamples*args.Concurrency)

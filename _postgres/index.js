@@ -13,6 +13,8 @@ class App {
       ...(options || {})
     };
     this.pool = new Pool(options);
+    this.concurrency = options.max;
+    this.INSERT_PREFIX = 'insert_test__'
   }
 
   async fetchUser(conn, id) {
@@ -295,13 +297,61 @@ class App {
     return JSON.stringify(movie);
   }
 
+  async updateMovie(id) {
+    const res = await this.pool.query(
+      `
+      UPDATE
+          movies
+      SET
+          title = movies.title || $2
+      WHERE
+          movies.id = $1
+      RETURNING
+          movies.id, movies.title
+      `,
+      [id, "---" + id]
+    );
+
+    var movie = {
+      id: res.rows[0].id,
+      title: res.rows[0].title,
+    };
+
+    return JSON.stringify(movie);
+  }
+
+  async insertUser(id) {
+    let num = Math.floor(Math.random() * 1000000);
+    const res = await this.pool.query(
+      `
+      INSERT INTO users (name, image) VALUES
+          ($1, $2)
+      RETURNING
+          users.id, users.name, users.image
+      `,
+      [id + num, 'image_' + id + num]
+    );
+
+    var user = {
+      id: res.rows[0].id,
+      name: res.rows[0].name,
+      image: res.rows[0].image,
+    };
+
+    return JSON.stringify(user);
+  }
+
   async benchQuery(query, id) {
     if (query == "get_user") {
       return await this.userDetails(id);
     } else if (query == "get_person") {
       return await this.personDetails(id);
     } else if (query == "get_movie") {
-      return this.movieDetails(id);
+      return await this.movieDetails(id);
+    } else if (query == "update_movie") {
+      return await this.updateMovie(id);
+    } else if (query == "insert_user") {
+      return await this.insertUser(id);
     }
   }
 
@@ -315,9 +365,42 @@ class App {
     return {
       get_user: ids[0].rows.map(x => x.id),
       get_person: ids[1].rows.map(x => x.id),
-      get_movie: ids[2].rows.map(x => x.id)
+      get_movie: ids[2].rows.map(x => x.id),
+      // re-use user IDs for update tests
+      update_movie: ids[2].rows.map(x => x.id),
+      // generate as many insert stubs as "concurrency" to
+      // accommodate concurrent inserts
+      insert_user: Array(this.concurrency).fill(this.INSERT_PREFIX),
     };
   }
+
+  async setup(query) {
+    if (query == "update_movie") {
+      return await this.pool.query(`
+        UPDATE
+            movies
+        SET
+            title = split_part(movies.title, '---', 1)
+        WHERE
+            movies.title LIKE '%---%';
+      `);
+    } else if (query == "insert_user") {
+      return await this.pool.query(`
+        DELETE FROM
+            users
+        WHERE
+            users.name LIKE $1;
+      `, [this.INSERT_PREFIX + '%']);
+    }
+  }
+
+  async cleanup(query) {
+    if (query == "update_movie" || query == "insert_user") {
+      // The clean up is the same as setup for mutation benchmarks
+      return await this.setup(query);
+    }
+  }
+
   getConnection(i) {
     return this;
   }

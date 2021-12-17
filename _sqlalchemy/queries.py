@@ -7,19 +7,17 @@
 
 
 import json
-
+import random
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from sqlalchemy.ext import baked
-
 import _sqlalchemy.models as m
 
 
 engine = None
 session_factory = None
-
-
 bakery = baked.bakery()
+INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
@@ -62,6 +60,11 @@ def load_ids(ctx, sess):
         get_user=[u.id for u in users],
         get_movie=[m.id for m in movies],
         get_person=[p.id for p in people],
+        # re-use user IDs for update tests
+        update_movie=[m.id for m in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -209,3 +212,65 @@ def get_person(sess, id):
     }
 
     return json.dumps(result)
+
+
+def update_movie(sess, id):
+    stmt = sa.update(
+        m.Movie
+    ).filter_by(
+        id=sa.bindparam('m_id')
+    ).values(
+        title=m.Movie.title + sa.bindparam('suffix')
+    ).returning(
+        m.Movie.id,
+        m.Movie.title,
+    )
+
+    result = sess.execute(
+        stmt,
+        dict(m_id=id, suffix=f'---{str(id)[:8]}')
+    ).first()
+    # Without this commit, the changes end up being committed outside
+    # of where they are timed.
+    sess.commit()
+
+    return json.dumps({
+        'id': result[0],
+        'title': result[1],
+    })
+
+
+def insert_user(sess, val):
+    num = random.randrange(1_000_000)
+    user = m.User(name=f'{val}{num}', image=f'image_{val}{num}')
+    sess.add(user)
+    sess.commit()
+
+    return json.dumps({
+        'id': user.id,
+        'name': user.name,
+        'image': user.image,
+    })
+
+
+def setup(ctx, sess, queryname):
+    if queryname == 'update_movie':
+        sess.query(
+            m.Movie
+        ).update(
+            dict(title=sa.func.split_part(m.Movie.title, '---', 1))
+        )
+        sess.commit()
+    elif queryname == 'insert_user':
+        sess.query(
+            m.User
+        ).filter(
+            m.User.name.like(f'{INSERT_PREFIX}%')
+        ).delete(synchronize_session=False)
+        sess.commit()
+
+
+def cleanup(ctx, sess, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, sess, queryname)

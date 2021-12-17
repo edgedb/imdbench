@@ -7,6 +7,10 @@
 
 
 import edgedb
+import random
+
+
+INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
@@ -34,6 +38,11 @@ def load_ids(ctx, conn):
         get_user=list(d.users),
         get_movie=list(d.movies),
         get_person=list(d.people),
+        # re-use user IDs for update tests
+        update_movie=list(d.movies),
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -142,3 +151,56 @@ def get_person(conn, id):
         }
         FILTER .id = <uuid>$id
     ''', id=id)
+
+
+def update_movie(conn, id):
+    return conn.query_single_json('''
+        SELECT (
+            UPDATE Movie
+            FILTER .id = <uuid>$id
+            SET {
+                title := .title ++ '---' ++ <str>$suffix
+            }
+        ) {
+            id,
+            title
+        }
+    ''', id=id, suffix=str(id)[:8])
+
+
+def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    return conn.query_single_json('''
+        SELECT (
+            INSERT User {
+                name := <str>$name,
+                image := <str>$image,
+            }
+        ) {
+            id,
+            name,
+            image,
+        }
+    ''', name=f'{val}{num}', image=f'image_{val}{num}')
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        conn.execute('''
+            update Movie
+            filter contains(.title, '---')
+            set {
+                title := str_split(.title, '---')[0]
+            };
+        ''')
+    elif queryname == 'insert_user':
+        conn.query('''
+            delete User
+            filter .name LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}%')
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)

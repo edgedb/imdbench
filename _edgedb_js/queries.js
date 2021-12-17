@@ -98,6 +98,30 @@ const queries = {
         ),
     }
     FILTER .id = <uuid>$id
-  `
+  `,
+  updateMovie: `
+    SELECT (
+        UPDATE Movie
+        FILTER .id = <uuid>$id
+        SET {
+            title := .title ++ '---' ++ <str>$suffix
+        }
+    ) {
+        id,
+        title
+    }
+  `,
+  insertUser: `
+      SELECT (
+          INSERT User {
+              name := <str>$name,
+              image := <str>$image,
+          }
+      ) {
+          id,
+          name,
+          image,
+      }
+  `,
 };
 module.exports = queries;

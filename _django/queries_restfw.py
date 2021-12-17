@@ -6,7 +6,9 @@
 ##
 
 
+from django.db import connection
 from django.test.client import RequestFactory
+import random
 
 from . import bootstrap  # NoQA
 
@@ -19,6 +21,9 @@ DUMMY_REQUEST = rf.get('/')
 USER_VIEW = views.UserDetailsViewSet.as_view({'get': 'retrieve'})
 MOVIE_VIEW = views.MovieDetailsViewSet.as_view({'get': 'retrieve'})
 PERSON_VIEW = views.PersonDetailsViewSet.as_view({'get': 'retrieve'})
+MOVIE_UPDATE_VIEW = views.MovieUpdateViewSet.as_view({'post': 'update'})
+USER_INSERT_VIEW = views.UserInsertViewSet.as_view({'post': 'create'})
+INSERT_PREFIX = 'insert_test__'
 
 
 def init(ctx):
@@ -54,6 +59,11 @@ def load_ids(ctx, db):
         get_user=[d.id for d in users],
         get_movie=[d.id for d in movies],
         get_person=[d.id for d in people],
+        # re-use user IDs for update tests
+        update_movie=[d.id for d in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -67,3 +77,47 @@ def get_movie(conn, id):
 
 def get_person(conn, id):
     return PERSON_VIEW(DUMMY_REQUEST, pk=id).render().getvalue()
+
+
+def update_movie(conn, id):
+    return MOVIE_UPDATE_VIEW(
+        rf.post('/', data={'title': f'---{id}'}),
+        pk=id
+    ).render().getvalue()
+
+
+def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    return USER_INSERT_VIEW(
+        rf.post(
+            '/',
+            data={'name': f'{val}{num}', 'image': f'image_{val}{num}'}
+        )
+    ).render().getvalue()
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        with connection.cursor() as cur:
+            cur.execute('''
+                UPDATE
+                    _django_movie
+                SET
+                    title = split_part(_django_movie.title, '---', 1)
+                WHERE
+                    _django_movie.title LIKE '%---%';
+            ''')
+    elif queryname == 'insert_user':
+        with connection.cursor() as cur:
+            cur.execute('''
+                DELETE FROM
+                    _django_user
+                WHERE
+                    _django_user.name LIKE %s
+            ''', [f'{INSERT_PREFIX}%'])
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)

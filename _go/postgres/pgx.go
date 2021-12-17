@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"regexp"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,19 +29,20 @@ func PGXWorker(args cli.Args) (bench.Exec, bench.Close) {
 		log.Fatal(err)
 	}
 
-	regex := regexp.MustCompile(`users|movie|person`)
-	queryType := regex.FindString(args.Query)
-
 	var exec bench.Exec
-	switch queryType {
-	case "movie":
+	switch args.QueryName {
+	case "get_movie":
 		exec = pgxExecMovie(con, args)
-	case "person":
+	case "get_person":
 		exec = pgxExecPerson(con, args)
-	case "users":
+	case "get_user":
 		exec = pgxExecUser(con, args)
+	case "update_movie":
+		exec = pgxUpdateMovie(con, args)
+	case "insert_user":
+		exec = pgxInsertUser(con, args)
 	default:
-		log.Fatalf("unknown query type: %q", queryType)
+		log.Fatalf("unknown query type: %q", args.QueryName)
 	}
 
 	close := func() {
@@ -63,7 +65,7 @@ func pgxExecMovie(con *pgx.Conn, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	queries := strings.Split(args.Query, ";")
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		tx, err := con.BeginTx(ctx, pgxTxOpts)
@@ -163,7 +165,7 @@ func pgxExecPerson(con *pgx.Conn, args cli.Args) bench.Exec {
 	ctx := context.TODO()
 	queries := strings.Split(args.Query, ";")
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		tx, err := con.BeginTx(ctx, pgxTxOpts)
@@ -245,7 +247,7 @@ func pgxExecUser(con *pgx.Conn, args cli.Args) bench.Exec {
 
 	ctx := context.TODO()
 
-	return func(id string) (time.Duration, string) {
+	return func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
 		rows, err := con.Query(ctx, args.Query, id)
@@ -269,6 +271,75 @@ func pgxExecUser(con *pgx.Conn, args cli.Args) bench.Exec {
 			)
 
 			user.LatestReviews = append(user.LatestReviews, review)
+		}
+
+		serial, err := json.Marshal(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pgxUpdateMovie(con *pgx.Conn, args cli.Args) bench.Exec {
+	var (
+		movie  PersonQueryMovie
+	)
+
+	ctx := context.TODO()
+
+	return func(id string, text string) (time.Duration, string) {
+		start := time.Now()
+
+		rows, err := con.Query(ctx, args.Query, id, "---" + id)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for rows.Next() {
+			rows.Scan(
+				&movie.ID,
+				&movie.Title,
+			)
+		}
+
+		serial, err := json.Marshal(movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pgxInsertUser(con *pgx.Conn, args cli.Args) bench.Exec {
+	var (
+		user   User
+	)
+
+	ctx := context.TODO()
+
+	return func(id string, text string) (time.Duration, string) {
+		start := time.Now()
+
+		num := rand.Intn(1_000_000)
+		name := text + strconv.Itoa(num)
+		image := "image_" + text + strconv.Itoa(num)
+
+		rows, err := con.Query(ctx, args.Query, name, image)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for rows.Next() {
+			rows.Scan(
+				&user.ID,
+				&user.Name,
+				&user.Image,
+			)
 		}
 
 		serial, err := json.Marshal(user)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -31,17 +32,31 @@ func Worker(args cli.Args) (bench.Exec, bench.Close) {
 	payload.Query = args.Query
 	payload.Variables = make(map[string]interface{}, 0)
 
-	exec := func(id string) (time.Duration, string) {
+	exec := func(id string, text string) (time.Duration, string) {
 		start := time.Now()
 
-		if args.IdsAreInts == "True" {
-			var err error
-			payload.Variables["id"], err = strconv.Atoi(id)
-			if err != nil {
-				log.Fatal(err)
+		if id != "" {
+			if args.IdsAreInts == "True" {
+				var err error
+				payload.Variables["id"], err = strconv.Atoi(id)
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				payload.Variables["id"] = id
 			}
-		} else {
-			payload.Variables["id"] = id
+		}
+
+		if text != "" {
+			// need to add more variables for the query
+			switch args.QueryName {
+			case "update_movie":
+				payload.Variables["title"] = text
+			case "insert_user":
+				num := rand.Intn(1_000_000)
+				payload.Variables["name"] = text + strconv.Itoa(num)
+				payload.Variables["image"] = "image_" + text + strconv.Itoa(num)
+			}
 		}
 
 		bts, err := json.Marshal(payload)

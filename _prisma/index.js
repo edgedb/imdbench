@@ -296,6 +296,40 @@ class App extends PrismaClient {
     return JSON.stringify(result[0]);
   }
 
+  async updateMovie(val) {
+    let result = await this.movies.update({
+      where: {
+        id: val.id,
+      },
+      data: {
+        title: val.title,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    return JSON.stringify(result);
+  }
+
+  async insertUser(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    let result = await this.users.create({
+      data: {
+        name: val + num,
+        image: 'image_' + val + num,
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
+    });
+
+    return JSON.stringify(result);
+  }
+
   async benchQuery(query, id) {
     if (query == "get_user") {
       return await this.userDetails(id);
@@ -303,6 +337,10 @@ class App extends PrismaClient {
       return await this.personDetails(id);
     } else if (query == "get_movie") {
       return this.movieDetails(id);
+    } else if (query == "update_movie") {
+      return this.updateMovie(id);
+    } else if (query == "insert_user") {
+      return this.insertUser(id);
     }
   }
 
@@ -310,14 +348,48 @@ class App extends PrismaClient {
     var ids = await Promise.all([
       this.users.findMany({select: {id: true}}),
       this.persons.findMany({select: {id: true}}),
-      this.movies.findMany({select: {id: true}}),
+      this.movies.findMany({select: {id: true, title: true}}),
     ]);
 
     return {
       get_user: ids[0].map(x => x.id),
       get_person: ids[1].map(x => x.id),
-      get_movie: ids[2].map(x => x.id)
+      get_movie: ids[2].map(x => x.id),
+      // re-use user IDs for update tests
+      update_movie: ids[2].map(
+        x => ({id: x.id, title: x.title + '---' + x.id})),
+      // generate a bunch of insert stubs to accommodate concurrent
+      // inserts
+      insert_user: Array(1000).fill('insert_test__'),
     };
+  }
+
+  async setup(query) {
+    if (query == "update_movie") {
+      // don't care about using proper Sequelize machinery for this
+      return await this.$executeRaw`
+        UPDATE
+            movies
+        SET
+            title = split_part(movies.title, '---', 1)
+        WHERE
+            movies.title LIKE '%---%';
+      `;
+    } else if (query == "insert_user") {
+      return await this.$executeRaw`
+        DELETE FROM
+            users
+        WHERE
+            users.name LIKE 'insert_test__%';
+      `;
+    }
+  }
+
+  async cleanup(query) {
+    if (query == "update_movie" || query == "insert_user") {
+      // The clean up is the same as setup for mutation benchmarks
+      return await this.setup(query);
+    }
   }
 
   getConnection(i) {

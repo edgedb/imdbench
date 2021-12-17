@@ -7,8 +7,11 @@
 
 
 import json
-
 import psycopg2
+import random
+
+
+INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
@@ -46,6 +49,11 @@ def load_ids(ctx, conn):
         get_user=[u[0] for u in users],
         get_movie=[m[0] for m in movies],
         get_person=[p[0] for p in people],
+        # re-use user IDs for update tests
+        update_movie=[m[0] for m in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -299,3 +307,74 @@ def get_person(conn, id):
             } for mov in directed_rows
         ],
     })
+
+
+def update_movie(conn, id):
+    with conn.cursor() as cur:
+        cur.execute('''
+            UPDATE
+                movies
+            SET
+                title = movies.title || '---' || %(suffix)s
+            WHERE
+                movies.id = %(id)s
+            RETURNING
+                movies.id, movies.title
+        ''', dict(id=id, suffix=str(id)[:8]))
+
+        rows = cur.fetchall()
+        cur.connection.commit()
+
+    return json.dumps({
+        'id': rows[0][0],
+        'title': rows[0][1],
+    })
+
+
+def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    with conn.cursor() as cur:
+        cur.execute('''
+            INSERT INTO users (name, image) VALUES
+                (%(name)s, %(image)s)
+            RETURNING
+                users.id, users.name, users.image
+        ''', dict(name=f'{val}{num}', image=f'image_{val}{num}'))
+
+        rows = cur.fetchall()
+        cur.connection.commit()
+
+    return json.dumps({
+        'id': rows[0][0],
+        'name': rows[0][1],
+        'image': rows[0][2],
+    })
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        cur = conn.cursor()
+        cur.execute('''
+            UPDATE
+                movies
+            SET
+                title = split_part(movies.title, '---', 1)
+            WHERE
+                movies.title LIKE '%---%';
+        ''')
+        conn.commit()
+    elif queryname == 'insert_user':
+        cur = conn.cursor()
+        cur.execute('''
+            DELETE FROM
+                users
+            WHERE
+                users.name LIKE %s
+        ''', [f'{INSERT_PREFIX}%'])
+        conn.commit()
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)
