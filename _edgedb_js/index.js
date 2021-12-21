@@ -38,7 +38,40 @@ class ConnectionJSON {
     let num = Math.floor(Math.random() * 1000000);
     return await this.client.querySingleJSON(queries.insertUser, {
       name: id + num,
-      image: 'image_' + id + num,
+      image: "image_" + id + num,
+    });
+  }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return await this.client.querySingleJSON(queries.insertMovie, {
+      title: val.prefix + num,
+      image: val.prefix + "image" + num + ".jpeg",
+      description: val.prefix + "description" + num,
+      year: num,
+      d_id: val.people[0],
+      c_id0: val.people[1],
+      c_id1: val.people[2],
+      c_id2: val.people[3],
+    });
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return await this.client.querySingleJSON(queries.insertMoviePlus, {
+      title: val + num,
+      image: val + "image" + num + ".jpeg",
+      description: val + "description" + num,
+      year: num,
+      dfn: val + "Alice",
+      dln: val + "Director",
+      dimg: val + "image" + num + ".jpeg",
+      cfn0: val + "Billie",
+      cln0: val + "Actor",
+      cimg0: val + "image" + (num + 1) + ".jpeg",
+      cfn1: val + "Cameron",
+      cln1: val + "Actor",
+      cimg1: val + "image" + (num + 2) + ".jpeg",
     });
   }
 
@@ -53,6 +86,10 @@ class ConnectionJSON {
       return this.updateMovie(id);
     } else if (query == "insert_user") {
       return this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return this.insertMovie(id);
+    } else if (query == "insert_movie_plus") {
+      return this.insertMoviePlus(id);
     }
   }
 }
@@ -102,7 +139,44 @@ class ConnectionRepack {
     return JSON.stringify(
       await this.client.querySingle(queries.insertUser, {
         name: id + num,
-        image: 'image_' + id + num,
+        image: id + "image" + num,
+      })
+    );
+  }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await this.client.querySingle(queries.insertMovie, {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+        d_id: val.people[0],
+        c_id0: val.people[1],
+        c_id1: val.people[2],
+        c_id2: val.people[3],
+      })
+    );
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await this.client.querySingle(queries.insertMoviePlus, {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+        dfn: val + "Alice",
+        dln: val + "Director",
+        dimg: val + "image" + num + ".jpeg",
+        cfn0: val + "Billie",
+        cln0: val + "Actor",
+        cimg0: val + "image" + (num + 1) + ".jpeg",
+        cfn1: val + "Cameron",
+        cln1: val + "Actor",
+        cimg1: val + "image" + (num + 2) + ".jpeg",
       })
     );
   }
@@ -118,6 +192,10 @@ class ConnectionRepack {
       return this.updateMovie(id);
     } else if (query == "insert_user") {
       return this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return this.insertMovie(id);
+    } else if (query == "insert_movie_plus") {
+      return this.insertMoviePlus(id);
     }
   }
 }
@@ -169,6 +247,11 @@ class App {
       // generate as many insert stubs as "concurrency" to
       // accommodate concurrent inserts
       insert_user: Array(this.concurrency).fill(this.INSERT_PREFIX),
+      insert_movie: Array(this.concurrency).fill({
+        prefix: this.INSERT_PREFIX,
+        people: ids.people.slice(0, 4),
+      }),
+      insert_movie_plus: Array(this.concurrency).fill(this.INSERT_PREFIX),
     }
   }
 
@@ -185,12 +268,28 @@ class App {
       return await this.conn.client.query(`
         delete User
         filter .name LIKE <str>$0;
-      `, [this.INSERT_PREFIX + '%']);
+      `, [this.INSERT_PREFIX + 'image%']);
+    } else if (query == "insert_movie") {
+      return await this.conn.client.query(`
+        delete Movie
+        filter .image LIKE <str>$0;
+      `, [this.INSERT_PREFIX + 'image%']);
+    } else if (query == "insert_movie_plus") {
+      await this.conn.client.query(`
+        delete Movie
+        filter .image LIKE <str>$0;
+      `, [this.INSERT_PREFIX + 'image%']);
+      return await this.conn.client.query(`
+        delete Person
+        filter .image LIKE <str>$0;
+      `, [this.INSERT_PREFIX + 'image%']);
     }
   }
 
   async cleanup(query) {
-    if (query == "update_movie" || query == "insert_user") {
+    if ([
+      "update_movie", "insert_user", "insert_movie", "insert_movie_plus"
+    ].indexOf(query) >= 0) {
       // The clean up is the same as setup for mutation benchmarks
       return await this.setup(query);
     }

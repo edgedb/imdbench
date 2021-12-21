@@ -36,14 +36,18 @@ def load_ids(ctx, conn):
     people = cur.fetchall()
 
     return dict(
-        get_user=[str(u[0]) for u in users],
-        get_movie=[str(m[0]) for m in movies],
-        get_person=[str(p[0]) for p in people],
+        get_user=[[str(u[0])] for u in users],
+        get_movie=[[str(m[0])] for m in movies],
+        get_person=[[str(p[0])] for p in people],
         # re-use user IDs for update tests
-        update_movie=[str(m[0]) for m in movies],
+        update_movie=[[str(m[0])] for m in movies],
         # generate as many insert stubs as "concurrency" to
         # accommodate concurrent inserts
-        insert_user=[INSERT_PREFIX] * ctx.concurrency,
+        insert_user=[[INSERT_PREFIX]] * ctx.concurrency,
+        insert_movie=[
+            [INSERT_PREFIX] + [str(v[0]) for v in people[:4]]
+        ] * ctx.concurrency,
+        insert_movie_plus=[[INSERT_PREFIX]] * ctx.concurrency,
     )
 
 
@@ -68,10 +72,42 @@ def setup(ctx, conn, queryname):
                 users.name LIKE %s
         ''', [f'{INSERT_PREFIX}%'])
         conn.commit()
+    elif queryname in {'insert_movie', 'insert_movie_plus'}:
+        cur = conn.cursor()
+        cur.execute('''
+            DELETE FROM
+                "directors" as D
+            USING
+                "movies" as M
+            WHERE
+                D.movie_id = M.id AND M.image LIKE %s;
+        ''', [f'{INSERT_PREFIX}%'])
+        cur.execute('''
+            DELETE FROM
+                "actors" as A
+            USING
+                "movies" as M
+            WHERE
+                A.movie_id = M.id AND M.image LIKE %s;
+        ''', [f'{INSERT_PREFIX}%'])
+        cur.execute('''
+            DELETE FROM
+                "movies" as M
+            WHERE
+                M.image LIKE %s;
+        ''', [f'{INSERT_PREFIX}%'])
+        cur.execute('''
+            DELETE FROM
+                "persons" as P
+            WHERE
+                P.image LIKE %s;
+        ''', [f'{INSERT_PREFIX}%'])
+        conn.commit()
 
 
 def cleanup(ctx, conn, queryname):
-    if queryname in {'update_movie', 'insert_user'}:
+    if queryname in {'update_movie', 'insert_user', 'insert_movie',
+                     'insert_movie_plus'}:
         # The clean up is the same as setup for mutation benchmarks
         setup(ctx, conn, queryname)
 
@@ -84,30 +120,38 @@ def get_queries(ctx):
     conn = connect(ctx)
 
     try:
-        ids = load_ids(ctx, conn)
+        qargs = load_ids(ctx, conn)
     finally:
         close(ctx, conn)
 
     return {
         'get_user': {
             'query': POSTGRES_GET_USER,
-            'ids': ids['get_user'],
+            'QArgs': qargs['get_user'],
         },
         'get_movie': {
             'query': POSTGRES_GET_MOVIE,
-            'ids': ids['get_movie'],
+            'QArgs': qargs['get_movie'],
         },
         'get_person': {
             'query': POSTGRES_GET_PERSON,
-            'ids': ids['get_person'],
+            'QArgs': qargs['get_person'],
         },
         'update_movie': {
             'query': POSTGRES_UPDATE_MOVIE,
-            'ids': ids['update_movie'],
+            'QArgs': qargs['update_movie'],
         },
         'insert_user': {
             'query': POSTGRES_INSERT_USER,
-            'text': ids['insert_user'],
+            'QArgs': qargs['insert_user'],
+        },
+        'insert_movie': {
+            'query': POSTGRES_INSERT_MOVIE,
+            'QArgs': qargs['insert_movie'],
+        },
+        'insert_movie_plus': {
+            'query': POSTGRES_INSERT_MOVIE_PLUS,
+            'QArgs': qargs['insert_movie_plus'],
         },
     }
 
@@ -266,4 +310,51 @@ POSTGRES_INSERT_USER = '''
         ($1, $2)
     RETURNING
         users.id, users.name, users.image
+'''
+
+
+POSTGRES_INSERT_MOVIE = '''
+    INSERT INTO movies AS M (title, image, description, year) VALUES
+        ($1, $2, $3, $4)
+    RETURNING
+        M.id, M.title, M.image, M.description, M.year;
+
+    SELECT
+        person.id,
+        person.full_name,
+        person.image
+    FROM
+        persons AS person
+    WHERE
+        id IN ($1, $2, $3, $4);
+
+    INSERT INTO directors AS M (person_id, movie_id) VALUES
+        ($1, $2);
+
+    INSERT INTO actors AS M (person_id, movie_id) VALUES
+        ($1, $4),
+        ($2, $4),
+        ($3, $4);
+'''
+
+
+POSTGRES_INSERT_MOVIE_PLUS = '''
+    INSERT INTO movies AS M (title, image, description, year) VALUES
+        ($1, $2, $3, $4)
+    RETURNING
+        M.id, M.title, M.image, M.description, M.year;
+
+    INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
+        ($1, $2, $3, ''),
+        ($4, $5, $6, ''),
+        ($7, $8, $9, '')
+    RETURNING
+        P.id, P.full_name, P.image;
+
+    INSERT INTO directors AS M (person_id, movie_id) VALUES
+        ($1, $2);
+
+    INSERT INTO actors AS M (person_id, movie_id) VALUES
+        ($1, $3),
+        ($2, $3);
 '''

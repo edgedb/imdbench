@@ -37,6 +37,10 @@ func PQWorker(args cli.Args) (bench.Exec, bench.Close) {
 		exec = pqUpdateMovie(db, args)
 	case "insert_user":
 		exec = pqInsertUser(db, args)
+	case "insert_movie":
+		exec = pqInsertMovie(db, args)
+	case "insert_movie_plus":
+		exec = pqInsertMoviePlus(db, args)
 	default:
 		log.Fatalf("unknown query type: %q", args.QueryName)
 	}
@@ -81,8 +85,9 @@ func pqExecMovie(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string, text string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
 		start := time.Now()
+		id := qargs[0]
 
 		tx, err := db.Begin()
 		if err != nil {
@@ -202,8 +207,9 @@ func pqExecPerson(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string, text string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
 		start := time.Now()
+		id := qargs[0]
 
 		tx, err := db.Begin()
 		if err != nil {
@@ -289,8 +295,9 @@ func pqExecUser(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string, text string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
 		start := time.Now()
+		id := qargs[0]
 
 		rows, err := stmt.Query(id)
 		if err != nil {
@@ -335,8 +342,9 @@ func pqUpdateMovie(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string, text string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
 		start := time.Now()
+		id := qargs[0]
 
 		rows, err := stmt.Query(id, "---" + id)
 		if err != nil {
@@ -370,12 +378,12 @@ func pqInsertUser(db *sql.DB, args cli.Args) bench.Exec {
 		log.Fatal(err)
 	}
 
-	return func(id string, text string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
 		start := time.Now()
-
+		text := qargs[0]
 		num := rand.Intn(1_000_000)
 		name := text + strconv.Itoa(num)
-		image := "image_" + text + strconv.Itoa(num)
+		image := text + "image" + strconv.Itoa(num)
 
 		rows, err := stmt.Query(name, image)
 		if err != nil {
@@ -391,6 +399,221 @@ func pqInsertUser(db *sql.DB, args cli.Args) bench.Exec {
 		}
 
 		serial, err := json.Marshal(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pqInsertMovie(db *sql.DB, args cli.Args) bench.Exec {
+	var (
+		movie    Movie
+		person 	 MovieQueryPerson
+	)
+
+	queries := strings.Split(args.Query, ";")
+
+	movieStmt, err := db.Prepare(queries[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	peopleStmt, err := db.Prepare(queries[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	directorsStmt, err := db.Prepare(queries[2])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	actorStmt, err := db.Prepare(queries[3])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(qargs []string) (time.Duration, string) {
+		start := time.Now()
+		prefix := qargs[0]
+		num := rand.Intn(1_000_000)
+		title := prefix + strconv.Itoa(num)
+		image := prefix + "image" + strconv.Itoa(num)
+        description := prefix + "description" + strconv.Itoa(num)
+		dirID, err := strconv.Atoi(qargs[1])
+	    if err != nil {
+			log.Fatal(err)
+	    }
+
+		tx, err := db.Begin()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer tx.Commit()
+
+		// create the movie
+		mrows, err := tx.Stmt(movieStmt).Query(title, image, description, num)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for mrows.Next() {
+			mrows.Scan(
+				&movie.ID,
+				&movie.Image,
+				&movie.Title,
+				&movie.Year,
+				&movie.Description,
+			)
+		}
+		movie.Directors = movie.Directors[:0]
+		movie.Cast = movie.Cast[:0]
+
+		// get the people to be used as directors and cast
+		prows, err := tx.Stmt(peopleStmt).Query(qargs[1], qargs[2], qargs[3], qargs[4])
+		err = prows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// add the people as directors or cast
+		for prows.Next() {
+			prows.Scan(
+				&person.ID,
+				&person.FullName,
+				&person.Image,
+			)
+			if person.ID == dirID {
+				movie.Directors = append(movie.Directors, person)
+			} else {
+				movie.Cast = append(movie.Cast, person)
+			}
+		}
+
+		// create actual directors and actors entries
+		_, err = tx.Stmt(directorsStmt).Exec(movie.Directors[0].ID, movie.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = tx.Stmt(actorStmt).Exec(movie.Cast[0].ID, movie.Cast[1].ID, movie.Cast[2].ID, movie.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		serial, err := json.Marshal(movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		duration := time.Since(start)
+		return duration, string(serial)
+	}
+}
+
+func pqInsertMoviePlus(db *sql.DB, args cli.Args) bench.Exec {
+	var (
+		movie    Movie
+		person 	 MovieQueryPerson
+	)
+
+	queries := strings.Split(args.Query, ";")
+
+	movieStmt, err := db.Prepare(queries[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	peopleStmt, err := db.Prepare(queries[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	directorsStmt, err := db.Prepare(queries[2])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	actorStmt, err := db.Prepare(queries[3])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(qargs []string) (time.Duration, string) {
+		start := time.Now()
+		prefix := qargs[0]
+		num := rand.Intn(1_000_000)
+		title := prefix + strconv.Itoa(num)
+		image := prefix + "image" + strconv.Itoa(num)
+        description := prefix + "description" + strconv.Itoa(num)
+
+		tx, err := db.Begin()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer tx.Commit()
+
+		mrows, err := tx.Stmt(movieStmt).Query(title, image, description, num)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for mrows.Next() {
+			mrows.Scan(
+				&movie.ID,
+				&movie.Image,
+				&movie.Title,
+				&movie.Year,
+				&movie.Description,
+			)
+		}
+		movie.Directors = movie.Directors[:0]
+		movie.Cast = movie.Cast[:0]
+
+		// get the people to be used as directors and cast
+        fname0 := prefix + "Alice"
+        lname0 := prefix + "Director"
+        img0 := prefix + "image" + strconv.Itoa(num) + ".jpeg"
+        fname1 := prefix + "Billie"
+        lname1 := prefix + "Actor"
+        img1 := prefix + "image" + strconv.Itoa(num + 1) + ".jpeg"
+        fname2 := prefix + "Cameron"
+        lname2 := prefix + "Actor"
+        img2 := prefix + "image" + strconv.Itoa(num + 2) + ".jpeg"
+
+		prows, err := tx.Stmt(peopleStmt).Query(fname0, lname0, img0, fname1, lname1, img1, fname2, lname2, img2)
+		err = prows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// add the people as directors or cast
+		for prows.Next() {
+			prows.Scan(
+				&person.ID,
+				&person.FullName,
+				&person.Image,
+			)
+			if person.FullName[len(person.FullName) - 8:] == "Director" {
+				movie.Directors = append(movie.Directors, person)
+			} else {
+				movie.Cast = append(movie.Cast, person)
+			}
+		}
+
+		// create actual directors and actors entries
+		_, err = tx.Stmt(directorsStmt).Exec(movie.Directors[0].ID, movie.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = tx.Stmt(actorStmt).Exec(movie.Cast[0].ID, movie.Cast[1].ID, movie.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		serial, err := json.Marshal(movie)
 		if err != nil {
 			log.Fatal(err)
 		}

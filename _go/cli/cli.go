@@ -16,8 +16,7 @@ type Args struct {
 	Timeout     time.Duration
 	Warmup      time.Duration
 	Query       string
-	Ids         []string
-	Text        []string
+	QArgs       [][]string
 	Host        string
 	Port        int
 	Path        string
@@ -86,7 +85,7 @@ func ParseArgs() Args {
 
 		queryname = app.Flag(
 			"queryname",
-			"queries to benchmark: get_movie, get_person, get_user, update_movie, insert_user",
+			"queries to benchmark: get_movie, get_person, get_user, update_movie, insert_user, insert_movie, insert_movie_plus",
 		).Required().String()
 
 		queryfile = app.Arg(

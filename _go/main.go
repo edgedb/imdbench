@@ -30,9 +30,9 @@ type Stats struct {
 }
 
 func safeSlice(
-	array 	[]string,
+	array 	[][]string,
 	slice 	Slice,
-) []string {
+) [][]string {
 	l := len(array)
 
 	if l < slice.Start {
@@ -63,33 +63,20 @@ func doWork(
 	}
 
 	var (
-		id 		string
-		text 	string
 		lenArgs	int
+		qargs	[]string
 	)
 
 	// To avoid concurrent modification of the same objects separate
 	// the inputs into non-overlapping chunks.
-	Ids := safeSlice(args.Ids, slice)
-	Text := safeSlice(args.Text, slice)
-
-	if len(Text) < len(Ids) {
-		lenArgs = len(Ids)
-	} else {
-		lenArgs = len(Text)
-	}
+	QArgs := safeSlice(args.QArgs, slice)
+	lenArgs = len(QArgs)
 
 	for i := 0; i < args.NSamples; i++ {
 		index := rand.Intn(lenArgs)
+		qargs = QArgs[index]
 
-		if len(Ids) > 0 {
-			id = Ids[index]
-		}
-		if len(Text) > 0 {
-			text = Text[index]
-		}
-
-		_, sample := exec(id, text)
+		_, sample := exec(qargs)
 		stats.Samples = append(stats.Samples, sample)
 	}
 
@@ -97,15 +84,9 @@ func doWork(
 	start := time.Now()
 	for time.Since(start) < duration {
 		index := rand.Intn(lenArgs)
+		qargs = QArgs[index]
 
-		if len(Ids) > 0 {
-			id = Ids[index]
-		}
-		if len(Text) > 0 {
-			text = Text[index]
-		}
-
-		reqTime, _ := exec(id, text)
+		reqTime, _ := exec(qargs)
 
 		rounded := reqTime.Nanoseconds() / 10_000
 		if rounded > stats.MaxLatency {
@@ -135,12 +116,7 @@ func doConcurrentWork(
 	statsChan := make(chan Stats, args.Concurrency)
     // We want to split the input ids into separate chunks, so that we
     // avoid concurrent mutations of the same object.
-    var chunk_len int
-	if len(args.Ids) > 0 {
-	    chunk_len = (len(args.Ids) + args.Concurrency - 1) / args.Concurrency
-	} else if len(args.Text) > 0 {
-	    chunk_len = (len(args.Text) + args.Concurrency - 1) / args.Concurrency
-	}
+    chunk_len := (len(args.QArgs) + args.Concurrency - 1) / args.Concurrency
 
 	for i := 0; i < args.Concurrency; i++ {
 		slice := Slice{Start: chunk_len*i, End: chunk_len*(i+1)}

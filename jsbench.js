@@ -283,8 +283,10 @@ async function main() {
   parser.add_argument("--query", {
     type: String,
     help: "specific query to run",
-    choices: ["get_movie", "get_person", "get_user",
-              "update_movie", "insert_user"]
+    choices: [
+      "get_movie", "get_person", "get_user",
+      "update_movie", "insert_user", "insert_movie", "insert_movie_plus",
+    ]
   });
   parser.add_argument("orm", {
     type: String,

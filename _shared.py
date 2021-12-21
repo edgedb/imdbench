@@ -113,7 +113,8 @@ BENCHMARKS = {
 
 
 QUERIES = ['get_movie', 'get_person', 'get_user',
-           'update_movie', 'insert_user']
+           'update_movie',
+           'insert_user', 'insert_movie', 'insert_movie_plus']
 
 
 def parse_args(*, prog_desc: str, out_to_json: bool = False,

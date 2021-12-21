@@ -318,7 +318,7 @@ class App extends PrismaClient {
     let result = await this.users.create({
       data: {
         name: val + num,
-        image: 'image_' + val + num,
+        image: val + 'image' + num,
       },
       select: {
         id: true,
@@ -330,17 +330,199 @@ class App extends PrismaClient {
     return JSON.stringify(result);
   }
 
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    let movie = await this.movies.create({
+      data: {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+
+        directors: {
+          create: {person_id: val.people[0]}
+        },
+        cast: {
+          createMany: {
+            data: val.people.slice(1).map(x => ({
+              person_id: x
+            }))
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        image: true,
+        description: true,
+        year: true,
+
+        directors: {
+          select: {
+            person: {
+              select: {
+                id: true,
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                image: true,
+              }
+            }
+          },
+        },
+        cast: {
+          select: {
+            person: {
+              select: {
+                id: true,
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                image: true,
+              }
+            }
+          },
+        },
+      },
+    });
+
+    // move the "person" object one level closer to "directors" and
+    // "cast"
+    for (let fname of ["directors", "cast"]) {
+      movie[fname] = movie[fname].map(rel => {
+        return {
+          id: rel.person.id,
+          full_name: get_full_name(rel.person),
+          image: rel.person.image
+        };
+      });
+    }
+
+    return JSON.stringify(movie);
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    let data = [{
+      first_name: val + "Alice",
+      middle_name: "",
+      last_name: val + "Director",
+      image: val + "image" + num + ".jpeg",
+      bio: "",
+    }, {
+      first_name: val + "Billie",
+      middle_name: "",
+      last_name: val + "Actor",
+      image: val + "image" + (num + 1) + ".jpeg",
+      bio: "",
+    }, {
+      first_name: val + "Cameron",
+      middle_name: "",
+      last_name: val + "Actor",
+      image: val + "image" + (num + 2) + ".jpeg",
+      bio: "",
+    }];
+    let people = [];
+
+    for (let p of data) {
+      people.push(
+        await this.persons.create({
+          data: p,
+          select: {
+            id: true,
+            first_name: true,
+            middle_name: true,
+            last_name: true,
+            image: true,
+          },
+        })
+      );
+    }
+
+    let movie = await this.movies.create({
+      data: {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+
+        directors: {
+          create: {person_id: people[0].id}
+        },
+        cast: {
+          createMany: {
+            data: people.slice(1).map(x => ({
+              person_id: x.id
+            }))
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        image: true,
+        description: true,
+        year: true,
+
+        directors: {
+          select: {
+            person: {
+              select: {
+                id: true,
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                image: true,
+              }
+            }
+          },
+        },
+        cast: {
+          select: {
+            person: {
+              select: {
+                id: true,
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                image: true,
+              }
+            }
+          },
+        },
+      },
+    });
+
+    // move the "person" object one level closer to "directors" and
+    // "cast"
+    for (let fname of ["directors", "cast"]) {
+      movie[fname] = movie[fname].map(rel => {
+        return {
+          id: rel.person.id,
+          full_name: get_full_name(rel.person),
+          image: rel.person.image
+        };
+      });
+    }
+
+    return JSON.stringify(movie);
+  }
+
   async benchQuery(query, id) {
     if (query == "get_user") {
       return await this.userDetails(id);
     } else if (query == "get_person") {
       return await this.personDetails(id);
     } else if (query == "get_movie") {
-      return this.movieDetails(id);
+      return await this.movieDetails(id);
     } else if (query == "update_movie") {
-      return this.updateMovie(id);
+      return await this.updateMovie(id);
     } else if (query == "insert_user") {
-      return this.insertUser(id);
+      return await this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return await this.insertMovie(id);
+    } else if (query == "insert_movie_plus") {
+      return await this.insertMoviePlus(id);
     }
   }
 
@@ -350,10 +532,11 @@ class App extends PrismaClient {
       this.persons.findMany({select: {id: true}}),
       this.movies.findMany({select: {id: true, title: true}}),
     ]);
+    var people = ids[1].map(x => x.id);
 
     return {
       get_user: ids[0].map(x => x.id),
-      get_person: ids[1].map(x => x.id),
+      get_person: people,
       get_movie: ids[2].map(x => x.id),
       // re-use user IDs for update tests
       update_movie: ids[2].map(
@@ -361,6 +544,11 @@ class App extends PrismaClient {
       // generate a bunch of insert stubs to accommodate concurrent
       // inserts
       insert_user: Array(1000).fill('insert_test__'),
+      insert_movie: Array(1000).fill({
+        prefix: 'insert_test__',
+        people: people.slice(0, 4),
+      }),
+      insert_movie_plus: Array(1000).fill('insert_test__'),
     };
   }
 
@@ -382,11 +570,42 @@ class App extends PrismaClient {
         WHERE
             users.name LIKE 'insert_test__%';
       `;
+    } else if (query == 'insert_movie' || query == 'insert_movie_plus') {
+      await this.$executeRaw`
+          DELETE FROM
+              "directors" as D
+          USING
+              "movies" as M
+          WHERE
+              D.movie_id = M.id AND M.image LIKE 'insert_test__%';
+      `;
+      await this.$executeRaw`
+          DELETE FROM
+              "actors" as A
+          USING
+              "movies" as M
+          WHERE
+              A.movie_id = M.id AND M.image LIKE 'insert_test__%';
+      `;
+      await this.$executeRaw`
+          DELETE FROM
+              "movies" as M
+          WHERE
+              M.image LIKE 'insert_test__%';
+      `;
+      return await this.$executeRaw`
+          DELETE FROM
+              "persons" as P
+          WHERE
+              P.image LIKE 'insert_test__%';
+      `;
     }
   }
 
   async cleanup(query) {
-    if (query == "update_movie" || query == "insert_user") {
+    if ([
+      "update_movie", "insert_user", "insert_movie", "insert_movie_plus"
+    ].indexOf(query) >= 0) {
       // The clean up is the same as setup for mutation benchmarks
       return await this.setup(query);
     }

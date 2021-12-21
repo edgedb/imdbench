@@ -341,6 +341,141 @@ class App {
     return JSON.stringify(user);
   }
 
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    const movie = (await this.pool.query(
+      `
+      INSERT INTO movies AS M (title, image, description, year) VALUES
+          ($1, $2, $3, $4)
+      RETURNING
+          M.id, M.title, M.image, M.description, M.year
+      `,
+      [
+        val.prefix + num,
+        val.prefix + "image" + num + ".jpeg",
+        val.prefix + "description" + num,
+        num,
+      ],
+    )).rows[0];
+
+    const people = await this.pool.query(
+      `
+      SELECT
+          P.id,
+          P.full_name,
+          P.image
+      FROM
+          persons AS P
+      WHERE
+          P.id IN ($1, $2, $3, $4);
+      `,
+      val.people,
+    );
+
+    var directors = [],
+        cast = [];
+
+    for (let p of people.rows) {
+      if (p.id == val.people[0]) {
+        directors.push(p)
+      } else {
+        cast.push(p)
+      }
+    }
+
+    await this.pool.query(
+      `
+      INSERT INTO directors AS M (person_id, movie_id) VALUES
+          ($1, $2);
+      `,
+      [directors[0].id, movie.id],
+    );
+    await this.pool.query(
+      `
+      INSERT INTO actors AS M (person_id, movie_id) VALUES
+          ($1, $4),
+          ($2, $4),
+          ($3, $4);
+      `,
+      [cast[0].id, cast[1].id, cast[2].id, movie.id],
+    );
+
+    movie.directors = directors;
+    movie.cast = cast;
+    return JSON.stringify(movie);
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    const movie = (await this.pool.query(
+      `
+      INSERT INTO movies AS M (title, image, description, year) VALUES
+          ($1, $2, $3, $4)
+      RETURNING
+          M.id, M.title, M.image, M.description, M.year
+      `,
+      [
+        val + num,
+        val + "image" + num + ".jpeg",
+        val + "description" + num,
+        num,
+      ]
+    )).rows[0];
+
+    const people = await this.pool.query(
+      `
+      INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
+          ($1, $2, $3, ''),
+          ($4, $5, $6, ''),
+          ($7, $8, $9, '')
+      RETURNING
+          P.id, P.full_name, P.image
+      `,
+      [
+        val + "Alice",
+        val + "Director",
+        val + "image" + num + ".jpeg",
+        val + "Billie",
+        val + "Actor",
+        val + "image" + (num + 1) + ".jpeg",
+        val + "Cameron",
+        val + "Actor",
+        val + "image" + (num + 2) + ".jpeg",
+      ],
+    );
+
+    var directors = [],
+        cast = [];
+
+    for (let p of people.rows) {
+      if (p.full_name.indexOf("Director") >= 0) {
+        directors.push(p)
+      } else {
+        cast.push(p)
+      }
+    }
+
+    await this.pool.query(
+      `
+      INSERT INTO directors AS M (person_id, movie_id) VALUES
+          ($1, $2);
+      `,
+      [directors[0].id, movie.id],
+    );
+    await this.pool.query(
+      `
+      INSERT INTO actors AS M (person_id, movie_id) VALUES
+          ($1, $3),
+          ($2, $3);
+      `,
+      [cast[0].id, cast[1].id, movie.id],
+    );
+
+    movie.directors = directors;
+    movie.cast = cast;
+    return JSON.stringify(movie);
+  }
+
   async benchQuery(query, id) {
     if (query == "get_user") {
       return await this.userDetails(id);
@@ -352,6 +487,10 @@ class App {
       return await this.updateMovie(id);
     } else if (query == "insert_user") {
       return await this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return await this.insertMovie(id);
+    } else if (query == "insert_movie_plus") {
+      return await this.insertMoviePlus(id);
     }
   }
 
@@ -361,16 +500,22 @@ class App {
       await this.pool.query("SELECT p.id FROM persons p ORDER BY random();"),
       await this.pool.query("SELECT m.id FROM movies m ORDER BY random();")
     ]);
+    var people = ids[1].rows.map(x => x.id);
 
     return {
       get_user: ids[0].rows.map(x => x.id),
-      get_person: ids[1].rows.map(x => x.id),
+      get_person: people,
       get_movie: ids[2].rows.map(x => x.id),
       // re-use user IDs for update tests
       update_movie: ids[2].rows.map(x => x.id),
       // generate as many insert stubs as "concurrency" to
       // accommodate concurrent inserts
       insert_user: Array(this.concurrency).fill(this.INSERT_PREFIX),
+      insert_movie: Array(this.concurrency).fill({
+        prefix: this.INSERT_PREFIX,
+        people: people.slice(0, 4),
+      }),
+      insert_movie_plus: Array(this.concurrency).fill(this.INSERT_PREFIX),
     };
   }
 
@@ -391,11 +536,42 @@ class App {
         WHERE
             users.name LIKE $1;
       `, [this.INSERT_PREFIX + '%']);
+    } else if (query == "insert_movie" || query == "insert_movie_plus") {
+      await this.pool.query(`
+        DELETE FROM
+            "directors" as D
+        USING
+            "movies" as M
+        WHERE
+            D.movie_id = M.id AND M.image LIKE $1;
+      `, [this.INSERT_PREFIX + '%']);
+      await this.pool.query(`
+        DELETE FROM
+            "actors" as A
+        USING
+            "movies" as M
+        WHERE
+            A.movie_id = M.id AND M.image LIKE $1;
+      `, [this.INSERT_PREFIX + '%']);
+      await this.pool.query(`
+        DELETE FROM
+            "movies" as M
+        WHERE
+            M.image LIKE $1;
+      `, [this.INSERT_PREFIX + '%']);
+      return await this.pool.query(`
+        DELETE FROM
+            "persons" as P
+        WHERE
+            P.image LIKE $1;
+      `, [this.INSERT_PREFIX + '%']);
     }
   }
 
   async cleanup(query) {
-    if (query == "update_movie" || query == "insert_user") {
+    if ([
+      "update_movie", "insert_user", "insert_movie", "insert_movie_plus"
+    ].indexOf(query) >= 0) {
       // The clean up is the same as setup for mutation benchmarks
       return await this.setup(query);
     }

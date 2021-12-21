@@ -9,6 +9,7 @@
 import argparse
 import collections
 import datetime
+from django.db import connection
 import json
 
 from . import bootstrap  # NoQA
@@ -89,3 +90,19 @@ if __name__ == '__main__':
         [Cast(**datum) for datum in data['cast']],
         batch_size=batch_size
     )
+
+    with connection.cursor() as cur:
+        cur.execute('''
+            SELECT setval('_django_cast_id_seq',
+                (SELECT id FROM "_django_cast" ORDER BY id DESC LIMIT 1));
+            SELECT setval('_django_directors_id_seq',
+                (SELECT id FROM "_django_directors" ORDER BY id DESC LIMIT 1));
+            SELECT setval('_django_movie_id_seq',
+                (SELECT id FROM "_django_movie" ORDER BY id DESC LIMIT 1));
+            SELECT setval('_django_person_id_seq',
+                (SELECT id FROM "_django_person" ORDER BY id DESC LIMIT 1));
+            SELECT setval('_django_review_id_seq',
+                (SELECT id FROM "_django_review" ORDER BY id DESC LIMIT 1));
+            SELECT setval('_django_user_id_seq',
+                (SELECT id FROM "_django_user" ORDER BY id DESC LIMIT 1));
+        ''')
