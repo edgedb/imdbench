@@ -42,7 +42,6 @@ def platform_info():
 
     if 'Linux' in system:
         distribution = '{} {}'.format(distro.name(), distro.version()).strip()
-
     else:
         distribution = None
 
@@ -277,19 +276,18 @@ def main():
         out_to_json=True)
 
     if any(b.startswith('edgedb') for b in args.benchmarks):
-        proj_path = os.path.join(os.path.dirname(__file__), '_edgedb')
+        print(__file__)
         project_info_proc = subprocess.run(
             ["edgedb", "project", "info", "--json"],
-            cwd=proj_path,
             text=True,
             capture_output=True,
         )
         if project_info_proc.returncode != 0:
             print(
-                f"`edgedb project` in ./_edgedb/ returned"
+                f"`edgedb project` returned"
                 f" {project_info_proc.returncode}. Please run"
                 f" `make load-edgedb`, or initialize the EdgeDB"
-                f" project in ./_edgedb/ directly",
+                f" project directly",
                 file=sys.stderr,
             )
             return 1
@@ -300,16 +298,16 @@ def main():
 
         instance_status_proc = subprocess.run(
             ["edgedb", "instance", "status", "--json", args.edgedb_instance],
-            cwd=proj_path,
             text=True,
             capture_output=True,
         )
-        if instance_status_proc.returncode != 0:
+        if (instance_status_proc.returncode != 0 and
+            instance_status_proc.returncode != 3):
             print(
-                f"`edgedb instance status` in ./_edgedb/ returned"
+                f"`edgedb instance status` returned"
                 f" {instance_status_proc.returncode}. Please run"
                 f" `make load-edgedb`, or initialize the EdgeDB"
-                f" project in ./_edgedb/ directly",
+                f" project directly",
                 file=sys.stderr,
             )
             return 1

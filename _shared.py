@@ -95,6 +95,12 @@ BENCHMARKS = {
     'edgedb_repack_js':
         bench('js', 'EdgeDB NodeJS Objects', None),
 
+    'edgedb_querybuilder_js':
+        bench('js', 'EdgeDB NodeJS Querybuilder', None),
+
+    'edgedb_querybuilder_uncached_js':
+        bench('js', 'EdgeDB NodeJS Querybuilder (uncached)', None),
+
     'typeorm':
         bench('js', 'Typeorm', None),
 

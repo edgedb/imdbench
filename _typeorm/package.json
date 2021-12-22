@@ -4,7 +4,8 @@
   "description": "Awesome project developed with TypeORM.",
   "devDependencies": {
     "@types/node": "^16.10.3",
-    "ts-node": "^10.2.1"
+    "ts-node": "^10.2.1",
+    "typescript": "^4.5.2"
   },
   "dependencies": {
     "lodash": "^4.17.21",
@@ -14,6 +15,7 @@
     "typeorm": "0.2.41"
   },
   "scripts": {
+    "build": "tsc",
     "start": "ts-node src/index.ts",
     "loaddata": "ts-node src/loaddata.ts"
   }
