@@ -7,19 +7,17 @@
 
 
 import json
-
+import random
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from sqlalchemy.ext import baked
-
 import _sqlalchemy.models as m
 
 
 engine = None
 session_factory = None
-
-
 bakery = baked.bakery()
+INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
@@ -62,6 +60,16 @@ def load_ids(ctx, sess):
         get_user=[u.id for u in users],
         get_movie=[m.id for m in movies],
         get_person=[p.id for p in people],
+        # re-use user IDs for update tests
+        update_movie=[m.id for m in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
+        insert_movie=[{
+            'prefix': INSERT_PREFIX,
+            'people': [p.id for p in people[:4]],
+        }] * ctx.concurrency,
+        insert_movie_plus=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -164,7 +172,6 @@ def get_movie(sess, id):
             } for r in sorted(movie.reviews,
                               key=lambda x: x.creation_time,
                               reverse=True)
-
         ]
     }
 
@@ -209,3 +216,203 @@ def get_person(sess, id):
     }
 
     return json.dumps(result)
+
+
+def update_movie(sess, id):
+    stmt = sa.update(
+        m.Movie
+    ).filter_by(
+        id=sa.bindparam('m_id')
+    ).values(
+        title=m.Movie.title + sa.bindparam('suffix')
+    ).returning(
+        m.Movie.id,
+        m.Movie.title,
+    )
+
+    result = sess.execute(
+        stmt,
+        dict(m_id=id, suffix=f'---{str(id)[:8]}')
+    ).first()
+    # Without this commit, the changes end up being committed outside
+    # of where they are timed.
+    sess.commit()
+
+    return json.dumps({
+        'id': result[0],
+        'title': result[1],
+    })
+
+
+def insert_user(sess, val):
+    num = random.randrange(1_000_000)
+    user = m.User(name=f'{val}{num}', image=f'image_{val}{num}')
+    sess.add(user)
+    sess.commit()
+
+    return json.dumps({
+        'id': user.id,
+        'name': user.name,
+        'image': user.image,
+    })
+
+
+def insert_movie(sess, val):
+    num = random.randrange(1_000_000)
+    movie = m.Movie(
+        title=f'{val["prefix"]}{num}',
+        image=f'{val["prefix"]}image{num}.jpeg',
+        description=f'{val["prefix"]}description{num}',
+        year=num,
+    )
+    sess.add(movie)
+    sess.commit()
+
+    directors = m.Directors(person_id=val["people"][0], movie_id=movie.id)
+    sess.add(directors)
+    c0 = m.Cast(person_id=val["people"][1], movie_id=movie.id)
+    c1 = m.Cast(person_id=val["people"][2], movie_id=movie.id)
+    c2 = m.Cast(person_id=val["people"][3], movie_id=movie.id)
+    sess.add(c0)
+    sess.add(c1)
+    sess.add(c2)
+    sess.commit()
+
+    result = {
+        'id': movie.id,
+        'image': movie.image,
+        'title': movie.title,
+        'year': movie.year,
+        'description': movie.description,
+        'directors': [
+            {
+                'id': directors.person_rel.id,
+                'full_name': directors.person_rel.full_name,
+                'image': directors.person_rel.image,
+            }
+        ],
+        'cast': [
+            {
+                'id': c.person_rel.id,
+                'full_name': c.person_rel.full_name,
+                'image': c.person_rel.image,
+            } for c in [c0, c1, c2]
+        ],
+    }
+    return json.dumps(result)
+
+
+def insert_movie_plus(sess, val):
+    num = random.randrange(1_000_000)
+    director = m.Person(
+        first_name=f'{val}Alice',
+        last_name=f'{val}Director',
+        image=f'{val}image{num}.jpeg',
+        bio='',
+    )
+    c0 = m.Person(
+        first_name=f'{val}Billie',
+        last_name=f'{val}Actor',
+        image=f'{val}image{num+1}.jpeg',
+        bio='',
+    )
+    c1 = m.Person(
+        first_name=f'{val}Cameron',
+        last_name=f'{val}Actor',
+        image=f'{val}image{num+2}.jpeg',
+        bio='',
+    )
+    sess.add(director)
+    sess.add(c0)
+    sess.add(c1)
+    movie = m.Movie(
+        title=f'{val}{num}',
+        image=f'{val}image{num}.jpeg',
+        description=f'{val}description{num}',
+        year=num,
+    )
+    sess.add(movie)
+    sess.commit()
+
+    sess.add(m.Directors(person_id=director.id, movie_id=movie.id))
+    sess.add(m.Cast(person_id=c0.id, movie_id=movie.id))
+    sess.add(m.Cast(person_id=c1.id, movie_id=movie.id))
+    sess.commit()
+
+    result = {
+        'id': movie.id,
+        'image': movie.image,
+        'title': movie.title,
+        'year': movie.year,
+        'description': movie.description,
+        'directors': [
+            {
+                'id': director.id,
+                'full_name': director.full_name,
+                'image': director.image,
+            }
+        ],
+        'cast': [
+            {
+                'id': c.id,
+                'full_name': c.full_name,
+                'image': c.image,
+            } for c in [c0, c1]
+        ],
+    }
+    return json.dumps(result)
+
+
+def setup(ctx, sess, queryname):
+    if queryname == 'update_movie':
+        sess.query(
+            m.Movie
+        ).update(
+            dict(title=sa.func.split_part(m.Movie.title, '---', 1))
+        )
+        sess.commit()
+    elif queryname == 'insert_user':
+        sess.query(
+            m.User
+        ).filter(
+            m.User.name.like(f'{INSERT_PREFIX}%')
+        ).delete(synchronize_session=False)
+        sess.commit()
+    elif queryname in {'insert_movie', 'insert_movie_plus'}:
+        # XXX: I just gave up on trying to figure out how to bulk delete
+        # all this in SQLAlchemy proper. Trying to filter the
+        # relationships based on the Movie they target didn't seem to
+        # work. So I'll use a raw query.
+        sess.execute('''
+            DELETE FROM
+                "directors" as D
+            USING
+                "movie" as M
+            WHERE
+                D.movie_id = M.id AND M.image LIKE 'insert_test__%';
+
+            DELETE FROM
+                "cast" as C
+            USING
+                "movie" as M
+            WHERE
+                C.movie_id = M.id AND M.image LIKE 'insert_test__%';
+
+            DELETE FROM
+                "movie" as M
+            WHERE
+                M.image LIKE 'insert_test__%';
+
+            DELETE FROM
+                "person" as P
+            WHERE
+                P.image LIKE 'insert_test__%';
+        ''')
+        sess.commit()
+
+
+def cleanup(ctx, sess, queryname):
+    if queryname in {'update_movie', 'insert_user', 'insert_movie',
+                     'insert_movie_plus'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, sess, queryname)

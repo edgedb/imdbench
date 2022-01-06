@@ -96,6 +96,18 @@ class MovieDetailsSerializer(serializers.ModelSerializer):
         return obj.get_avg_rating()
 
 
+class MovieUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Movie
+        fields = ('id', 'title')
+
+    def update(self, instance, validated_data):
+        title = validated_data.pop('title')
+        validated_data['title'] = f'{instance.title}---{title}'
+        return super(MovieUpdateSerializer, self).update(
+            instance, validated_data)
+
+
 # Person-specific serializers
 class PersonMovieSerializer(serializers.ModelSerializer):
     avg_rating = serializers.SerializerMethodField()

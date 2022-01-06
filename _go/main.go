@@ -15,6 +15,11 @@ import (
 	"github.com/edgedb/webapp-bench/_go/postgres"
 )
 
+type Slice struct {
+	Start 	int
+	End 	int
+}
+
 type Stats struct {
 	Queries       int64    `json:"nqueries"`
 	MinLatency    int64    `json:"min_latency"`
@@ -24,10 +29,26 @@ type Stats struct {
 	Samples       []string `json:"samples"`
 }
 
+func safeSlice(
+	array 	[][]string,
+	slice 	Slice,
+) [][]string {
+	l := len(array)
+
+	if l < slice.Start {
+		return array[l:l];
+	} else if l < slice.End {
+		return array[slice.Start:l];
+	} else {
+		return array[slice.Start:slice.End];
+	}
+}
+
 func doWork(
 	work bench.Worker,
 	duration time.Duration,
 	args cli.Args,
+	slice Slice,
 	statsChan chan Stats,
 ) {
 	exec, close := work(args)
@@ -41,17 +62,31 @@ func doWork(
 		Samples:       make([]string, 0, args.NSamples),
 	}
 
+	var (
+		lenArgs	int
+		qargs	[]string
+	)
+
+	// To avoid concurrent modification of the same objects separate
+	// the inputs into non-overlapping chunks.
+	QArgs := safeSlice(args.QArgs, slice)
+	lenArgs = len(QArgs)
+
 	for i := 0; i < args.NSamples; i++ {
-		id := args.Ids[rand.Intn(len(args.Ids))]
-		_, sample := exec(id)
+		index := rand.Intn(lenArgs)
+		qargs = QArgs[index]
+
+		_, sample := exec(qargs)
 		stats.Samples = append(stats.Samples, sample)
 	}
 
 	roundedTimeout := args.Timeout.Nanoseconds() / 10_000
 	start := time.Now()
 	for time.Since(start) < duration {
-		id := args.Ids[rand.Intn(len(args.Ids))]
-		reqTime, _ := exec(id)
+		index := rand.Intn(lenArgs)
+		qargs = QArgs[index]
+
+		reqTime, _ := exec(qargs)
 
 		rounded := reqTime.Nanoseconds() / 10_000
 		if rounded > stats.MaxLatency {
@@ -79,9 +114,13 @@ func doConcurrentWork(
 	args cli.Args,
 ) Stats {
 	statsChan := make(chan Stats, args.Concurrency)
+    // We want to split the input ids into separate chunks, so that we
+    // avoid concurrent mutations of the same object.
+    chunk_len := (len(args.QArgs) + args.Concurrency - 1) / args.Concurrency
 
 	for i := 0; i < args.Concurrency; i++ {
-		go doWork(work, duration, args, statsChan)
+		slice := Slice{Start: chunk_len*i, End: chunk_len*(i+1)}
+		go doWork(work, duration, args, slice, statsChan)
 	}
 
 	samples := make([]string, 0, args.NSamples*args.Concurrency)

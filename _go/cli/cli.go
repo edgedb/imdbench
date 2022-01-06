@@ -16,7 +16,7 @@ type Args struct {
 	Timeout     time.Duration
 	Warmup      time.Duration
 	Query       string
-	Ids         []string
+	QArgs       [][]string
 	Host        string
 	Port        int
 	Path        string
@@ -24,6 +24,7 @@ type Args struct {
 	NSamples    int
 	Concurrency int
 	Benchmark   string
+	QueryName   string
 }
 
 func parseOrFatal(seconds int) time.Duration {
@@ -82,6 +83,11 @@ func ParseArgs() Args {
 			"application protocol to use: http or edgedb",
 		).Required().String()
 
+		queryname = app.Flag(
+			"queryname",
+			"queries to benchmark: get_movie, get_person, get_user, update_movie, insert_user, insert_movie, insert_movie_plus",
+		).Required().String()
+
 		queryfile = app.Arg(
 			"queryfile",
 			"file to read benchmark query information from",
@@ -101,6 +107,7 @@ func ParseArgs() Args {
 		NSamples:    *nsamples,
 		Concurrency: *concurrency,
 		Benchmark:   *benchmark,
+		QueryName:   *queryname,
 	}
 
 	file := os.Stdin

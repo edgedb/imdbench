@@ -8,9 +8,11 @@
 
 import asyncpg
 import json
+import random
 
 
 ASYNC = True
+INSERT_PREFIX = 'insert_test__'
 
 
 async def connect(ctx):
@@ -43,6 +45,16 @@ async def load_ids(ctx, conn):
         get_user=[u['id'] for u in users],
         get_movie=[m['id'] for m in movies],
         get_person=[p['id'] for p in people],
+        # re-use user IDs for update tests
+        update_movie=[u['id'] for u in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
+        insert_movie=[{
+            'prefix': INSERT_PREFIX,
+            'people': [p['id'] for p in people[:4]],
+        }] * ctx.concurrency,
+        insert_movie_plus=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -328,3 +340,266 @@ async def get_person(conn, id):
             } for mov in person['directed']
         ]
     })
+
+
+async def update_movie(conn, id):
+    rows = await conn.fetch('''
+        UPDATE
+            movies
+        SET
+            title = movies.title || $2
+        WHERE
+            movies.id = $1
+        RETURNING
+            movies.id, movies.title
+    ''', id, f'---{str(id)[:8]}')
+
+    return json.dumps({
+        'id': rows[0]['id'],
+        'title': rows[0]['title'],
+    })
+
+
+async def insert_user(conn, val):
+    num = random.randrange(1_000_000)
+    rows = await conn.fetch('''
+        INSERT INTO users (name, image) VALUES
+            ($1, $2)
+        RETURNING
+            users.id, users.name, users.image
+    ''', f'{val}{num}', f'{val}image{num}')
+
+    return json.dumps({
+        'id': rows[0]['id'],
+        'name': rows[0]['name'],
+        'image': rows[0]['image'],
+    })
+
+
+async def insert_movie(conn, val):
+    num = random.randrange(1_000_000)
+    async with conn.transaction():
+        movie = (await conn.fetch(
+            '''
+            INSERT INTO movies AS M (title, image, description, year) VALUES
+                ($1, $2, $3, $4)
+            RETURNING
+                M.id, M.title, M.image, M.description, M.year
+            ''',
+            f'{val["prefix"]}{num}',
+            f'{val["prefix"]}image{num}.jpeg',
+            f'{val["prefix"]}description{num}',
+            num,
+        ))[0]
+
+        # we don't need the full people records to insert things, but
+        # we'll need them as return values
+        people = await conn.fetch(
+            '''
+            SELECT
+                person.id,
+                person.full_name,
+                person.image
+            FROM
+                persons AS person
+            WHERE
+                id IN ($1, $2, $3, $4);
+            ''',
+            *val["people"],
+        )
+
+        directors = []
+        cast = []
+        for p in people:
+            if p['id'] == val['people'][0]:
+                directors.append(p)
+            else:
+                cast.append(p)
+
+        await conn.fetch(
+            '''
+            INSERT INTO directors AS M (person_id, movie_id) VALUES
+                ($1, $2);
+            ''',
+            directors[0]['id'],
+            movie['id'],
+        )
+        await conn.fetch(
+            '''
+            INSERT INTO actors AS M (person_id, movie_id) VALUES
+                ($1, $4),
+                ($2, $4),
+                ($3, $4);
+            ''',
+            cast[0]['id'],
+            cast[1]['id'],
+            cast[2]['id'],
+            movie['id'],
+        )
+
+    result = {
+        'id': movie['id'],
+        'image': movie['image'],
+        'title': movie['title'],
+        'year': movie['year'],
+        'description': movie['description'],
+        'directors': [
+            {
+                'id': p['id'],
+                'full_name': p['full_name'],
+                'image': p['image'],
+            } for p in directors
+        ],
+        'cast': [
+            {
+                'id': p['id'],
+                'full_name': p['full_name'],
+                'image': p['image'],
+            } for p in cast
+        ],
+    }
+    return json.dumps(result)
+
+
+async def insert_movie_plus(conn, val):
+    num = random.randrange(1_000_000)
+    async with conn.transaction():
+        movie = (await conn.fetch(
+            '''
+            INSERT INTO movies AS M (title, image, description, year) VALUES
+                ($1, $2, $3, $4)
+            RETURNING
+                M.id, M.title, M.image, M.description, M.year
+            ''',
+            f'{val}{num}',
+            f'{val}image{num}.jpeg',
+            f'{val}description{num}',
+            num,
+        ))[0]
+
+        # we don't need the full people records to insert things, but
+        # we'll need them as return values
+        people = await conn.fetch(
+            '''
+            INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
+                ($1, $2, $3, ''),
+                ($4, $5, $6, ''),
+                ($7, $8, $9, '')
+            RETURNING
+                P.id, P.full_name, P.image
+            ''',
+            f'{val}Alice',
+            f'{val}Director',
+            f'{val}image{num}.jpeg',
+            f'{val}Billie',
+            f'{val}Actor',
+            f'{val}image{num+1}.jpeg',
+            f'{val}Cameron',
+            f'{val}Actor',
+            f'{val}image{num+2}.jpeg',
+        )
+
+        directors = []
+        cast = []
+        for p in people:
+            if 'Director' in p['full_name']:
+                directors.append(p)
+            else:
+                cast.append(p)
+
+        await conn.fetch(
+            '''
+            INSERT INTO directors AS M (person_id, movie_id) VALUES
+                ($1, $2);
+            ''',
+            directors[0]['id'],
+            movie['id'],
+        )
+        await conn.fetch(
+            '''
+            INSERT INTO actors AS M (person_id, movie_id) VALUES
+                ($1, $3),
+                ($2, $3);
+            ''',
+            cast[0]['id'],
+            cast[1]['id'],
+            movie['id'],
+        )
+
+    result = {
+        'id': movie['id'],
+        'image': movie['image'],
+        'title': movie['title'],
+        'year': movie['year'],
+        'description': movie['description'],
+        'directors': [
+            {
+                'id': p['id'],
+                'full_name': p['full_name'],
+                'image': p['image'],
+            } for p in directors
+        ],
+        'cast': [
+            {
+                'id': p['id'],
+                'full_name': p['full_name'],
+                'image': p['image'],
+            } for p in cast
+        ],
+    }
+    return json.dumps(result)
+
+
+async def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        await conn.execute('''
+            UPDATE
+                movies
+            SET
+                title = split_part(movies.title, '---', 1)
+            WHERE
+                movies.title LIKE '%---%'
+        ''')
+    elif queryname == 'insert_user':
+        await conn.fetch('''
+            DELETE FROM
+                users
+            WHERE
+                users.name LIKE $1
+        ''', f'{INSERT_PREFIX}%')
+    elif queryname in {'insert_movie', 'insert_movie_plus'}:
+        await conn.fetch('''
+            DELETE FROM
+                "directors" as D
+            USING
+                "movies" as M
+            WHERE
+                D.movie_id = M.id AND M.image LIKE $1;
+        ''', f'{INSERT_PREFIX}%')
+        await conn.fetch('''
+            DELETE FROM
+                "actors" as A
+            USING
+                "movies" as M
+            WHERE
+                A.movie_id = M.id AND M.image LIKE $1;
+        ''', f'{INSERT_PREFIX}%')
+        await conn.fetch('''
+            DELETE FROM
+                "movies" as M
+            WHERE
+                M.image LIKE $1;
+        ''', f'{INSERT_PREFIX}%')
+        await conn.fetch('''
+            DELETE FROM
+                "persons" as P
+            WHERE
+                P.image LIKE $1;
+        ''', f'{INSERT_PREFIX}%')
+
+
+async def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user', 'insert_movie',
+                     'insert_movie_plus'}:
+        # The clean up is the same as setup for mutation benchmarks
+        await setup(ctx, conn, queryname)

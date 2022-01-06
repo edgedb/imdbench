@@ -9,6 +9,9 @@
 import edgedb
 
 
+INSERT_PREFIX = 'insert_test__'
+
+
 def get_port(ctx):
     return ctx.edgedb_port
 
@@ -16,22 +19,38 @@ def get_port(ctx):
 def get_queries(ctx):
     conn = connect(ctx)
     try:
-        ids = load_ids(ctx, conn)
+        qargs = load_ids(ctx, conn)
     finally:
         close(ctx, conn)
 
     return {
         'get_user': {
             'query': EDGEQL_GET_USER,
-            'ids': ids['get_user'],
+            'QArgs': qargs['get_user'],
         },
         'get_movie': {
             'query': EDGEQL_GET_MOVIE,
-            'ids': ids['get_movie'],
+            'QArgs': qargs['get_movie'],
         },
         'get_person': {
             'query': EDGEQL_GET_PERSON,
-            'ids': ids['get_person'],
+            'QArgs': qargs['get_person'],
+        },
+        'update_movie': {
+            'query': EDGEQL_UPDATE_MOVIE,
+            'QArgs': qargs['update_movie'],
+        },
+        'insert_user': {
+            'query': EDGEQL_INSERT_USER,
+            'QArgs': qargs['insert_user'],
+        },
+        'insert_movie': {
+            'query': EDGEQL_INSERT_MOVIE,
+            'QArgs': qargs['insert_movie'],
+        },
+        'insert_movie_plus': {
+            'query': EDGEQL_INSERT_MOVIE_PLUS,
+            'QArgs': qargs['insert_movie_plus'],
         },
     }
 
@@ -52,16 +71,67 @@ def load_ids(ctx, conn):
             P := Person {id, r := random()}
         SELECT (
             users := array_agg((SELECT U ORDER BY U.r LIMIT <int64>$lim).id),
-            movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim).id),
+            movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim){
+                id,
+                title := '---' ++ (<str>.id)[:8],
+            }),
             people := array_agg((SELECT P ORDER BY P.r LIMIT <int64>$lim).id),
         );
     ''', lim=ctx.number_of_ids)
 
+    people = list(d.people)
+
     return dict(
-        get_user=[str(v) for v in d.users],
-        get_movie=[str(v) for v in d.movies],
-        get_person=[str(v) for v in d.people],
+        get_user=[[str(v)] for v in d.users],
+        get_movie=[[str(v.id)] for v in d.movies],
+        get_person=[[str(v)] for v in people],
+        # re-use user IDs for update tests
+        update_movie=[[str(v.id), v.title] for v in d.movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[[INSERT_PREFIX]] * ctx.concurrency,
+        insert_movie=[
+            [INSERT_PREFIX] + [str(v) for v in people[:4]]
+        ] * ctx.concurrency,
+        insert_movie_plus=[[INSERT_PREFIX]] * ctx.concurrency,
     )
+
+
+def setup(ctx, conn, queryname):
+    if queryname == 'update_movie':
+        conn.execute('''
+            update Movie
+            filter contains(.title, '---')
+            set {
+                title := str_split(.title, '---')[0]
+            };
+        ''')
+    elif queryname == 'insert_user':
+        conn.query('''
+            delete User
+            filter .name LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}%')
+    elif queryname == 'insert_movie':
+        conn.query('''
+            delete Movie
+            filter .image LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}image%')
+    elif queryname == 'insert_movie_plus':
+        conn.query('''
+            delete Movie
+            filter .image LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}image%')
+        conn.query('''
+            delete Person
+            filter .image LIKE <str>$prefix
+        ''', prefix=f'{INSERT_PREFIX}image%')
+
+
+def cleanup(ctx, conn, queryname):
+    if queryname in {'update_movie', 'insert_user', 'insert_movie',
+                     'insert_movie_plus'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, conn, queryname)
 
 
 EDGEQL_GET_USER = '''
@@ -164,4 +234,122 @@ EDGEQL_GET_PERSON = '''
         ),
     }
     FILTER .id = <uuid>$id
+'''
+
+
+EDGEQL_UPDATE_MOVIE = '''
+    SELECT (
+        UPDATE Movie
+        FILTER .id = <uuid>$id
+        SET {
+            title := .title ++ <str>$title
+        }
+    ) {
+        id,
+        title
+    }
+'''
+
+
+EDGEQL_INSERT_USER = '''
+    SELECT (
+        INSERT User {
+            name := <str>$name,
+            image := <str>$image,
+        }
+    ) {
+        id,
+        name,
+        image,
+    }
+'''
+
+
+EDGEQL_INSERT_MOVIE = '''
+    SELECT (
+        INSERT Movie {
+            title := <str>$title,
+            image := <str>$image,
+            description := <str>$description,
+            year := <int64>$year,
+            directors := (
+                SELECT Person
+                FILTER .id = (<uuid>$did)
+            ),
+            cast := (
+                SELECT Person
+                FILTER .id IN {<uuid>$cid0, <uuid>$cid1, <uuid>$cid2}
+            ),
+        }
+    ) {
+        id,
+        title,
+        image,
+        description,
+        year,
+        directors: {
+            id,
+            full_name,
+            image,
+        }
+        ORDER BY .last_name,
+
+        cast: {
+            id,
+            full_name,
+            image,
+        }
+        ORDER BY .last_name,
+    }
+'''
+
+
+EDGEQL_INSERT_MOVIE_PLUS = '''
+    SELECT (
+        INSERT Movie {
+            title := <str>$title,
+            image := <str>$image,
+            description := <str>$description,
+            year := <int64>$year,
+            directors := (
+                INSERT Person {
+                    first_name := <str>$dfn,
+                    last_name := <str>$dln,
+                    image := <str>$dimg,
+                }
+            ),
+            cast := {(
+                INSERT Person {
+                    first_name := <str>$cfn0,
+                    last_name := <str>$cln0,
+                    image := <str>$cimg0,
+                }
+            ), (
+                INSERT Person {
+                    first_name := <str>$cfn1,
+                    last_name := <str>$cln1,
+                    image := <str>$cimg1,
+                }
+            )},
+        }
+    ) {
+        id,
+        title,
+        image,
+        description,
+        year,
+        directors: {
+            id,
+            full_name,
+            image,
+        }
+        ORDER BY .last_name,
+
+        cast: {
+            id,
+            full_name,
+            image,
+        }
+        ORDER BY .last_name,
+    }
 '''

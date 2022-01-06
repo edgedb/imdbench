@@ -6,9 +6,14 @@
 ##
 
 
-import pymongo
 import bson
 import bson.json_util
+import pymongo
+from pymongo.collection import ReturnDocument
+import random
+
+
+INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
@@ -33,10 +38,25 @@ def load_ids(ctx, db):
     movies = db.movies.aggregate([{'$sample': {'size': ctx.number_of_ids}}])
     people = db.people.aggregate([{'$sample': {'size': ctx.number_of_ids}}])
 
+    people = list(people)
+    movies = list(movies)
     return dict(
         get_user=[d['_id'] for d in users],
         get_movie=[d['_id'] for d in movies],
         get_person=[d['_id'] for d in people],
+        # re-use user IDs for update tests
+        update_movie=[{
+            'id': d['_id'],
+            'title': f"{d['title']}---{str(d['_id'])[:8]}"
+        } for d in movies],
+        # generate as many insert stubs as "concurrency" to
+        # accommodate concurrent inserts
+        insert_user=[INSERT_PREFIX] * ctx.concurrency,
+        insert_movie=[{
+            'prefix': INSERT_PREFIX,
+            'people': [p['_id'] for p in people[:4]],
+        }] * ctx.concurrency,
+        insert_movie_plus=[INSERT_PREFIX] * ctx.concurrency,
     )
 
 
@@ -378,3 +398,257 @@ def get_person(db, id):
 
     person = list(person)
     return bson.json_util.dumps(person[0])
+
+
+def update_movie(db, val):
+    with db.client.start_session() as session:
+        movie = db.movies.find_one_and_update(
+            {
+                '_id': val['id']
+            },
+            {
+                '$set': {'title': val['title']},
+            },
+            projection={'_id': True, 'title': True},
+            return_document=ReturnDocument.AFTER,
+            session=session,
+        )
+        result = bson.json_util.dumps(movie)
+
+    return result
+
+
+def insert_user(db, val):
+    with db.client.start_session() as session:
+        num = random.randrange(1_000_000)
+        user = db.users.insert_one(
+            {
+                'name': f'{val}{num}',
+                'image': f'{val}image{num}',
+            },
+            session=session,
+        )
+        result = bson.json_util.dumps(dict(
+            _id=user.inserted_id,
+            name=f'{val}{num}',
+            image=f'image_{val}{num}',
+        ))
+
+    return result
+
+
+def get_inserted_movie(db, id):
+    movie = db.movies.aggregate([
+        {
+            '$match': {
+                '_id': id
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'people',
+                'localField': 'cast',
+                'foreignField': '_id',
+                'as': 'cast'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'people',
+                'localField': 'directors',
+                'foreignField': '_id',
+                'as': 'directors'
+            }
+        },
+        {
+            '$group': {
+                '_id': "$_id",
+                'title': {'$first': "$title"},
+                'year': {'$first': "$year"},
+                'image': {'$first': "$image"},
+                'description': {'$first': "$description"},
+                'cast': {'$first': "$cast"},
+                'directors': {'$first': "$directors"},
+            }
+        },
+        {
+            '$project': {
+                'cast': {  # Calculating `full_name` adds around 5%
+                           # overhead, but all other benchmarks do this,
+                           # so it is fair to test how well mongodb
+                           # performs with this kind of queries.
+                    '$map': {
+                        'input': '$cast',
+                        'as': 'c',
+                        'in': {
+                            'name': {
+                                "$concat": [
+                                    "$$c.first_name",
+                                    " ",
+                                    {
+                                        '$cond': {
+                                            'if': {
+                                                '$eq': ['$$c.middle_name', '']
+                                            },
+                                            'then': '',
+                                            'else': {
+                                                "$concat": [
+                                                    "$$c.middle_name", ' '
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "$$c.last_name"
+                                ]
+                            },
+                            'image': '$$c.image',
+                            '_id': '$$c._id',
+                        }
+                    }
+                },
+                'directors': {  # See the comment for "cast".
+                    '$map': {
+                        'input': '$directors',
+                        'as': 'c',
+                        'in': {
+                            'name': {
+                                "$concat": [
+                                    "$$c.first_name",
+                                    " ",
+                                    {
+                                        '$cond': {
+                                            'if': {
+                                                '$eq': ['$$c.middle_name', '']
+                                            },
+                                            'then': '',
+                                            'else': {
+                                                "$concat": [
+                                                    "$$c.middle_name", ' '
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "$$c.last_name"
+                                ]
+                            },
+                            'image': '$$c.image',
+                            '_id': '$$c._id',
+                        }
+                    }
+                },
+                'image': 1,
+                'title': 1,
+                'year': 1,
+                'description': 1,
+            }
+        }
+    ])
+    movie = list(movie)
+    result = bson.json_util.dumps(movie[0])
+    return result
+
+
+def insert_movie(db, val):
+    with db.client.start_session() as session:
+        num = random.randrange(1_000_000)
+        result = db.movies.insert_one({
+                'title': f'{val["prefix"]}{num}',
+                'image': f'{val["prefix"]}image{num}.jpeg',
+                'description': f'{val["prefix"]}description{num}',
+                'year': num,
+                'directors': val["people"][:1],
+                'cast': val["people"][1:],
+            },
+            session=session,
+        )
+        return get_inserted_movie(db, result.inserted_id)
+
+
+def insert_movie_plus(db, val):
+    with db.client.start_session() as session:
+        num = random.randrange(1_000_000)
+        people = db.people.insert_many([{
+            'first_name': f'{val}Alice',
+            'middle_name': '',
+            'last_name': f'{val}Director',
+            'image': f'{val}image{num}.jpeg',
+            'bio': '',
+        }, {
+            'first_name': f'{val}Billie',
+            'middle_name': '',
+            'last_name': f'{val}Actor',
+            'image': f'{val}image{num+1}.jpeg',
+            'bio': '',
+        }, {
+            'first_name': f'{val}Cameron',
+            'middle_name': '',
+            'last_name': f'{val}Actor',
+            'image': f'{val}image{num+2}.jpeg',
+            'bio': '',
+        }]).inserted_ids
+
+        result = db.movies.insert_one({
+                'title': f'{val}{num}',
+                'image': f'{val}image{num}.jpeg',
+                'description': f'{val}description{num}',
+                'year': num,
+                'directors': people[:1],
+                'cast': people[1:],
+            },
+            session=session,
+        )
+        return get_inserted_movie(db, result.inserted_id)
+
+
+def setup(ctx, db, queryname):
+    if queryname == 'update_movie':
+        with db.client.start_session() as session:
+            movies = db.movies.find(
+                {
+                    'title': {'$regex': r'.+---.+'},
+                },
+                {
+                    '_id': True,
+                    'title': True,
+                },
+                session=session,
+            )
+            for mov in movies:
+                db.movies.find_one_and_update(
+                    {
+                        '_id': mov['_id']
+                    },
+                    {
+                        '$set': {'title': mov['title'].split('---')[0]},
+                    },
+                    session=session,
+                )
+    elif queryname == 'insert_user':
+        with db.client.start_session() as session:
+            db.users.delete_many(
+                {
+                    'name': {'$regex': f'{INSERT_PREFIX}.+'}
+                },
+                session=session,
+            )
+    elif queryname in {'insert_movie', 'insert_movie_plus'}:
+        with db.client.start_session() as session:
+            db.movies.delete_many(
+                {
+                    'image': {'$regex': f'{INSERT_PREFIX}.+'}
+                },
+                session=session,
+            )
+            db.people.delete_many(
+                {
+                    'image': {'$regex': f'{INSERT_PREFIX}.+'}
+                },
+                session=session,
+            )
+
+
+def cleanup(ctx, db, queryname):
+    if queryname in {'update_movie', 'insert_user', 'insert_movie',
+                     'insert_movie_plus'}:
+        # The clean up is the same as setup for mutation benchmarks
+        setup(ctx, db, queryname)

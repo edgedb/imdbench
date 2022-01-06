@@ -11,6 +11,7 @@ import asyncio
 import edgedb
 import json
 import progress.bar
+import uvloop
 
 
 class Pool:
@@ -248,4 +249,5 @@ if __name__ == '__main__':
     with open(args.filename, 'rt') as f:
         records = json.load(f)
 
+    uvloop.install()
     asyncio.run(import_data(records))

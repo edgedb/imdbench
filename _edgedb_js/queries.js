@@ -98,6 +98,116 @@ const queries = {
         ),
     }
     FILTER .id = <uuid>$id
-  `
+  `,
+  updateMovie: `
+    SELECT (
+        UPDATE Movie
+        FILTER .id = <uuid>$id
+        SET {
+            title := .title ++ '---' ++ <str>$suffix
+        }
+    ) {
+        id,
+        title
+    }
+  `,
+  insertUser: `
+      SELECT (
+          INSERT User {
+              name := <str>$name,
+              image := <str>$image,
+          }
+      ) {
+          id,
+          name,
+          image,
+      }
+  `,
+  insertMovie: `
+      SELECT (
+          INSERT Movie {
+              title := <str>$title,
+              image := <str>$image,
+              description := <str>$description,
+              year := <int64>$year,
+              directors := (
+                  SELECT Person
+                  FILTER .id = (<uuid>$d_id)
+              ),
+              cast := (
+                  SELECT Person
+                  FILTER .id IN {<uuid>$c_id0, <uuid>$c_id1, <uuid>$c_id2}
+              ),
+          }
+      ) {
+          id,
+          title,
+          image,
+          description,
+          year,
+          directors: {
+              id,
+              full_name,
+              image,
+          }
+          ORDER BY .last_name,
+
+          cast: {
+              id,
+              full_name,
+              image,
+          }
+          ORDER BY .last_name,
+      }
+  `,
+  insertMoviePlus: `
+      SELECT (
+          INSERT Movie {
+              title := <str>$title,
+              image := <str>$image,
+              description := <str>$description,
+              year := <int64>$year,
+              directors := (
+                  INSERT Person {
+                      first_name := <str>$dfn,
+                      last_name := <str>$dln,
+                      image := <str>$dimg,
+                  }
+              ),
+              cast := {(
+                  INSERT Person {
+                      first_name := <str>$cfn0,
+                      last_name := <str>$cln0,
+                      image := <str>$cimg0,
+                  }
+              ), (
+                  INSERT Person {
+                      first_name := <str>$cfn1,
+                      last_name := <str>$cln1,
+                      image := <str>$cimg1,
+                  }
+              )},
+          }
+      ) {
+          id,
+          title,
+          image,
+          description,
+          year,
+          directors: {
+              id,
+              full_name,
+              image,
+          }
+          ORDER BY .last_name,
+
+          cast: {
+              id,
+              full_name,
+              image,
+          }
+          ORDER BY .last_name,
+      }
+  `,
 };
 module.exports = queries;

@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"regexp"
+	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/edgedb/edgedb-go"
@@ -90,18 +91,23 @@ func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 		log.Fatal(err)
 	}
 
-	regex := regexp.MustCompile(`Person|Movie|User`)
-	queryType := regex.FindString(args.Query)
-
-	switch queryType {
-	case "Person":
-		exec = execPerson(pool, args)
-	case "Movie":
+	switch args.QueryName {
+	case "get_movie":
 		exec = execMovie(pool, args)
-	case "User":
+	case "get_person":
+		exec = execPerson(pool, args)
+	case "get_user":
 		exec = execUser(pool, args)
+	case "update_movie":
+		exec = updateMovie(pool, args)
+	case "insert_user":
+		exec = insertUser(pool, args)
+	case "insert_movie":
+		exec = insertMovie(pool, args)
+	case "insert_movie_plus":
+		exec = insertMoviePlus(pool, args)
 	default:
-		log.Fatalf("unknown query type %q", queryType)
+		log.Fatalf("unknown query type: %q", args.QueryName)
 	}
 
 	close = func() {
@@ -126,7 +132,8 @@ func execPerson(pool *edgedb.Client, args cli.Args) bench.Exec {
 		bts      []byte
 	)
 
-	return func(id string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
+		id := qargs[0]
 		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
@@ -160,7 +167,8 @@ func execMovie(pool *edgedb.Client, args cli.Args) bench.Exec {
 		bts      []byte
 	)
 
-	return func(id string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
+		id := qargs[0]
 		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
@@ -183,7 +191,6 @@ func execMovie(pool *edgedb.Client, args cli.Args) bench.Exec {
 }
 
 func execUser(pool *edgedb.Client, args cli.Args) bench.Exec {
-
 	ctx := context.TODO()
 	params := make(map[string]interface{}, 1)
 
@@ -195,7 +202,8 @@ func execUser(pool *edgedb.Client, args cli.Args) bench.Exec {
 		bts      []byte
 	)
 
-	return func(id string) (time.Duration, string) {
+	return func(qargs []string) (time.Duration, string) {
+		id := qargs[0]
 		params["id"], err = edgedb.ParseUUID(id)
 		if err != nil {
 			log.Fatal(err)
@@ -208,6 +216,173 @@ func execUser(pool *edgedb.Client, args cli.Args) bench.Exec {
 		}
 
 		bts, err = json.Marshal(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+		duration = time.Since(start)
+
+		return duration, string(bts)
+	}
+}
+
+func updateMovie(pool *edgedb.Client, args cli.Args) bench.Exec {
+	ctx := context.TODO()
+	params := make(map[string]interface{}, 1)
+
+	var (
+		movie    RMovie
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
+	return func(qargs []string) (time.Duration, string) {
+		id := qargs[0]
+		params["id"], err = edgedb.ParseUUID(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		start = time.Now()
+		err = pool.QuerySingle(ctx, args.Query, &movie, params)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bts, err = json.Marshal(movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+		duration = time.Since(start)
+
+		return duration, string(bts)
+	}
+}
+
+func insertUser(pool *edgedb.Client, args cli.Args) bench.Exec {
+	ctx := context.TODO()
+	params := make(map[string]interface{}, 1)
+
+	var (
+		user     RUser
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
+	return func(qargs []string) (time.Duration, string) {
+		text := qargs[0]
+		num := rand.Intn(1_000_000)
+		params["name"] = text + strconv.Itoa(num)
+		params["image"] = "image_" + text + strconv.Itoa(num)
+
+		start = time.Now()
+		err = pool.QuerySingle(ctx, args.Query, &user, params)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bts, err = json.Marshal(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+		duration = time.Since(start)
+
+		return duration, string(bts)
+	}
+}
+
+func insertMovie(pool *edgedb.Client, args cli.Args) bench.Exec {
+	ctx := context.TODO()
+	params := make(map[string]interface{}, 1)
+
+	var (
+		movie    Movie
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
+	return func(qargs []string) (time.Duration, string) {
+		text := qargs[0]
+		num := rand.Intn(1_000_000)
+        params["title"] = text + strconv.Itoa(num)
+		params["image"] = text + "image" + strconv.Itoa(num)
+		params["description"] = text + "description" + strconv.Itoa(num)
+		params["year"] = int64(num)
+
+		params["did"], err = edgedb.ParseUUID(qargs[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		params["cid0"], err = edgedb.ParseUUID(qargs[2])
+		if err != nil {
+			log.Fatal(err)
+		}
+		params["cid1"], err = edgedb.ParseUUID(qargs[3])
+		if err != nil {
+			log.Fatal(err)
+		}
+		params["cid2"], err = edgedb.ParseUUID(qargs[4])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		start = time.Now()
+		err = pool.QuerySingle(ctx, args.Query, &movie, params)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bts, err = json.Marshal(movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+		duration = time.Since(start)
+
+		return duration, string(bts)
+	}
+}
+
+func insertMoviePlus(pool *edgedb.Client, args cli.Args) bench.Exec {
+	ctx := context.TODO()
+	params := make(map[string]interface{}, 1)
+
+	var (
+		movie    Movie
+		start    time.Time
+		duration time.Duration
+		err      error
+		bts      []byte
+	)
+
+	return func(qargs []string) (time.Duration, string) {
+		text := qargs[0]
+		num := rand.Intn(1_000_000)
+        params["title"] = text + strconv.Itoa(num)
+		params["image"] = text + "image" + strconv.Itoa(num)
+		params["description"] = text + "description" + strconv.Itoa(num)
+		params["year"] = int64(num)
+        params["dfn"] = text + "Alice"
+        params["dln"] = text + "Director"
+        params["dimg"] = text + "image" + strconv.Itoa(num) + ".jpeg"
+        params["cfn0"] = text + "Billie"
+        params["cln0"] = text + "Actor"
+        params["cimg0"] = text + "image" + strconv.Itoa(num + 1) + ".jpeg"
+        params["cfn1"] = text + "Cameron"
+        params["cln1"] = text + "Actor"
+        params["cimg1"] = text + "image" + strconv.Itoa(num + 2) + ".jpeg"
+
+		start = time.Now()
+		err = pool.QuerySingle(ctx, args.Query, &movie, params)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bts, err = json.Marshal(movie)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -233,10 +408,64 @@ func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 		duration time.Duration
 	)
 
-	exec := func(id string) (time.Duration, string) {
-		params["id"], err = edgedb.ParseUUID(id)
-		if err != nil {
-			log.Fatal(err)
+	exec := func(qargs []string) (time.Duration, string) {
+		if args.QueryName[:3] == "get" {
+			// get queries only have one argument - ID
+			params["id"], err = edgedb.ParseUUID(qargs[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if args.QueryName == "update_movie" {
+			params["id"], err = edgedb.ParseUUID(qargs[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if args.QueryName == "insert_user" {
+			// need to add more variables for the query
+			text := qargs[0]
+			num := rand.Intn(1_000_000)
+			params["name"] = text + strconv.Itoa(num)
+			params["image"] = "image_" + text + strconv.Itoa(num)
+		} else if args.QueryName == "insert_movie" {
+			text := qargs[0]
+			num := rand.Intn(1_000_000)
+	        params["title"] = text + strconv.Itoa(num)
+			params["image"] = text + "image" + strconv.Itoa(num)
+			params["description"] = text + "description" + strconv.Itoa(num)
+			params["year"] = int64(num)
+
+			params["did"], err = edgedb.ParseUUID(qargs[1])
+			if err != nil {
+				log.Fatal(err)
+			}
+			params["cid0"], err = edgedb.ParseUUID(qargs[2])
+			if err != nil {
+				log.Fatal(err)
+			}
+			params["cid1"], err = edgedb.ParseUUID(qargs[3])
+			if err != nil {
+				log.Fatal(err)
+			}
+			params["cid2"], err = edgedb.ParseUUID(qargs[4])
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if args.QueryName == "insert_movie_plus" {
+			text := qargs[0]
+			num := rand.Intn(1_000_000)
+	        params["title"] = text + strconv.Itoa(num)
+			params["image"] = text + "image" + strconv.Itoa(num)
+			params["description"] = text + "description" + strconv.Itoa(num)
+			params["year"] = int64(num)
+	        params["dfn"] = text + "Alice"
+	        params["dln"] = text + "Director"
+	        params["dimg"] = text + "image" + strconv.Itoa(num) + ".jpeg"
+	        params["cfn0"] = text + "Billie"
+	        params["cln0"] = text + "Actor"
+	        params["cimg0"] = text + "image" + strconv.Itoa(num + 1) + ".jpeg"
+	        params["cfn1"] = text + "Cameron"
+	        params["cln1"] = text + "Actor"
+	        params["cimg1"] = text + "image" + strconv.Itoa(num + 2) + ".jpeg"
 		}
 
 		start = time.Now()
