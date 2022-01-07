@@ -85,8 +85,7 @@ type PMovie struct {
 
 func RepackWorker(args cli.Args) (exec bench.Exec, close bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.CreateClientDSN(
-		ctx, "edgedb_bench", edgedb.Options{Concurrency: 1})
+	pool, err := edgedb.CreateClient(ctx, edgedb.Options{Concurrency: 1})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -394,8 +393,7 @@ func insertMoviePlus(pool *edgedb.Client, args cli.Args) bench.Exec {
 
 func JSONWorker(args cli.Args) (bench.Exec, bench.Close) {
 	ctx := context.TODO()
-	pool, err := edgedb.CreateClientDSN(
-		ctx, "edgedb_bench", edgedb.Options{Concurrency: 1})
+	pool, err := edgedb.CreateClient(ctx, edgedb.Options{Concurrency: 1})
 	if err != nil {
 		log.Fatal(err)
 	}

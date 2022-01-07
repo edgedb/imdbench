@@ -19,8 +19,7 @@ thread_data = threading.local()
 async def connect(ctx):
     client = getattr(thread_data, 'client', None)
     if client is None:
-        client = edgedb.create_async_client(
-            'edgedb_bench', concurrency=ctx.concurrency)
+        client = edgedb.create_async_client(concurrency=ctx.concurrency)
 
     return client
 
