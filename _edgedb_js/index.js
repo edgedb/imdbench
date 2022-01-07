@@ -6,7 +6,6 @@ const queries = require("./queries");
 class ConnectionJSON {
   constructor(opts) {
     this.client = edgedb.createClient({
-      dsn: "edgedb_bench",
       concurrency: opts.pool,
     });
   }
@@ -98,7 +97,6 @@ module.exports.ConnectionJSON = ConnectionJSON;
 class ConnectionRepack {
   constructor(opts) {
     this.client = edgedb.createClient({
-      dsn: "edgedb_bench",
       concurrency: opts.pool,
     });
   }

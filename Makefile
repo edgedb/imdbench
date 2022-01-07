@@ -67,7 +67,6 @@ load-edgedb: $(BUILD)/edbdataset.json
 	edgedb query 'DROP DATABASE temp'
 	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
-	edgedb instance status --json edgedb_bench > bench_cfg.json
 
 load-django: $(BUILD)/dataset.json
 	$(PSQL) -U postgres -tc \
