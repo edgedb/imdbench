@@ -62,9 +62,10 @@ async def load_ids(ctx, conn):
         insert_movie_plus=[INSERT_PREFIX] * ctx.concurrency,
     )
 
+ctr = 0
 
 async def get_user(conn, id):
-    return await conn.query_single_json('''
+    res = await conn.query_single_json('''
         SELECT User {
             id,
             name,
@@ -88,6 +89,11 @@ async def get_user(conn, id):
         }
         FILTER .id = <uuid>$id
     ''', id=id)
+    global ctr
+    ctr += 1
+    if ctr == 20:
+        1/0
+    return res
 
 
 async def get_movie(conn, id):
@@ -217,7 +223,7 @@ async def insert_movie(conn, val):
                 ),
                 cast := (
                     SELECT Person
-                    FILTER .id IN {<uuid>$c_ids0, <uuid>$c_ids1, <uuid>$c_ids2}
+                    FILTER .id IN array_unpack(<array<uuid>>$cast)
                 ),
             }
         ) {
@@ -246,9 +252,7 @@ async def insert_movie(conn, val):
         description=f'{val["prefix"]}description{num}',
         year=num,
         d_ids=val["people"][0],
-        c_ids0=val["people"][1],
-        c_ids1=val["people"][2],
-        c_ids2=val["people"][3],
+        cast=val["people"][1:3],
     )
 
 

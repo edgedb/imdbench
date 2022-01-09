@@ -41,8 +41,7 @@ def platform_info():
                     break
 
     if 'Linux' in system:
-        distname, distversion, distid = distro.linux_distribution()
-        distribution = '{} {}'.format(distname, distversion).strip()
+        distribution = '{} {}'.format(distro.name(), distro.version()).strip()
 
     else:
         distribution = None
