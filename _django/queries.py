@@ -82,7 +82,8 @@ def get_person(conn, id):
 
 def update_movie(conn, id):
     record = models.Movie.objects.get(pk=id)
-    record.title = f'{record.title}---{record.id}'
+    # The title has a 200 char limit, so we truncate the value to fit in
+    record.title = f'{record.title}---{str(record.id)[:-3]}'[:200]
     record.save()
     return json.dumps({
         'id': record.id,
