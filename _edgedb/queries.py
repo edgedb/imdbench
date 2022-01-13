@@ -209,7 +209,7 @@ def insert_movie(conn, val):
                 ),
                 cast := (
                     SELECT Person
-                    FILTER .id IN {<uuid>$c_id0, <uuid>$c_id1, <uuid>$c_id2}
+                    FILTER .id IN array_unpack(<array<uuid>>$cast)
                 ),
             }
         ) {
@@ -238,9 +238,7 @@ def insert_movie(conn, val):
         description=f'{val["prefix"]}description{num}',
         year=num,
         d_id=val["people"][0],
-        c_id0=val["people"][1],
-        c_id1=val["people"][2],
-        c_id2=val["people"][3],
+        cast=val["people"][1:3],
     )
 
 
