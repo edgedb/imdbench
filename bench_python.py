@@ -30,6 +30,7 @@ class Result(typing.NamedTuple):
     nqueries: int
     duration: int
     min_latency: int
+    avg_latency: int
     max_latency: int
     latency_stats: typing.List[int]
     samples: typing.List[str]
@@ -183,12 +184,16 @@ def agg_results(results, benchname, queryname, duration) -> Result:
         if t_min_latency < min_latency:
             min_latency = t_min_latency
 
+    avg_latency = np.average(
+        np.arange(len(latency_stats)), weights=latency_stats)
+
     return Result(
         benchmark=benchname,
         queryname=queryname,
         nqueries=nqueries,
         duration=duration,
         min_latency=min_latency,
+        avg_latency=avg_latency,
         max_latency=max_latency,
         latency_stats=latency_stats,
         samples=samples,
@@ -354,6 +359,7 @@ def print_result(ctx, result: Result):
     print(f'queries:\t{result.nqueries}')
     print(f'qps:\t\t{result.nqueries // ctx.duration} q/s')
     print(f'min latency:\t{result.min_latency / 100:.2f}ms')
+    print(f'avg latency:\t{result.avg_latency / 100:.2f}ms')
     print(f'max latency:\t{result.max_latency / 100:.2f}ms')
     print()
 
