@@ -119,15 +119,60 @@ def calc_latency_stats(queries, duration, min_latency, max_latency,
     return data
 
 
-def process_results(results):
-    try:
-        lat_data = json.loads(results)
-    except json.JSONDecodeError as e:
-        print('could not process benchmark results: {}'.format(e),
-              file=sys.stderr)
-        print(results, file=sys.stderr)
-        sys.exit(1)
+def _geom_mean(values):
+    p = 1
+    root = 0
+    for val in values:
+        p *= val
+        root += 1
 
+    if root != 0:
+        return p ** (1.0 / root)
+    else:
+        return 0
+
+
+def mean_latency_stats(data):
+    for bench in data:
+        var = bench['variations']
+        mean_data = {
+            'queryname': 'all',
+            'samples': [],
+        }
+        # Just collect all the samples together, no need to obscure
+        # anything here
+        for v in var:
+            mean_data['samples'] += v['samples']
+
+        mean_data.update(
+            duration=round(_geom_mean(v['duration'] for v in var), 2),
+            queries=round(_geom_mean(v['queries'] for v in var), 2),
+            qps=round(_geom_mean(v['qps'] for v in var), 2),
+            latency_min=round(_geom_mean(v['latency_min'] for v in var), 3),
+            latency_mean=round(_geom_mean(v['latency_mean'] for v in var), 3),
+            latency_max=round(_geom_mean(v['latency_max'] for v in var), 3),
+            latency_std=round(_geom_mean(v['latency_std'] for v in var), 3),
+            latency_cv=round(_geom_mean(v['latency_cv'] for v in var), 2),
+            latency_percentiles=[
+                (
+                    p,
+                    round(
+                        _geom_mean(
+                            v['latency_percentiles'][i][1] for v in var
+                        ),
+                        3
+                    )
+                ) for i, p in enumerate(percentiles)
+            ]
+
+        )
+
+        bench['variations'] = [mean_data]
+
+    return data
+
+
+def process_results(lat_data):
     data = []
     for queries_bench in lat_data['data']:
         benchname = queries_bench['benchmark']
@@ -207,7 +252,17 @@ def run_benchmarks(args, argv):
                 cmd, stdout=sys.stdout, stderr=sys.stderr, check=True)
 
             with open('__tmp.json', 'rt') as f:
-                data = process_results(f.read())
+                # Read the raw data from the file
+                results = f.read()
+                try:
+                    raw_data = json.loads(results)
+                except json.JSONDecodeError as e:
+                    print('could not process benchmark results: {}'.format(e),
+                          file=sys.stderr)
+                    print(results, file=sys.stderr)
+                    sys.exit(1)
+
+                data = process_results(raw_data)
                 agg_data.extend(data)
     finally:
         if os.path.exists('__tmp.json'):
@@ -265,6 +320,10 @@ def main():
         argv.extend(("--edgedb-port", str(args.edgedb_port)))
 
     benchmarks_data = run_benchmarks(args, argv)
+    # potentially aggregate the data from different queries using a
+    # geometric mean
+    if args.aggregate:
+        mean_latency_stats(benchmarks_data)
 
     date = datetime.datetime.now().strftime('%c')
     plat_info = platform_info()
@@ -273,7 +332,7 @@ def main():
         'duration': args.duration,
         'platform': plat_info,
         'concurrency': args.concurrency,
-        'querynames': args.queries,
+        'querynames': ['all'] if args.aggregate else args.queries,
         'benchmarks': benchmarks_data,
     }
 

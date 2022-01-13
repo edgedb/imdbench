@@ -3,7 +3,7 @@ alembic~=1.6.5
 sqlalchemy~=1.4.28
 Django~=3.0
 djangorestframework~=3.12.0
-edgedb~=0.20.0
+edgedb~=0.20.1
 faker
 psycopg2-binary~=2.9.2
 pymongo
