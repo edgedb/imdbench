@@ -103,7 +103,8 @@ class MovieUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         title = validated_data.pop('title')
-        validated_data['title'] = f'{instance.title}---{title}'
+        # The title has a 200 char limit, so we truncate the value to fit in
+        validated_data['title'] = f'{instance.title}---{title[:-3]}'[:200]
         return super(MovieUpdateSerializer, self).update(
             instance, validated_data)
 

@@ -87,7 +87,7 @@ def get_person(conn, id):
 
 def update_movie(conn, id):
     return MOVIE_UPDATE_VIEW(
-        rf.post('/', data={'title': f'---{id}'}),
+        rf.post('/', data={'title': f'{id}'}),
         pk=id
     ).render().getvalue()
 
