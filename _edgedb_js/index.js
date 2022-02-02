@@ -9,6 +9,8 @@ const qbQueryPerson = qbQueries.person();
 const qbQueryMovie = qbQueries.movie();
 const qbUpdateMovie = qbQueries.updateMovie();
 const qbInsertUser = qbQueries.insertUser();
+const qbInsertMovie = qbQueries.insertMovie();
+const qbInsertMoviePlus = qbQueries.insertMoviePlus();
 
 class _BaseConnection {
   constructor(opts) {
@@ -209,6 +211,43 @@ class ConnectionQB extends _BaseConnection {
       })
     );
   }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbInsertMovie.run(this.client, {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+        d_id: val.people[0],
+        c_id0: val.people[1],
+        c_id1: val.people[2],
+        c_id2: val.people[3],
+      })
+    );
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbInsertMoviePlus.run(this.client, {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+        dfn: val + "Alice",
+        dln: val + "Director",
+        dimg: val + "image" + num + ".jpeg",
+        cfn0: val + "Billie",
+        cln0: val + "Actor",
+        cimg0: val + "image" + (num + 1) + ".jpeg",
+        cfn1: val + "Cameron",
+        cln1: val + "Actor",
+        cimg1: val + "image" + (num + 2) + ".jpeg",
+      })
+    );
+  }
 }
 module.exports.ConnectionQB = ConnectionQB;
 
@@ -240,6 +279,43 @@ class ConnectionQBUncached extends _BaseConnection {
       await qbQueries.insertUser().run(this.client, {
         name: id + num,
         image: "image_" + id + num,
+      })
+    );
+  }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbQueries.insertMovie().run(this.client, {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+        d_id: val.people[0],
+        c_id0: val.people[1],
+        c_id1: val.people[2],
+        c_id2: val.people[3],
+      })
+    );
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbQueries.insertMoviePlus().run(this.client, {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+        dfn: val + "Alice",
+        dln: val + "Director",
+        dimg: val + "image" + num + ".jpeg",
+        cfn0: val + "Billie",
+        cln0: val + "Actor",
+        cimg0: val + "image" + (num + 1) + ".jpeg",
+        cfn1: val + "Cameron",
+        cln1: val + "Actor",
+        cimg1: val + "image" + (num + 2) + ".jpeg",
       })
     );
   }

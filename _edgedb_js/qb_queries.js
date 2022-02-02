@@ -4,7 +4,7 @@ const e = require("./querybuilder").default;
 
 const queries = {
   user: () =>
-    e.withParams(
+    e.params(
       {
         id: e.uuid,
       },
@@ -32,11 +32,11 @@ const queries = {
               limit: 10,
             })
           ),
-          filter: e.eq(user.id, $.id),
+          filter: e.op(user.id, "=", $.id),
         }))
     ),
   person: () =>
-    e.withParams({ id: e.uuid }, ($) =>
+    e.params({ id: e.uuid }, ($) =>
       e.select(e.Person, (person) => ({
         id: true,
         full_name: true,
@@ -67,11 +67,11 @@ const queries = {
             ],
           })
         ),
-        filter: e.eq(person.id, $.id),
+        filter: e.op(person.id, "=", $.id),
       }))
     ),
   movie: () =>
-    e.withParams({ id: e.uuid }, ($) =>
+    e.params({ id: e.uuid }, ($) =>
       e.select(e.Movie, (movie) => ({
         id: true,
         image: true,
@@ -108,35 +108,31 @@ const queries = {
           },
           order: { expression: review.creation_time, direction: e.DESC },
         })),
-        filter: e.eq(movie.id, $.id),
+        filter: e.op(movie.id, "=", $.id),
       }))
     ),
   updateMovie: () =>
-    e.withParams(
+    e.params(
       {
         id: e.uuid,
         suffix: e.str,
       },
-      ($) => {
-        const selectedMovie = e.select(e.Movie, (movie) => ({
-          filter: e.eq(movie.id, $.id),
-        }));
-        return e.select(
-          selectedMovie.update({
-            title: e.concat(
-              e.concat(selectedMovie.title, e.str("---")),
-              $.suffix
-            ),
-          }),
-          {
+      ($) =>
+        e.select(
+          e.update(e.Movie, (movie) => ({
+            filter: e.op(movie.id, "=", $.id),
+            set: {
+              title: e.op(e.op(movie.title, "++", "---"), "++", $.suffix),
+            },
+          })),
+          () => ({
             id: true,
             title: true,
-          }
-        );
-      }
+          })
+        )
     ),
   insertUser: () =>
-    e.withParams(
+    e.params(
       {
         name: e.str,
         image: e.str,
@@ -151,6 +147,116 @@ const queries = {
             id: true,
             name: true,
             image: true,
+          })
+        )
+    ),
+  insertMovie: () =>
+    e.params(
+      {
+        title: e.str,
+        image: e.str,
+        description: e.str,
+        year: e.int64,
+        d_id: e.uuid,
+        c_id0: e.uuid,
+        c_id1: e.uuid,
+        c_id2: e.uuid,
+      },
+      ($) =>
+        e.select(
+          e.insert(e.Movie, {
+            title: $.title,
+            image: $.image,
+            description: $.description,
+            year: $.year,
+            directors: e.select(e.Person, (person) => ({
+              filter: e.op(person.id, "=", $.d_id),
+            })),
+            cast: e.select(e.Person, (person) => ({
+              filter: e.op(person.id, "in", e.set($.c_id0, $.c_id1, $.c_id2)),
+            })),
+          }),
+          () => ({
+            id: true,
+            title: true,
+            image: true,
+            description: true,
+            year: true,
+            directors: (director) => ({
+              id: true,
+              full_name: true,
+              image: true,
+              order: director.last_name,
+            }),
+            cast: (cast) => ({
+              id: true,
+              full_name: true,
+              image: true,
+              order: cast.last_name,
+            }),
+          })
+        )
+    ),
+  insertMoviePlus: () =>
+    e.params(
+      {
+        title: e.str,
+        image: e.str,
+        description: e.str,
+        year: e.int64,
+        dfn: e.str,
+        dln: e.str,
+        dimg: e.str,
+        cfn0: e.str,
+        cln0: e.str,
+        cimg0: e.str,
+        cfn1: e.str,
+        cln1: e.str,
+        cimg1: e.str,
+      },
+      ($) =>
+        e.select(
+          e.insert(e.Movie, {
+            title: $.title,
+            image: $.image,
+            description: $.description,
+            year: $.year,
+            directors: e.insert(e.Person, {
+              first_name: $.dfn,
+              last_name: $.dln,
+              image: $.dimg,
+            }),
+            cast: e.set(
+              e.insert(e.Person, {
+                first_name: $.cfn0,
+                last_name: $.cln0,
+                image: $.cimg0,
+              }),
+              e.insert(e.Person, {
+                first_name: $.cfn1,
+                last_name: $.cln1,
+                image: $.cimg1,
+              })
+            ),
+          }),
+          () => ({
+            id: true,
+            title: true,
+            image: true,
+            description: true,
+            year: true,
+            directors: (director) => ({
+              id: true,
+              full_name: true,
+              image: true,
+              order: director.last_name,
+            }),
+            cast: (cast) => ({
+              id: true,
+              full_name: true,
+              image: true,
+              order: cast.last_name,
+            }),
           })
         )
     ),
