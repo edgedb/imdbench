@@ -25,7 +25,7 @@ const queries = {
                 title: true,
                 avg_rating: true,
               },
-              order: {
+              order_by: {
                 expression: userReview.creation_time,
                 direction: e.DESC,
               },
@@ -48,7 +48,7 @@ const queries = {
           title: true,
           year: true,
           avg_rating: true,
-          order: [
+          order_by: [
             { expression: movie.year, direction: e.ASC },
             { expression: movie.title, direction: e.ASC },
           ],
@@ -61,7 +61,7 @@ const queries = {
             title: true,
             year: true,
             avg_rating: true,
-            order: [
+            order_by: [
               { expression: movie.year, direction: e.ASC },
               { expression: movie.title, direction: e.ASC },
             ],
@@ -83,7 +83,7 @@ const queries = {
           id: true,
           full_name: true,
           image: true,
-          order: [
+          order_by: [
             { expression: director["@list_order"], empty: e.EMPTY_LAST },
             { expression: director.last_name },
           ],
@@ -92,7 +92,7 @@ const queries = {
           id: true,
           full_name: true,
           image: true,
-          order: [
+          order_by: [
             { expression: cast["@list_order"], empty: e.EMPTY_LAST },
             { expression: cast.last_name },
           ],
@@ -106,7 +106,7 @@ const queries = {
             name: true,
             image: true,
           },
-          order: { expression: review.creation_time, direction: e.DESC },
+          order_by: { expression: review.creation_time, direction: e.DESC },
         })),
         filter: e.op(movie.id, "=", $.id),
       }))
@@ -158,9 +158,7 @@ const queries = {
         description: e.str,
         year: e.int64,
         d_id: e.uuid,
-        c_id0: e.uuid,
-        c_id1: e.uuid,
-        c_id2: e.uuid,
+        cast: e.array(e.uuid),
       },
       ($) =>
         e.select(
@@ -173,7 +171,7 @@ const queries = {
               filter: e.op(person.id, "=", $.d_id),
             })),
             cast: e.select(e.Person, (person) => ({
-              filter: e.op(person.id, "in", e.set($.c_id0, $.c_id1, $.c_id2)),
+              filter: e.op(person.id, "in", e.array_unpack($.cast)),
             })),
           }),
           () => ({
@@ -186,13 +184,13 @@ const queries = {
               id: true,
               full_name: true,
               image: true,
-              order: director.last_name,
+              order_by: director.last_name,
             }),
             cast: (cast) => ({
               id: true,
               full_name: true,
               image: true,
-              order: cast.last_name,
+              order_by: cast.last_name,
             }),
           })
         )
@@ -249,13 +247,13 @@ const queries = {
               id: true,
               full_name: true,
               image: true,
-              order: director.last_name,
+              order_by: director.last_name,
             }),
             cast: (cast) => ({
               id: true,
               full_name: true,
               image: true,
-              order: cast.last_name,
+              order_by: cast.last_name,
             }),
           })
         )

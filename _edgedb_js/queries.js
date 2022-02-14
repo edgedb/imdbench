@@ -136,7 +136,7 @@ const queries = {
               ),
               cast := (
                   SELECT Person
-                  FILTER .id IN {<uuid>$c_id0, <uuid>$c_id1, <uuid>$c_id2}
+                  FILTER .id IN array_unpack(<array<uuid>>$cast)
               ),
           }
       ) {

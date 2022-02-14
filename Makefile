@@ -202,4 +202,4 @@ ts:
 	cd _typeorm && npm i && npm run build
 
 js-querybuilder:
-	cd _edgedb_js && npx edgedb-generate --output-dir querybuilder
+	cd _edgedb_js && npx edgeql-js --output-dir querybuilder

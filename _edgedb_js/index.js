@@ -14,7 +14,9 @@ const qbInsertMoviePlus = qbQueries.insertMoviePlus();
 
 class _BaseConnection {
   constructor(opts) {
-    this.client = edgedb.createClient({ concurrency: opts.pool });
+    this.client = edgedb
+      .createClient({ concurrency: opts.pool })
+      .withRetryOptions({ attempts: 10 });
   }
 
   async connect() {
@@ -76,9 +78,7 @@ class ConnectionJSON extends _BaseConnection {
       description: val.prefix + "description" + num,
       year: num,
       d_id: val.people[0],
-      c_id0: val.people[1],
-      c_id1: val.people[2],
-      c_id2: val.people[3],
+      cast: val.people.slice(1, 3),
     });
   }
 
@@ -150,9 +150,7 @@ class ConnectionRepack extends _BaseConnection {
         description: val.prefix + "description" + num,
         year: num,
         d_id: val.people[0],
-        c_id0: val.people[1],
-        c_id1: val.people[2],
-        c_id2: val.people[3],
+        cast: val.people.slice(1, 3),
       })
     );
   }
@@ -221,9 +219,7 @@ class ConnectionQB extends _BaseConnection {
         description: val.prefix + "description" + num,
         year: num,
         d_id: val.people[0],
-        c_id0: val.people[1],
-        c_id1: val.people[2],
-        c_id2: val.people[3],
+        cast: val.people.slice(1, 3),
       })
     );
   }
@@ -292,9 +288,7 @@ class ConnectionQBUncached extends _BaseConnection {
         description: val.prefix + "description" + num,
         year: num,
         d_id: val.people[0],
-        c_id0: val.people[1],
-        c_id1: val.people[2],
-        c_id2: val.people[3],
+        cast: val.people.slice(1, 3),
       })
     );
   }
