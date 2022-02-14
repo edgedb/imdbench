@@ -14,7 +14,7 @@ const queries = {
           name: true,
           image: true,
           latest_reviews: e.select(
-            user["<author[IS default::Review]"],
+            user["<author[is Review]"],
             (userReview) => ({
               id: true,
               body: true,
@@ -42,7 +42,7 @@ const queries = {
         full_name: true,
         image: true,
         bio: true,
-        acted_in: e.select(person["<cast[IS default::Movie]"], (movie) => ({
+        acted_in: e.select(person["<cast[is Movie]"], (movie) => ({
           id: true,
           image: true,
           title: true,
@@ -53,20 +53,17 @@ const queries = {
             { expression: movie.title, direction: e.ASC },
           ],
         })),
-        directed: e.select(
-          person["<directors[IS default::Movie]"],
-          (movie) => ({
-            id: true,
-            image: true,
-            title: true,
-            year: true,
-            avg_rating: true,
-            order_by: [
-              { expression: movie.year, direction: e.ASC },
-              { expression: movie.title, direction: e.ASC },
-            ],
-          })
-        ),
+        directed: e.select(person["<directors[is Movie]"], (movie) => ({
+          id: true,
+          image: true,
+          title: true,
+          year: true,
+          avg_rating: true,
+          order_by: [
+            { expression: movie.year, direction: e.ASC },
+            { expression: movie.title, direction: e.ASC },
+          ],
+        })),
         filter: e.op(person.id, "=", $.id),
       }))
     ),
@@ -97,7 +94,7 @@ const queries = {
             { expression: cast.last_name },
           ],
         }),
-        reviews: e.select(movie["<movie[IS default::Review]"], (review) => ({
+        reviews: e.select(movie["<movie[is Review]"], (review) => ({
           id: true,
           body: true,
           rating: true,
