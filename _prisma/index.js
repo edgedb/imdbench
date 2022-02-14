@@ -25,260 +25,264 @@ function get_avg_rating(movie) {
 
 class App extends PrismaClient {
   async userDetails(id) {
-    let result = await this.users.findUnique({
-      where: {
-        id: id
-      },
-      select: {
-        id: true,
-        name: true,
-        image: true,
-        reviews: {
-          take: 10,
-          orderBy: {
-            creation_time: 'desc',
-          },
-          select: {
-            id: true,
-            body: true,
-            rating: true,
-            movie: {
-              select: {
-                id: true,
-                image: true,
-                title: true,
+    const result = await this.$transaction(async (prisma) => {
+      let result = await prisma.users.findUnique({
+        where: {
+          id: id
+        },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          reviews: {
+            take: 10,
+            orderBy: {
+              creation_time: 'desc',
+            },
+            select: {
+              id: true,
+              body: true,
+              rating: true,
+              movie: {
+                select: {
+                  id: true,
+                  image: true,
+                  title: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    let avgRatings = await this.reviews.groupBy({
-      by: ['movie_id'],
-      where: {
-        movie_id: {
-          in: result.reviews.map((r) => r.movie.id),
+      let avgRatings = await prisma.reviews.groupBy({
+        by: ['movie_id'],
+        where: {
+          movie_id: {
+            in: result.reviews.map((r) => r.movie.id),
+          },
         },
-      },
-      _avg: {
-        rating: true,
+        _avg: {
+          rating: true,
+        }
+      })
+
+      let avgRatingsMap = {};
+
+      for (let m of avgRatings) {
+        avgRatingsMap[m.movie_id] = m._avg.rating;
       }
-    })
 
-    let avgRatingsMap = {};
-
-    for (let m of avgRatings) {
-      avgRatingsMap[m.movie_id] = m._avg.rating;
-    }
-
-    for (let r of result.reviews) {
-      r.movie.avg_rating = avgRatingsMap[r.movie.id];
-    }
-    result.latest_reviews = result.reviews;
-    delete result.reviews;
+      for (let r of result.reviews) {
+        r.movie.avg_rating = avgRatingsMap[r.movie.id];
+      }
+      result.latest_reviews = result.reviews;
+      delete result.reviews;
+      return result
+    });
 
     return JSON.stringify(result);
   }
 
   async personDetails(id) {
-    let result = await this.persons.findUnique({
-      where: {
-        id: id
-      },
-      select: {
-        id: true,
-        first_name: true,
-        middle_name: true,
-        last_name: true,
-        image: true,
-        bio: true,
-        acted_in: {
-          select: {
-            movie: {
-              select: {
-                id: true,
-                image: true,
-                title: true,
-                year: true,
-              }
+    const result = await this.$transaction(async (prisma) => {
+      let result = await prisma.persons.findUnique({
+        where: {
+          id: id
+        },
+        select: {
+          id: true,
+          first_name: true,
+          middle_name: true,
+          last_name: true,
+          image: true,
+          bio: true,
+          acted_in: {
+            select: {
+              movie: {
+                select: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                }
+              },
             },
+            orderBy: [
+              {
+                movie: {
+                  year: 'asc',
+                },
+              },
+              {
+                movie: {
+                  title: 'asc',
+                },
+              },
+            ],
           },
-          orderBy: [
-            {
+          directed: {
+            select: {
               movie: {
-                year: 'asc',
+                select: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                }
               },
             },
-            {
-              movie: {
-                title: 'asc',
+            orderBy: [
+              {
+                movie: {
+                  year: 'asc',
+                },
               },
-            },
-          ],
-        },
-        directed: {
-          select: {
-            movie: {
-              select: {
-                id: true,
-                image: true,
-                title: true,
-                year: true,
-              }
-            },
+              {
+                movie: {
+                  title: 'asc',
+                },
+              },
+            ],
           },
-          orderBy: [
-            {
-              movie: {
-                year: 'asc',
-              },
-            },
-            {
-              movie: {
-                title: 'asc',
-              },
-            },
-          ],
         },
-      },
-    });
+      });
 
-    // move the "movie" object one level closer to "acted_in" and
-    // "directed"
-    result.acted_in = result.acted_in.map((m) => m.movie);
-    result.directed = result.directed.map((m) => m.movie);
+      // move the "movie" object one level closer to "acted_in" and
+      // "directed"
+      result.acted_in = result.acted_in.map((m) => m.movie);
+      result.directed = result.directed.map((m) => m.movie);
 
-    let movieIds = result.acted_in.map((m) => m.id);
-    movieIds.concat(result.directed.map((m) => m.id));
+      let movieIds = result.acted_in.map((m) => m.id);
+      movieIds.concat(result.directed.map((m) => m.id));
 
-    let avgRatings = await this.reviews.groupBy({
-      by: ['movie_id'],
-      where: {
-        movie_id: {
-          in: movieIds,
+      let avgRatings = await prisma.reviews.groupBy({
+        by: ['movie_id'],
+        where: {
+          movie_id: {
+            in: movieIds,
+          },
         },
-      },
-      _avg: {
-        rating: true,
+        _avg: {
+          rating: true,
+        }
+      })
+
+      let avgRatingsMap = {};
+
+      for (let m of avgRatings) {
+        avgRatingsMap[m.movie_id] = m._avg.rating;
       }
-    })
 
-    let avgRatingsMap = {};
+      for (let m of result.acted_in) {
+        m.avg_rating = avgRatingsMap[m.id];
+      }
+      for (let m of result.directed) {
+        m.avg_rating = avgRatingsMap[m.id];
+      }
 
-    for (let m of avgRatings) {
-      avgRatingsMap[m.movie_id] = m._avg.rating;
-    }
+      result.full_name = get_full_name(result);
+      delete result.first_name;
+      delete result.middle_name;
+      delete result.last_name;
 
-    for (let m of result.acted_in) {
-      m.avg_rating = avgRatingsMap[m.id];
-    }
-    for (let m of result.directed) {
-      m.avg_rating = avgRatingsMap[m.id];
-    }
-
-    result.full_name = get_full_name(result);
-    delete result.first_name;
-    delete result.middle_name;
-    delete result.last_name;
+      return result;
+    });
 
     return JSON.stringify(result);
   }
 
   async movieDetails(id) {
-    let movie = this.movies.findUnique({
-      where: {
-        id: id
-      },
-      select: {
-        id: true,
-        image: true,
-        title: true,
-        year: true,
-        description: true,
+    const result = await this.$transaction([
+      this.movies.findUnique({
+        where: {
+          id: id
+        },
+        select: {
+          id: true,
+          image: true,
+          title: true,
+          year: true,
+          description: true,
 
-        directors: {
-          select: {
-            person: {
-              select: {
-                id: true,
-                first_name: true,
-                middle_name: true,
-                last_name: true,
-                image: true,
-              }
-            }
-          },
-          orderBy: [
-            {
-              list_order: 'asc',
-            },
-            {
+          directors: {
+            select: {
               person: {
-                last_name: 'asc',
-              },
-            },
-          ],
-        },
-        cast: {
-          select: {
-            person: {
-              select: {
-                id: true,
-                first_name: true,
-                middle_name: true,
-                last_name: true,
-                image: true,
+                select: {
+                  id: true,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  image: true,
+                }
               }
-            }
-          },
-          orderBy: [
-            {
-              list_order: 'asc',
             },
-            {
+            orderBy: [
+              {
+                list_order: 'asc',
+              },
+              {
+                person: {
+                  last_name: 'asc',
+                },
+              },
+            ],
+          },
+          cast: {
+            select: {
               person: {
-                last_name: 'asc',
+                select: {
+                  id: true,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  image: true,
+                }
+              }
+            },
+            orderBy: [
+              {
+                list_order: 'asc',
+              },
+              {
+                person: {
+                  last_name: 'asc',
+                },
+              },
+            ],
+          },
+
+          reviews: {
+            orderBy: {
+              creation_time: 'desc',
+            },
+            select: {
+              id: true,
+              body: true,
+              rating: true,
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
               },
             },
-          ],
-        },
-
-        reviews: {
-          orderBy: {
-            creation_time: 'desc',
-          },
-          select: {
-            id: true,
-            body: true,
-            rating: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
           },
         },
-      },
-    });
+      }),
 
-    let avgRating = this.reviews.aggregate({
-      _avg: {
-        rating: true,
-      },
-      where: {
-        movie: {
-          id: id,
+      this.reviews.aggregate({
+        _avg: {
+          rating: true,
         },
-      },
-    })
-
-    let result = await Promise.all([
-      movie,
-      avgRating,
-    ])
+        where: {
+          movie: {
+            id: id,
+          },
+        },
+      })
+    ]);
 
     result[0].avg_rating = result[1]._avg.rating
     // move the "person" object one level closer to "directors" and
@@ -422,88 +426,93 @@ class App extends PrismaClient {
       image: val + "image" + (num + 2) + ".jpeg",
       bio: "",
     }];
-    let people = [];
 
-    for (let p of data) {
-      people.push(
-        await this.persons.create({
-          data: p,
-          select: {
-            id: true,
-            first_name: true,
-            middle_name: true,
-            last_name: true,
-            image: true,
+    const movie = await this.$transaction(async (prisma) => {
+      let people = [];
+
+      for (let p of data) {
+        people.push(
+          await prisma.persons.create({
+            data: p,
+            select: {
+              id: true,
+              first_name: true,
+              middle_name: true,
+              last_name: true,
+              image: true,
+            },
+          })
+        );
+      }
+
+      let movie = await prisma.movies.create({
+        data: {
+          title: val + num,
+          image: val + "image" + num + ".jpeg",
+          description: val + "description" + num,
+          year: num,
+
+          directors: {
+            create: {person_id: people[0].id}
           },
-        })
-      );
-    }
-
-    let movie = await this.movies.create({
-      data: {
-        title: val + num,
-        image: val + "image" + num + ".jpeg",
-        description: val + "description" + num,
-        year: num,
-
-        directors: {
-          create: {person_id: people[0].id}
-        },
-        cast: {
-          createMany: {
-            data: people.slice(1).map(x => ({
-              person_id: x.id
-            }))
+          cast: {
+            createMany: {
+              data: people.slice(1).map(x => ({
+                person_id: x.id
+              }))
+            },
           },
         },
-      },
-      select: {
-        id: true,
-        title: true,
-        image: true,
-        description: true,
-        year: true,
+        select: {
+          id: true,
+          title: true,
+          image: true,
+          description: true,
+          year: true,
 
-        directors: {
-          select: {
-            person: {
-              select: {
-                id: true,
-                first_name: true,
-                middle_name: true,
-                last_name: true,
-                image: true,
+          directors: {
+            select: {
+              person: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  image: true,
+                }
               }
-            }
+            },
           },
-        },
-        cast: {
-          select: {
-            person: {
-              select: {
-                id: true,
-                first_name: true,
-                middle_name: true,
-                last_name: true,
-                image: true,
+          cast: {
+            select: {
+              person: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  image: true,
+                }
               }
-            }
+            },
           },
         },
-      },
-    });
-
-    // move the "person" object one level closer to "directors" and
-    // "cast"
-    for (let fname of ["directors", "cast"]) {
-      movie[fname] = movie[fname].map(rel => {
-        return {
-          id: rel.person.id,
-          full_name: get_full_name(rel.person),
-          image: rel.person.image
-        };
       });
-    }
+
+      // move the "person" object one level closer to "directors" and
+      // "cast"
+      for (let fname of ["directors", "cast"]) {
+        movie[fname] = movie[fname].map(rel => {
+          return {
+            id: rel.person.id,
+            full_name: get_full_name(rel.person),
+            image: rel.person.image
+          };
+        });
+      }
+
+      return movie;
+    });
 
     return JSON.stringify(movie);
   }
