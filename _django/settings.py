@@ -28,7 +28,7 @@ INSTALLED_APPS = [
 CONN_MAX_AGE = None
 
 # Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -37,7 +37,7 @@ DATABASES = {
         'USER': 'django_bench',
         'PASSWORD': 'edgedbbenchmark',
         'HOST': 'localhost',
-        'PORT': '',
+        'PORT': '15432',
     }
 }
 

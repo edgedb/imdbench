@@ -152,7 +152,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         help='duration of warmup period for each benchmark in seconds')
 
     parser.add_argument(
-        '--pg-port', type=int, default=5432,
+        '--pg-port', type=int, default=15432,
         help='PostgreSQL server port')
 
     parser.add_argument(

@@ -8,7 +8,7 @@ class App extends Sequelize {
     var opts = {
       dialect: 'postgres',
       host: 'localhost',
-      port: 5432,
+      port: 15432,
       username: 'sequelize_bench',
       password: 'edgedbbenchmark',
       database: 'sequelize_bench',

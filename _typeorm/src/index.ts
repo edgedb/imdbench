@@ -10,7 +10,7 @@ import { Cast } from "./entity/Cast";
 var defaultOptions: ConnectionOptions = {
   type: "postgres",
   host: "localhost",
-  port: 5432,
+  port: 15432,
   username: "typeorm_bench",
   password: "edgedbbenchmark",
   database: "typeorm_bench",

@@ -68,7 +68,7 @@ def run_query(ctx, benchmark, queryname):
         with open('_prisma/.env', 'wt') as f:
             f.write(
                 f'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@'
-                f'localhost:5432/postgres_bench'
+                f'localhost:15432/postgres_bench'
                 f'?schema=public'
                 f'&connection_limit={ctx.concurrency}'
                 f'&pool_timeout={ctx.timeout}"')

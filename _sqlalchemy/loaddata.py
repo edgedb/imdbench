@@ -44,7 +44,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     engine = sa.create_engine(
-        'postgresql://sqlalch_bench:edgedbbenchmark@localhost/sqlalch_bench')
+        'postgresql://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench')
 
     session_factory = orm.sessionmaker(bind=engine)
     Session = orm.scoped_session(session_factory)

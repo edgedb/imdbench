@@ -11,7 +11,10 @@ SHELL = /bin/bash
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
-PSQL ?= psql -h localhost
+DOCKER ?= docker
+PSQL ?= psql
+
+PSQL_CMD = $(PSQL) -h localhost -p 15432 -U postgres
 PYTHON ?= python
 PP = PYTHONPATH=$(CURRENT_DIR) $(PYTHON)
 
@@ -56,11 +59,76 @@ new-dataset:
 	synth generate movies > $(BUILD)/protodataset.json
 	$(PP) cleandata.py
 
+docker-network:
+	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
+		|| $(DOCKER) network create --driver=bridge webapp-bench
+
+docker-network-destroy:
+	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
+		&& $(DOCKER) network rm webapp-bench
+
+docker-postgres-volume:
+	$(DOCKER) volume inspect webapp-bench-postgres >/dev/null 2>&1 \
+		|| $(DOCKER) volume create webapp-bench-postgres
+
+docker-postgres-volume-destroy:
+	$(DOCKER) volume inspect webapp-bench-postgres >/dev/null 2>&1 \
+		&& $(DOCKER) volume rm webapp-bench-postgres
+
+docker-postgres: docker-network docker-postgres-volume
+	$(DOCKER) stop webapp-bench-postgres >/dev/null 2>&1 || :
+	$(DOCKER) run --rm -d --name webapp-bench-postgres \
+		-v webapp-bench-postgres:/var/lib/postgresql/data \
+		-e POSTGRES_HOST_AUTH_METHOD=trust \
+		--network=webapp-bench \
+		-p 15432:5432 \
+		postgres:14
+	sleep 3
+	$(DOCKER) exec webapp-bench-postgres pg_isready -t10
+
+docker-postgres-stop:
+	$(DOCKER) stop webapp-bench-postgres
+
+docker-edgedb-volume:
+	$(DOCKER) volume inspect webapp-bench-edgedb >/dev/null 2>&1 \
+		|| $(DOCKER) volume create webapp-bench-edgedb
+
+docker-edgedb-volume-destroy:
+	$(DOCKER) volume inspect webapp-bench-edgedb >/dev/null 2>&1 \
+		&& $(DOCKER) volume rm webapp-bench-edgedb
+
+docker-edgedb: docker-network docker-edgedb-volume
+	$(DOCKER) stop webapp-bench-edgedb >/dev/null 2>&1 || :
+	$(DOCKER) run --rm -d --name webapp-bench-edgedb \
+		-v webapp-bench-edgedb:/var/lib/edgedb/data \
+		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
+		--network=webapp-bench \
+		-p 15656:5656 \
+		edgedb/edgedb:1
+	sleep 3
+
+docker-edgedb-stop:
+	$(DOCKER) stop webapp-bench-edgedb
+
+stop-docker:
+	-$(DOCKER) stop hasura-bench
+	-$(DOCKER) stop postgraphile-bench
+	-$(DOCKER) stop webapp-bench-postgres
+	-$(DOCKER) stop webapp-bench-edgedb
+
+docker-clean: stop-docker docker-network-destroy \
+              docker-postgres-volume-destroy docker-edgedb-volume-destroy
+
 load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
-load-edgedb: $(BUILD)/edbdataset.json
-	edgedb project info || edgedb project init --server-instance edgedb_bench
+load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
+	edgedb project info && \
+		(edgedb project unlink; edgedb instance unlink edgedb_bench)
+	edgedb -H localhost -P 15656 instance link \
+		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
+	&& edgedb -H localhost -P 15656 project init --link \
+		--non-interactive --server-instance edgedb_bench
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
 	edgedb -d temp query 'CREATE DATABASE edgedb'
@@ -68,58 +136,54 @@ load-edgedb: $(BUILD)/edbdataset.json
 	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
 
-load-django: $(BUILD)/dataset.json
-	$(PSQL) -U postgres -tc \
+load-django: $(BUILD)/dataset.json docker-postgres
+	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS django_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"DROP ROLE IF EXISTS django_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE ROLE django_bench WITH \
 			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE DATABASE django_bench WITH OWNER = django_bench;"
 
 	$(PP) _django/manage.py flush --noinput
 	$(PP) _django/manage.py migrate
 	$(PP) -m _django.loaddata $(BUILD)/dataset.json
 
-load-sqlalchemy: $(BUILD)/dataset.json
-	$(PSQL) -U postgres -tc \
+load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
+	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS sqlalch_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"DROP ROLE IF EXISTS sqlalch_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE ROLE sqlalch_bench WITH \
 			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;"
 
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
 	cd .. && $(PP) loaddata.py $(BUILD)/dataset.json
 
 load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
-	$(PSQL) -U postgres_bench -d postgres_bench \
+	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
 
-stop-docker:
-	-docker stop hasura-bench
-	-docker stop postgraphile-bench
-
-reset-postgres:
-	$(PSQL) -U postgres -tc \
+reset-postgres: docker-postgres
+	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS postgres_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -U postgres -tc \
 		"DROP ROLE IF EXISTS postgres_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -U postgres -tc \
 		"CREATE ROLE postgres_bench WITH \
 			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -U postgres -tc \
 		"CREATE DATABASE postgres_bench WITH OWNER = postgres_bench;"
 
-load-postgres-helpers:
-	$(PSQL) -U postgres_bench -d postgres_bench -tc "\
+load-postgres-helpers: docker-postgres
+	$(PSQL_CMD) -U postgres_bench -d postgres_bench -tc "\
 		CREATE OR REPLACE VIEW movie_view AS \
 		SELECT \
 			movies.id, \
@@ -142,50 +206,50 @@ load-postgres-helpers:
 		"
 
 load-hasura: load-postgres-helpers
-	$(PSQL) -U postgres -d postgres_bench -tc \
+	$(PSQL_CMD) -d postgres_bench -tc \
 		"DROP SCHEMA IF EXISTS hdb_catalog CASCADE;"
-	$(PSQL) -U postgres -d postgres_bench -tc \
+	$(PSQL_CMD) -d postgres_bench -tc \
 		"DROP SCHEMA IF EXISTS hdb_views CASCADE;"
-	$(PSQL) -U postgres -d postgres_bench -tc \
+	$(PSQL_CMD) -d postgres_bench -tc \
 		"CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 	_hasura/docker-run.sh
 	sleep 60s
 	(cd _hasura && ./send-metadata.sh)
 
-load-prisma: load-postgres-helpers
+load-prisma: docker-postgres
 	cd _prisma
-	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:5432/postgres_bench?schema=public"' > .env
+	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env
 	npx prisma generate && npm i
 
-load-postgraphile:
+load-postgraphile: docker-postgres
 	cd _postgraphile
-	$(PSQL) -U postgres_bench -d postgres_bench \
+	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
 	docker build -t postgraphile_bench:latest .
 	./run_postgraphile.sh
 
-load-typeorm: $(BUILD)/dataset.json
-	$(PSQL) -U postgres -tc \
+load-typeorm: $(BUILD)/dataset.json docker-postgres
+	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS typeorm_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"DROP ROLE IF EXISTS typeorm_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE ROLE typeorm_bench WITH \
 			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE DATABASE typeorm_bench WITH OWNER = typeorm_bench;"
 
 	cd _typeorm && npm i && npm run loaddata $(BUILD)/dataset.json
 
-load-sequelize: $(BUILD)/dataset.json
-	$(PSQL) -U postgres -tc \
+load-sequelize: $(BUILD)/dataset.json docker-postgres
+	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS sequelize_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"DROP ROLE IF EXISTS sequelize_bench;"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE ROLE sequelize_bench WITH \
 			LOGIN ENCRYPTED PASSWORD 'edgedbbenchmark';"
-	$(PSQL) -U postgres -tc \
+	$(PSQL_CMD) -tc \
 		"CREATE DATABASE sequelize_bench WITH OWNER = sequelize_bench;"
 
 	cd _sequelize && npm i && node loaddata.js $(BUILD)/dataset.json

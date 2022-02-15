@@ -9,7 +9,7 @@ class App {
       host: "localhost",
       database: "postgres_bench",
       password: "edgedbbenchmark",
-      port: 5432,
+      port: 15432,
       ...(options || {})
     };
     this.pool = new Pool(options);

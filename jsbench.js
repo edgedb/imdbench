@@ -279,7 +279,7 @@ async function main() {
   });
   parser.add_argument("--port", {
     type: Number,
-    default: 5432,
+    default: 15432,
     help: "PostgreSQL server port",
   });
   parser.add_argument("--user", {
