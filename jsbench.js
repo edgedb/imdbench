@@ -25,7 +25,7 @@ async function getApp(args) {
     app = new typeormapp.App({
       host: args.host,
       port: args.port,
-      extra: { max: ncon }
+      extra: { max: ncon },
     });
     await app.connect();
   } else if (args.orm == "sequelize") {
@@ -34,8 +34,8 @@ async function getApp(args) {
       port: args.port,
       pool: {
         min: ncon,
-        max: ncon
-      }
+        max: ncon,
+      },
     });
   } else if (args.orm == "postgres_prisma_js") {
     app = new prismaapp.App();
@@ -45,14 +45,14 @@ async function getApp(args) {
     app = new pgapp.App({
       host: args.host,
       port: args.port,
-      max: ncon
+      max: ncon,
     });
   } else if (args.orm == "edgedb_json_js") {
     app = new edgedbapp.App({
       style: "json",
       host: args.host,
       port: args.port,
-      pool: ncon
+      pool: ncon,
     });
     await app.initPool();
   } else if (args.orm == "edgedb_repack_js") {
@@ -60,7 +60,23 @@ async function getApp(args) {
       style: "repack",
       host: args.host,
       port: args.port,
-      pool: ncon
+      pool: ncon,
+    });
+    await app.initPool();
+  } else if (args.orm == "edgedb_querybuilder_js") {
+    app = new edgedbapp.App({
+      style: "querybuilder",
+      host: args.host,
+      port: args.port,
+      pool: ncon,
+    });
+    await app.initPool();
+  } else if (args.orm == "edgedb_querybuilder_uncached_js") {
+    app = new edgedbapp.App({
+      style: "querybuilder_uncached",
+      host: args.host,
+      port: args.port,
+      pool: ncon,
     });
     await app.initPool();
   } else {
@@ -130,7 +146,7 @@ async function runner(args, app) {
         min_latency: minLatency,
         max_latency: maxLatency,
         latency_stats: Array.prototype.slice.call(latencyStats),
-        samples: samples.slice(0, args.nsamples)
+        samples: samples.slice(0, args.nsamples),
       };
       console.log(JSON.stringify(data));
     }
@@ -227,66 +243,71 @@ async function runner(args, app) {
 async function main() {
   let parser = argparse.ArgumentParser({
     add_help: true,
-    description: "async pg driver benchmark [concurrent]"
+    description: "async pg driver benchmark [concurrent]",
   });
 
   parser.add_argument("--concurrency", {
     type: Number,
     default: 10,
-    help: "number of concurrent connections"
+    help: "number of concurrent connections",
   });
   parser.add_argument("--duration", {
     type: Number,
     default: 30,
-    help: "duration of test in seconds"
+    help: "duration of test in seconds",
   });
   parser.add_argument("--timeout", {
     type: Number,
     default: 2,
-    help: "server timeout in seconds"
+    help: "server timeout in seconds",
   });
   parser.add_argument("--warmup-time", {
     type: Number,
     default: 5,
-    help: "duration of warmup period for each benchmark in seconds"
+    help: "duration of warmup period for each benchmark in seconds",
   });
   parser.add_argument("--output-format", {
     type: String,
     default: "text",
     help: "output format",
-    choices: ["text", "json"]
+    choices: ["text", "json"],
   });
   parser.add_argument("--host", {
     type: String,
     default: "127.0.0.1",
-    help: "PostgreSQL server host"
+    help: "PostgreSQL server host",
   });
   parser.add_argument("--port", {
     type: Number,
     default: 5432,
-    help: "PostgreSQL server port"
+    help: "PostgreSQL server port",
   });
   parser.add_argument("--user", {
     type: String,
-    help: "PostgreSQL server user"
+    help: "PostgreSQL server user",
   });
   parser.add_argument("--nsamples", {
     type: Number,
     default: 0,
-    help: "number of result samples to return"
+    help: "number of result samples to return",
   });
   parser.add_argument("--number-of-ids", {
     type: Number,
     default: 250,
-    help: "number of random IDs to fetch data with in benchmarks"
+    help: "number of random IDs to fetch data with in benchmarks",
   });
   parser.add_argument("--query", {
     type: String,
     help: "specific query to run",
     choices: [
-      "get_movie", "get_person", "get_user",
-      "update_movie", "insert_user", "insert_movie", "insert_movie_plus",
-    ]
+      "get_movie",
+      "get_person",
+      "get_user",
+      "update_movie",
+      "insert_user",
+      "insert_movie",
+      "insert_movie_plus",
+    ],
   });
   parser.add_argument("orm", {
     type: String,
@@ -298,8 +319,10 @@ async function main() {
       "postgres_prisma_js",
       "postgres_prisma_tuned_js",
       "edgedb_json_js",
-      "edgedb_repack_js"
-    ]
+      "edgedb_repack_js",
+      "edgedb_querybuilder_js",
+      "edgedb_querybuilder_uncached_js",
+    ],
   });
 
   let args = parser.parse_args();
@@ -308,9 +331,11 @@ async function main() {
   try {
     await runner(args, app);
   } finally {
-    if (args.orm == "postgres_prisma_js" ||
-        args.orm == "postgres_prisma_tuned_js") {
-      await app.$disconnect()
+    if (
+      args.orm == "postgres_prisma_js" ||
+      args.orm == "postgres_prisma_tuned_js"
+    ) {
+      await app.$disconnect();
     }
   }
 }
@@ -319,7 +344,7 @@ main()
   .then(async () => {
     setTimeout(() => process.exit(0), 500);
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
     process.exit(1);
   });

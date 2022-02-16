@@ -7,10 +7,11 @@ SHELL = /bin/bash
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
+.PHONY: js-querybuilder
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
-PSQL ?= psql
+PSQL ?= psql -h localhost
 PYTHON ?= python
 PP = PYTHONPATH=$(CURRENT_DIR) $(PYTHON)
 
@@ -59,7 +60,6 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json
-	cd _edgedb
 	edgedb project info || edgedb project init --server-instance edgedb_bench
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
@@ -199,4 +199,7 @@ go:
 	make -C _go
 
 ts:
-	cd _typeorm && npm i && tsc
+	cd _typeorm && npm i && npm run build
+
+js-querybuilder:
+	cd _edgedb_js && npx edgeql-js --output-dir querybuilder

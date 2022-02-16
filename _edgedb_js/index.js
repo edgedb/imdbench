@@ -2,18 +2,47 @@
 
 const edgedb = require("edgedb");
 const queries = require("./queries");
+const qbQueries = require("./qb_queries");
 
-class ConnectionJSON {
+const qbQueryUser = qbQueries.user();
+const qbQueryPerson = qbQueries.person();
+const qbQueryMovie = qbQueries.movie();
+const qbUpdateMovie = qbQueries.updateMovie();
+const qbInsertUser = qbQueries.insertUser();
+const qbInsertMovie = qbQueries.insertMovie();
+const qbInsertMoviePlus = qbQueries.insertMoviePlus();
+
+class _BaseConnection {
   constructor(opts) {
-    this.client = edgedb.createClient({
-      concurrency: opts.pool,
-    });
+    this.client = edgedb
+      .createClient({ concurrency: opts.pool })
+      .withRetryOptions({ attempts: 10 });
   }
 
   async connect() {
     await this.client.ensureConnected();
   }
 
+  async benchQuery(query, id) {
+    if (query == "get_user") {
+      return this.userDetails(id);
+    } else if (query == "get_person") {
+      return this.personDetails(id);
+    } else if (query == "get_movie") {
+      return this.movieDetails(id);
+    } else if (query == "update_movie") {
+      return this.updateMovie(id);
+    } else if (query == "insert_user") {
+      return this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return this.insertMovie(id);
+    } else if (query == "insert_movie_plus") {
+      return this.insertMoviePlus(id);
+    }
+  }
+}
+
+class ConnectionJSON extends _BaseConnection {
   async userDetails(id) {
     return await this.client.querySingleJSON(queries.user, { id: id });
   }
@@ -49,9 +78,7 @@ class ConnectionJSON {
       description: val.prefix + "description" + num,
       year: num,
       d_id: val.people[0],
-      c_id0: val.people[1],
-      c_id1: val.people[2],
-      c_id2: val.people[3],
+      cast: val.people.slice(1, 3),
     });
   }
 
@@ -73,38 +100,10 @@ class ConnectionJSON {
       cimg1: val + "image" + (num + 2) + ".jpeg",
     });
   }
-
-  async benchQuery(query, id) {
-    if (query == "get_user") {
-      return await this.userDetails(id);
-    } else if (query == "get_person") {
-      return await this.personDetails(id);
-    } else if (query == "get_movie") {
-      return this.movieDetails(id);
-    } else if (query == "update_movie") {
-      return this.updateMovie(id);
-    } else if (query == "insert_user") {
-      return this.insertUser(id);
-    } else if (query == "insert_movie") {
-      return this.insertMovie(id);
-    } else if (query == "insert_movie_plus") {
-      return this.insertMoviePlus(id);
-    }
-  }
 }
 module.exports.ConnectionJSON = ConnectionJSON;
 
-class ConnectionRepack {
-  constructor(opts) {
-    this.client = edgedb.createClient({
-      concurrency: opts.pool,
-    });
-  }
-
-  async connect() {
-    await this.client.ensureConnected();
-  }
-
+class ConnectionRepack extends _BaseConnection {
   async userDetails(id) {
     return JSON.stringify(
       await this.client.querySingle(queries.user, { id: id })
@@ -151,9 +150,7 @@ class ConnectionRepack {
         description: val.prefix + "description" + num,
         year: num,
         d_id: val.people[0],
-        c_id0: val.people[1],
-        c_id1: val.people[2],
-        c_id2: val.people[3],
+        cast: val.people.slice(1, 3),
       })
     );
   }
@@ -178,45 +175,170 @@ class ConnectionRepack {
       })
     );
   }
-
-  async benchQuery(query, id) {
-    if (query == "get_user") {
-      return await this.userDetails(id);
-    } else if (query == "get_person") {
-      return await this.personDetails(id);
-    } else if (query == "get_movie") {
-      return this.movieDetails(id);
-    } else if (query == "update_movie") {
-      return this.updateMovie(id);
-    } else if (query == "insert_user") {
-      return this.insertUser(id);
-    } else if (query == "insert_movie") {
-      return this.insertMovie(id);
-    } else if (query == "insert_movie_plus") {
-      return this.insertMoviePlus(id);
-    }
-  }
 }
 module.exports.ConnectionRepack = ConnectionRepack;
 
+class ConnectionQB extends _BaseConnection {
+  async userDetails(id) {
+    return JSON.stringify(await qbQueryUser.run(this.client, { id }));
+  }
+
+  async personDetails(id) {
+    return JSON.stringify(await qbQueryPerson.run(this.client, { id }));
+  }
+
+  async movieDetails(id) {
+    return JSON.stringify(await qbQueryMovie.run(this.client, { id }));
+  }
+
+  async updateMovie(id) {
+    return JSON.stringify(
+      await qbUpdateMovie.run(this.client, {
+        id: id,
+        suffix: id.slice(0, 8),
+      })
+    );
+  }
+
+  async insertUser(id) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbInsertUser.run(this.client, {
+        name: id + num,
+        image: "image_" + id + num,
+      })
+    );
+  }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbInsertMovie.run(this.client, {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+        d_id: val.people[0],
+        cast: val.people.slice(1, 3),
+      })
+    );
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbInsertMoviePlus.run(this.client, {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+        dfn: val + "Alice",
+        dln: val + "Director",
+        dimg: val + "image" + num + ".jpeg",
+        cfn0: val + "Billie",
+        cln0: val + "Actor",
+        cimg0: val + "image" + (num + 1) + ".jpeg",
+        cfn1: val + "Cameron",
+        cln1: val + "Actor",
+        cimg1: val + "image" + (num + 2) + ".jpeg",
+      })
+    );
+  }
+}
+module.exports.ConnectionQB = ConnectionQB;
+
+class ConnectionQBUncached extends _BaseConnection {
+  async userDetails(id) {
+    return JSON.stringify(await qbQueries.user().run(this.client, { id }));
+  }
+
+  async personDetails(id) {
+    return JSON.stringify(await qbQueries.person().run(this.client, { id }));
+  }
+
+  async movieDetails(id) {
+    return JSON.stringify(await qbQueries.movie().run(this.client, { id }));
+  }
+
+  async updateMovie(id) {
+    return JSON.stringify(
+      await qbQueries.updateMovie().run(this.client, {
+        id: id,
+        suffix: id.slice(0, 8),
+      })
+    );
+  }
+
+  async insertUser(id) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbQueries.insertUser().run(this.client, {
+        name: id + num,
+        image: "image_" + id + num,
+      })
+    );
+  }
+
+  async insertMovie(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbQueries.insertMovie().run(this.client, {
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+        d_id: val.people[0],
+        cast: val.people.slice(1, 3),
+      })
+    );
+  }
+
+  async insertMoviePlus(val) {
+    let num = Math.floor(Math.random() * 1000000);
+    return JSON.stringify(
+      await qbQueries.insertMoviePlus().run(this.client, {
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+        dfn: val + "Alice",
+        dln: val + "Director",
+        dimg: val + "image" + num + ".jpeg",
+        cfn0: val + "Billie",
+        cln0: val + "Actor",
+        cimg0: val + "image" + (num + 1) + ".jpeg",
+        cfn1: val + "Cameron",
+        cln1: val + "Actor",
+        cimg1: val + "image" + (num + 2) + ".jpeg",
+      })
+    );
+  }
+}
+module.exports.ConnectionQBUncached = ConnectionQBUncached;
+
 class App {
-  constructor({ host = "localhost", port = 5656, pool = 1, style = "json" }) {
+  constructor({ pool = 1, style = "json" }) {
     this.conn = null;
     this.concurrency = pool;
-    this.INSERT_PREFIX = 'insert_test__'
+    this.INSERT_PREFIX = "insert_test__";
 
     let Connection;
     if (style === "json") {
       Connection = ConnectionJSON;
     } else if (style === "repack") {
       Connection = ConnectionRepack;
+    } else if (style === "querybuilder") {
+      Connection = ConnectionQB;
+    } else if (style === "querybuilder_uncached") {
+      Connection = ConnectionQBUncached;
     } else {
       throw new Error(
-        "unrecognized 'style': valid values are 'json' and 'repack'"
+        "unrecognized 'style': valid values are 'json', 'repack', " +
+          "'querybuilder' and 'querybuilder_uncached'"
       );
     }
 
-    this.conn = new Connection({pool: pool});
+    this.conn = new Connection({ pool: pool });
   }
 
   async initPool() {
@@ -250,7 +372,7 @@ class App {
         people: ids.people.slice(0, 4),
       }),
       insert_movie_plus: Array(this.concurrency).fill(this.INSERT_PREFIX),
-    }
+    };
   }
 
   async setup(query) {
@@ -263,31 +385,48 @@ class App {
         };
       `);
     } else if (query == "insert_user") {
-      return await this.conn.client.query(`
+      return await this.conn.client.query(
+        `
         delete User
         filter .name LIKE <str>$0;
-      `, [this.INSERT_PREFIX + 'image%']);
+      `,
+        [this.INSERT_PREFIX + "image%"]
+      );
     } else if (query == "insert_movie") {
-      return await this.conn.client.query(`
+      return await this.conn.client.query(
+        `
         delete Movie
         filter .image LIKE <str>$0;
-      `, [this.INSERT_PREFIX + 'image%']);
+      `,
+        [this.INSERT_PREFIX + "image%"]
+      );
     } else if (query == "insert_movie_plus") {
-      await this.conn.client.query(`
+      await this.conn.client.query(
+        `
         delete Movie
         filter .image LIKE <str>$0;
-      `, [this.INSERT_PREFIX + 'image%']);
-      return await this.conn.client.query(`
+      `,
+        [this.INSERT_PREFIX + "image%"]
+      );
+      return await this.conn.client.query(
+        `
         delete Person
         filter .image LIKE <str>$0;
-      `, [this.INSERT_PREFIX + 'image%']);
+      `,
+        [this.INSERT_PREFIX + "image%"]
+      );
     }
   }
 
   async cleanup(query) {
-    if ([
-      "update_movie", "insert_user", "insert_movie", "insert_movie_plus"
-    ].indexOf(query) >= 0) {
+    if (
+      [
+        "update_movie",
+        "insert_user",
+        "insert_movie",
+        "insert_movie_plus",
+      ].includes(query)
+    ) {
       // The clean up is the same as setup for mutation benchmarks
       return await this.setup(query);
     }

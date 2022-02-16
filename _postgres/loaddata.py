@@ -40,7 +40,7 @@ class Pool:
     async def _worker(self):
         con = await asyncpg.connect(
             user='postgres_bench', database='postgres_bench',
-            password='edgedbbenchmark')
+            host='localhost', password='edgedbbenchmark')
 
         try:
             while True:
