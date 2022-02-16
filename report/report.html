@@ -862,12 +862,9 @@ function _copyAndSortBenchmarks(benchmarks) {
     var newBench = [];
     Array.prototype.push.apply(newBench, benchmarks);
     newBench.sort(function(e1, e2) {
-        return d3.ascending(e1.variations.reduce(function(s, el) {
-                                return s+el.qps }, 0),
-                            e2.variations.reduce(function(s, el) {
-                                return s+el.qps }, 0));
+        return d3.ascending(e1.qps, e2.qps);
     })
-    return newBench
+    return newBench;
 }
 
 function drawBars(elSelector, data, options) {'use strict';
@@ -880,21 +877,18 @@ var fullWidth = (options.width || 1000),
     margin = {top: 10, right: 65, bottom: 55, left: 65},
     width = fullWidth - margin.left - margin.right,
     height = fullHeight - margin.top - margin.bottom,
-    benchmarks = _copyAndSortBenchmarks(data.benchmarks);
+    benchmarks = _copyAndSortBenchmarks(data);
 
 
 // data reshape
 
 var maxRps = 0;
-benchmarks.forEach(function(bench) {
-    bench.variations.forEach(function(v) {
-        if (v.qps > maxRps) {
-            maxRps = v.qps
-        }
-    })
+benchmarks.forEach(function(v) {
+    if (v.qps > maxRps) {
+        maxRps = v.qps
+    }
 });
-var sizes = data.querynames;
-var names = benchmarks.map(function(d) { return d.title });
+var names = benchmarks.map(function(d) { return d.implementation });
 
 // charting
 
@@ -904,9 +898,6 @@ var color = d3.scale.ordinal()
 var x0 = d3.scale.ordinal()
             .rangeRoundBands([0, width], .2)
             .domain(names);
-
-var x1 = d3.scale.ordinal();
-x1.domain(sizes).rangeRoundBands([0, x0.rangeBand()], .2);
 
 var y = d3.scale.linear()
             .range([height, 0])
@@ -960,24 +951,14 @@ chart.append("g")
                 .style("text-anchor", "end")
                 .text("Iterations / sec");
 
-_drawLegend(chart, width, sizes);
-
-var bench = chart.selectAll(".bench")
+chart.selectAll("rect")
             .data(benchmarks)
-            .enter().append("g")
-                .attr("class", "bench")
-                .attr("transform", function(d) {
-                    return "translate(" + x0(d.title) + ",0)";
-                });
-
-bench.selectAll("rect")
-            .data(function(d) { return d.variations; })
             .enter().append("rect")
-                .attr("width", x1.rangeBand())
-                .attr("x", function(d, i) { return x1(sizes[i]); })
+                .style("fill", function(d, i) { return color(0); })
+                .attr("width", x0.rangeBand())
+                .attr("x", function(d, i) { return x0(d.implementation); })
                 .attr("y", function(d) { return y(d.qps); })
                 .attr("height", function(d) { return height - y(d.qps); })
-                .style("fill", function(d, i) { return color(sizes[i]); })
                 .on("mouseover", function(d, i) {
                     focusRect
                         .attr('y', y(d.qps) - 9);
@@ -1027,21 +1008,18 @@ var fullWidth = (options.width || 1000),
     margin = {top: 10, right: 65, bottom: 55, left: 65},
     width = fullWidth - margin.left - margin.right,
     height = fullHeight - margin.top - margin.bottom,
-    benchmarks = _copyAndSortBenchmarks(data.benchmarks);
+    benchmarks = _copyAndSortBenchmarks(data);
 
 // data reshape
 
 var maxLat = 0;
-benchmarks.forEach(function(bench) {
-    bench.variations.forEach(function(v) {
-        if (v.latency_percentiles[4][1] > maxLat) {
-            maxLat = v.latency_percentiles[4][1];
-        }
-    })
+benchmarks.forEach(function(v) {
+    if (v.latency_percentiles[4][1] > maxLat) {
+        maxLat = v.latency_percentiles[4][1];
+    }
 });
 
-var sizes = data.querynames;
-var names = benchmarks.map(function(d) { return d.title });
+var names = benchmarks.map(function(d) { return d.implementation });
 
 // charting
 
@@ -1051,9 +1029,6 @@ var color = d3.scale.ordinal()
 var x0 = d3.scale.ordinal()
             .rangeRoundBands([0, width], .2)
             .domain(names);
-
-var x1 = d3.scale.ordinal();
-x1.domain(sizes).rangeRoundBands([0, x0.rangeBand()], 0.3);
 
 var y = d3.scale.linear()
             .range([height, 0])
@@ -1108,71 +1083,61 @@ chart.append("g")
                 .style("text-anchor", "end")
                 .text("Latency (msec)");
 
-_drawLegend(chart, width, sizes);
-
-var bench = chart.selectAll(".bench")
+var g = chart.selectAll("rect")
             .data(benchmarks)
-            .enter().append("g")
-                .attr("class", "bench")
-                .attr("transform", function(d) {
-                    return "translate(" + x0(d.title) + ",0)";
-                });
-
-var g = bench.selectAll("rect")
-            .data(function(d) { return d.variations; })
             .enter().append("g")
                 .attr('class', 'sub');
 
 g.append('line')
             .attr('y1', function(d) { return y(d.latency_percentiles[4][1]); })
             .attr('y2', function(d) { return y(d.latency_percentiles[4][1]); })
-            .attr('x1', function(d, i) { return x1(sizes[i]); })
-            .attr('x2', function(d, i) { return x1(sizes[i]) + x1.rangeBand(); })
-            .style("stroke", function(d, i) { return color(sizes[i]); });
+            .attr('x1', function(d, i) { return x0(d.implementation); })
+            .attr('x2', function(d, i) { return x0(d.implementation) + x0.rangeBand(); })
+            .style("stroke", function(d, i) { return color(0); });
 
 g.append('line')
             .attr('y1', function(d) { return y(d.latency_min); })
             .attr('y2', function(d) { return y(d.latency_min); })
-            .attr('x1', function(d, i) { return x1(sizes[i]); })
-            .attr('x2', function(d, i) { return x1(sizes[i]) + x1.rangeBand(); })
-            .style("stroke", function(d, i) { return color(sizes[i]); });
+            .attr('x1', function(d, i) { return x0(d.implementation); })
+            .attr('x2', function(d, i) { return x0(d.implementation) + x0.rangeBand(); })
+            .style("stroke", function(d, i) { return color(0); });
 
 g.append('line')
             .attr('y1', function(d) { return y(d.latency_percentiles[1][1]); })
             .attr('y2', function(d) { return y(d.latency_percentiles[1][1]); })
-            .attr('x1', function(d, i) { return x1(sizes[i]); })
-            .attr('x2', function(d, i) { return x1(sizes[i]) + x1.rangeBand(); })
-            .style("stroke", function(d, i) { return color(sizes[i]); });
+            .attr('x1', function(d, i) { return x0(d.implementation); })
+            .attr('x2', function(d, i) { return x0(d.implementation) + x0.rangeBand(); })
+            .style("stroke", function(d, i) { return color(0); });
 
 g.append('line')
             .attr('y1', function(d) { return y(d.latency_min); })
             .attr('y2', function(d) { return y(d.latency_percentiles[0][1]) })
-            .attr('x1', function(d, i) { return x1(sizes[i]) + x1.rangeBand() / 2; })
-            .attr('x2', function(d, i) { return x1(sizes[i]) + x1.rangeBand() / 2; })
-            .style("stroke", function(d, i) { return color(sizes[i]); })
+            .attr('x1', function(d, i) { return x0(d.implementation) + x0.rangeBand() / 2; })
+            .attr('x2', function(d, i) { return x0(d.implementation) + x0.rangeBand() / 2; })
+            .style("stroke", function(d, i) { return color(0); })
             .style("stroke-dasharray", "2,2");
 
 g.append('line')
             .attr('y1', function(d) { return y(d.latency_percentiles[4][1]); })
             .attr('y2', function(d) { return y(d.latency_percentiles[2][1]) })
-            .attr('x1', function(d, i) { return x1(sizes[i]) + x1.rangeBand() / 2; })
-            .attr('x2', function(d, i) { return x1(sizes[i]) + x1.rangeBand() / 2; })
-            .style("stroke", function(d, i) { return color(sizes[i]); })
+            .attr('x1', function(d, i) { return x0(d.implementation) + x0.rangeBand() / 2; })
+            .attr('x2', function(d, i) { return x0(d.implementation) + x0.rangeBand() / 2; })
+            .style("stroke", function(d, i) { return color(0); })
             .style("stroke-dasharray", "2,2");
 
 g.append('rect')
             .attr('y', function(d) { return y(d.latency_percentiles[2][1]); })
-            .attr('x', function(d, i) { return x1(sizes[i]); })
-            .attr("width", x1.rangeBand())
+            .attr('x', function(d, i) { return x0(d.implementation); })
+            .attr("width", x0.rangeBand())
             .attr('height', function(d) { return Math.abs(y(d.latency_percentiles[2][1]) - y(d.latency_percentiles[0][1])) })
-            .style("stroke", function(d, i) { return color(sizes[i]); })
+            .style("stroke", function(d, i) { return color(0); })
             .style("fill", 'rgba(0, 0, 0, 0)');
 
 g.append('rect')
             .attr('y', 0)
             .attr('height', height)
-            .attr('x', function(d, i) { return x1(sizes[i]); })
-            .attr('width', function(d) { return x1.rangeBand(); })
+            .attr('x', function(d, i) { return x0(d.implementation); })
+            .attr('width', function(d) { return x0.rangeBand(); })
             .style('fill', 'rgba(0, 0, 0, 0)')
             .on("mouseout", function(d, i) {
                 d3.select(this).style('fill', 'rgba(0, 0, 0, 0)');
@@ -1225,67 +1190,63 @@ var focusText = focus.append('text')
             .attr('alignment-baseline', 'middle');
 };
 
-</script>
 
-<script>
-    var DATA = ${__BENCHMARK_DATA__};
+function renderSamples(root_el, data) {
+    for (let bench of data) {
+        let inner = document.createElement('div');
+        let title = document.createElement('h3');
+        title.innerHTML = bench.implementation;
+        inner.appendChild(title);
+
+        let s_el = document.createElement('div');
+        let body = document.createElement('div');
+        for (let sample of bench.samples) {
+            let f = new JSONFormatter(JSON.parse(sample));
+            body.appendChild(f.render());
+            body.appendChild(document.createElement('hr'));
+        }
+        body.classList.add('json-out');
+        s_el.appendChild(body);
+        inner.appendChild(s_el);
+
+        root_el.appendChild(inner);
+    }
+};
 </script>
 
 </head>
 
 <body>
 
-<p><em>${__BENCHMARK_DATE__}</em></p>
+<p><em>{{ __BENCHMARK_DATE__ }}</em></p>
 
 <h1>EdgeDB Databases Benchmark Report</h1>
 
-<p>Duration: ${__BENCHMARK_DURATION__} seconds</p>
-<p>Concurrency: ${__BENCHMARK_CONCURRENCY__}</p>
+<p>Duration: {{ __BENCHMARK_DURATION__ }} seconds</p>
+<p>Concurrency: {{ __BENCHMARK_CONCURRENCY__ }}</p>
 
-<h2>Results</h2>
+{% for bench, data in __BENCHMARK_DATA__.items() %}
+<h2>{{ bench }}</h2>
 
-<svg id="bars" class="chart" style="width: 80vw"></svg>
-<svg id="lats" class="chart" style="width: 80vw"></svg>
-
-<script>
-  drawBars('#bars', DATA);
-  drawLats('#lats', DATA);
-</script>
-
-<h2>Sample Outputs</h2>
-
-<div id="samples"></div>
+<svg id="bars-{{ bench }}" class="chart" style="width: 80vw"></svg>
+<svg id="lats-{{ bench }}" class="chart" style="width: 80vw"></svg>
 
 <script>
-(function() {
-    var root_el = document.getElementById('samples');
-
-    for (let bench of DATA.benchmarks) {
-        let inner = document.createElement('div');
-        let title = document.createElement('h3');
-        title.innerHTML = bench.title;
-        inner.appendChild(title);
-
-        for (let v of bench.variations) {
-            let s_el = document.createElement('div');
-            let title = document.createElement('h4');
-            title.innerHTML = v.queryname;
-            s_el.appendChild(title);
-            let body = document.createElement('div');
-            for (let sample of v.samples) {
-                let f = new JSONFormatter(JSON.parse(sample));
-                body.appendChild(f.render());
-                body.appendChild(document.createElement('hr'));
-            }
-            body.classList.add('json-out');
-            s_el.appendChild(body);
-            inner.appendChild(s_el);
-        }
-
-        root_el.appendChild(inner);
-    }
-})();
+  var DATA_{{ bench }} = {{ data }};
+  drawBars('#bars-{{ bench }}', DATA_{{ bench }});
+  drawLats('#lats-{{ bench }}', DATA_{{ bench }});
 </script>
+
+{% if bench != "mean" %}
+<h3>Sample Outputs</h3>
+
+<div id="samples-{{ bench }}"></div>
+
+<script>
+  renderSamples(document.getElementById('samples-{{ bench }}'), DATA_{{ bench }});
+</script>
+{% endif %}
+{% endfor %}
 
 </body>
 

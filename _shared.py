@@ -173,10 +173,6 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         choices=QUERIES)
 
     parser.add_argument(
-        '--aggregate', action='store_true',
-        help='aggregate the results of multiple queries into a single stat')
-
-    parser.add_argument(
         'benchmarks', nargs='+', help='benchmarks names',
         choices=list(BENCHMARKS.keys()) + ['all'])
 

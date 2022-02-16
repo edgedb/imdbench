@@ -9,10 +9,12 @@
 
 
 import datetime
+import itertools
 import json
 import math
 import os
 import os.path
+import pathlib
 import platform
 import random
 import string
@@ -20,6 +22,7 @@ import subprocess
 import sys
 
 import distro
+import jinja2
 import numpy as np
 
 import _shared
@@ -131,18 +134,15 @@ def _geom_mean(values):
 
 
 def mean_latency_stats(data):
-    for bench in data:
-        var = bench['variations']
-        mean_data = {
-            'queryname': 'all',
-            'samples': [],
-        }
-        # Just collect all the samples together, no need to obscure
-        # anything here
-        for v in var:
-            mean_data['samples'] += v['samples']
+    pivot = {}
+    for bench in itertools.chain.from_iterable(data.values()):
+        pivot.setdefault(bench["implementation"], []).append(bench)
 
-        mean_data.update(
+    mean_data = []
+
+    for impl, var in pivot.items():
+        mean_data.append(dict(
+            implementation=impl,
             duration=round(_geom_mean(v['duration'] for v in var), 2),
             queries=round(_geom_mean(v['queries'] for v in var), 2),
             qps=round(_geom_mean(v['qps'] for v in var), 2),
@@ -162,47 +162,40 @@ def mean_latency_stats(data):
                     )
                 ) for i, p in enumerate(percentiles)
             ]
+        ))
 
-        )
-
-        bench['variations'] = [mean_data]
-
-    return data
+    return {'mean': mean_data, **data}
 
 
-def process_results(lat_data):
-    data = []
-    for queries_bench in lat_data['data']:
-        benchname = queries_bench['benchmark']
-        bench = _shared.BENCHMARKS[benchname]
+def process_results(lat_data, results):
+    for bench_data in lat_data['data']:
+        impl_name = bench_data['benchmark']
+        impl = _shared.BENCHMARKS[impl_name]
 
-        data_bench = []
-        for query_bench in queries_bench['queries']:
+        for query_bench in bench_data['queries']:
             d = calc_latency_stats(
                 query_bench['nqueries'],
-                queries_bench['duration'],
+                bench_data['duration'],
                 query_bench['min_latency'],
                 query_bench['max_latency'],
                 np.array(query_bench['latency_stats']),
                 query_bench.get('samples'))
 
-            d['queryname'] = query_bench['queryname']
-            data_bench.append(d)
+            d["implementation"] = impl.title
 
-        data.append({
-            'benchmark': benchname,
-            'title': bench.title,
-            'variations': data_bench,
-        })
-
-    return data
+            results.setdefault(query_bench['queryname'], []).append(d)
 
 
 def format_report_html(data, target_file):
-    tpl_path = os.path.join(os.path.dirname(__file__), 'report', 'report.html')
+    tpl_dir = pathlib.Path(__file__).parent / 'report'
+    tpl_path = tpl_dir / 'report.html'
 
-    with open(tpl_path, 'r') as f:
-        tpl = string.Template(f.read())
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(tpl_dir),
+    )
+
+    with open(tpl_path) as f:
+        tpl = env.from_string(f.read())
 
     platform = '{system} ({dist}, {arch}) on {cpu}'.format(
         system=data['platform']['system'],
@@ -211,13 +204,17 @@ def format_report_html(data, target_file):
         cpu=data['platform']['cpu'],
     )
 
-    output = tpl.safe_substitute(
+    params = dict(
         __BENCHMARK_DATE__=data['date'],
         __BENCHMARK_DURATION__=data['duration'],
         __BENCHMARK_CONCURRENCY__=data['concurrency'],
         __BENCHMARK_PLATFORM__=platform,
-        __BENCHMARK_DATA__=json.dumps(data),
+        __BENCHMARK_DATA__={
+            b: json.dumps(v) for b, v in data['benchmarks'].items()
+        },
     )
+
+    output = tpl.render(**params)
 
     with open(target_file, 'wt') as f:
         f.write(output)
@@ -244,7 +241,7 @@ def run_benchmarks(args, argv):
                 bench.language))
 
     try:
-        agg_data = []
+        agg_data = {}
         for cmd in lang_args.values():
             subprocess.run(
                 cmd, stdout=sys.stdout, stderr=sys.stderr, check=True)
@@ -260,13 +257,12 @@ def run_benchmarks(args, argv):
                     print(results, file=sys.stderr)
                     sys.exit(1)
 
-                data = process_results(raw_data)
-                agg_data.extend(data)
+                process_results(raw_data, agg_data)
     finally:
         if os.path.exists('__tmp.json'):
             os.unlink('__tmp.json')
 
-    return agg_data
+    return mean_latency_stats(agg_data)
 
 
 def main():
@@ -317,10 +313,6 @@ def main():
         argv.extend(("--edgedb-port", str(args.edgedb_port)))
 
     benchmarks_data = run_benchmarks(args, argv)
-    # potentially aggregate the data from different queries using a
-    # geometric mean
-    if args.aggregate:
-        mean_latency_stats(benchmarks_data)
 
     date = datetime.datetime.now().strftime('%c')
     plat_info = platform_info()
@@ -329,7 +321,6 @@ def main():
         'duration': args.duration,
         'platform': plat_info,
         'concurrency': args.concurrency,
-        'querynames': ['all'] if args.aggregate else args.queries,
         'benchmarks': benchmarks_data,
     }
 
