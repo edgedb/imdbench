@@ -69,7 +69,6 @@ class BenchApp extends App {
         [{ model: Movie, as: "directed" }, "year", "ASC"],
         [{ model: Movie, as: "directed" }, "title", "ASC"]
       ],
-      benchmark: true
     });
 
     // still need to repack the top-level person
@@ -135,7 +134,6 @@ class BenchApp extends App {
         [{ model: Person, as: "cast" }, Cast, "list_order", "ASC"],
         [{ model: Person, as: "cast" }, "last_name", "ASC"]
       ],
-      benchmark: true
     });
 
     result = result.toJSON();
@@ -185,8 +183,6 @@ class BenchApp extends App {
   async _getMovieAfterInsert(id) {
     const Movie = this.models.Movie;
     const Person = this.models.Person;
-    const Directors = this.models.Directors;
-    const Cast = this.models.Cast;
 
     // returning is not sufficient to get nested results, so we fetch them
     var result = await Movie.findByPk(id, {
@@ -218,7 +214,6 @@ class BenchApp extends App {
           through: { attributes: [] }
         },
       ],
-      benchmark: true
     });
 
     result = result.toJSON();
@@ -242,23 +237,26 @@ class BenchApp extends App {
     const Directors = this.models.Directors;
     const Cast = this.models.Cast;
 
-    var movie = await Movie.create({
-      // using the automatic id sequence from cast as a matter of convenience
-      id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
-      title: val.prefix + num,
-      image: val.prefix + "image" + num + ".jpeg",
-      description: val.prefix + "description" + num,
-      year: num,
-    });
-    // adding directors and cast only seems to be possible as a separate step
-    await Directors.create({
-      movie_id: movie.id,
-      person_id: val.people[0],
-    });
-    await Cast.bulkCreate(val.people.slice(1).map(x => ({
-      movie_id: movie.id,
-      person_id: x,
-    })));
+    const movie = await this.transaction(async (t) => {
+      var movie = await Movie.create({
+        // using the automatic id sequence from cast as a matter of convenience
+        id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+        title: val.prefix + num,
+        image: val.prefix + "image" + num + ".jpeg",
+        description: val.prefix + "description" + num,
+        year: num,
+      }, { transaction: t });
+      // adding directors and cast only seems to be possible as a separate step
+      await Directors.create({
+        movie_id: movie.id,
+        person_id: val.people[0],
+      }, { transaction: t });
+      await Cast.bulkCreate(val.people.slice(1).map(x => ({
+        movie_id: movie.id,
+        person_id: x,
+      })), { transaction: t });
+      return movie;
+    })
 
     // returning is not sufficient to get nested results, so we fetch them
     return await this._getMovieAfterInsert(movie.id);
@@ -271,46 +269,50 @@ class BenchApp extends App {
     const Directors = this.models.Directors;
     const Cast = this.models.Cast;
 
-    var people = await Person.bulkCreate([{
-        id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
-        first_name: val + "Alice",
-        middle_name: "",
-        last_name: val + "Director",
-        image: val + "image" + num + ".jpeg",
-        bio: "",
-    }, {
-        id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
-        first_name: val + "Billie",
-        middle_name: "",
-        last_name: val + "Actor",
-        image: val + "image" + (num + 1) + ".jpeg",
-        bio: "",
-    }, {
-        id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
-        first_name: val + "Cameron",
-        middle_name: "",
-        last_name: val + "Actor",
-        image: val + "image" + (num + 2) + ".jpeg",
-        bio: "",
-    }]);
+    const movie = await this.transaction(async (t) => {
+      var people = await Person.bulkCreate([{
+          id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+          first_name: val + "Alice",
+          middle_name: "",
+          last_name: val + "Director",
+          image: val + "image" + num + ".jpeg",
+          bio: "",
+      }, {
+          id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+          first_name: val + "Billie",
+          middle_name: "",
+          last_name: val + "Actor",
+          image: val + "image" + (num + 1) + ".jpeg",
+          bio: "",
+      }, {
+          id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+          first_name: val + "Cameron",
+          middle_name: "",
+          last_name: val + "Actor",
+          image: val + "image" + (num + 2) + ".jpeg",
+          bio: "",
+      }], { transaction: t });
 
-    var movie = await Movie.create({
-      // using the automatic id sequence from cast as a matter of convenience
-      id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
-      title: val + num,
-      image: val + "image" + num + ".jpeg",
-      description: val + "description" + num,
-      year: num,
+      var movie = await Movie.create({
+        // using the automatic id sequence from cast as a matter of convenience
+        id: App.literal(`nextval('"Cast_id_seq"'::regclass)`),
+        title: val + num,
+        image: val + "image" + num + ".jpeg",
+        description: val + "description" + num,
+        year: num,
+      }, { transaction: t });
+      // adding directors and cast only seems to be possible as a separate step
+      await Directors.create({
+        movie_id: movie.id,
+        person_id: people[0].id,
+      }, { transaction: t });
+      await Cast.bulkCreate(people.slice(1).map(x => ({
+        movie_id: movie.id,
+        person_id: x.id,
+      })), { transaction: t });
+
+      return movie;
     });
-    // adding directors and cast only seems to be possible as a separate step
-    await Directors.create({
-      movie_id: movie.id,
-      person_id: people[0].id,
-    });
-    await Cast.bulkCreate(people.slice(1).map(x => ({
-      movie_id: movie.id,
-      person_id: x.id,
-    })));
 
     // returning is not sufficient to get nested results, so we fetch them
     return await this._getMovieAfterInsert(movie.id);
