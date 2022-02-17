@@ -1194,14 +1194,14 @@ var focusText = focus.append('text')
 function renderSamples(root_el, data) {
     for (let bench of data) {
         let inner = document.createElement('div');
-        let title = document.createElement('h3');
+        let title = document.createElement('h5');
         title.innerHTML = bench.implementation;
         inner.appendChild(title);
 
         let s_el = document.createElement('div');
         let body = document.createElement('div');
         for (let sample of bench.samples) {
-            let f = new JSONFormatter(JSON.parse(sample));
+            let f = new JSONFormatter(JSON.parse(sample), 0);
             body.appendChild(f.render());
             body.appendChild(document.createElement('hr'));
         }
@@ -1220,13 +1220,40 @@ function renderSamples(root_el, data) {
 
 <p><em>{{ __BENCHMARK_DATE__ }}</em></p>
 
-<h1>EdgeDB Databases Benchmark Report</h1>
+<h1>Benchmark Report</h1>
 
-<p>Duration: {{ __BENCHMARK_DURATION__ }} seconds</p>
-<p>Concurrency: {{ __BENCHMARK_CONCURRENCY__ }}</p>
+<p>
+    Below are the results of running
+    <a href="https://github.com/edgedb/webapp-bench" target="_blank">
+        webapp-bench
+    </a>
+    benchmarks on these implementations:
+</p>
+<ul>
+    {% for impl in __BENCHMARK_IMPLEMENTATIONS__ %}
+    <li>{{ impl }}</li>
+    {% endfor %}
+</ul>
+
+<p>Test environment: {{ __BENCHMARK_PLATFORM__ }}</p>
+<p>Duration of each benchmark: {{ __BENCHMARK_DURATION__ }} seconds</p>
+<p>Concurrency: {{ __BENCHMARK_CONCURRENCY__ }} clients</p>
+<p>Minimum client-to-database roundtrip network latency: ~{{ __BENCHMARK_NETLATENCY__ }}ms</p>
 
 {% for bench, data in __BENCHMARK_DATA__.items() %}
-<h2>{{ bench }}</h2>
+{% if bench == "mean" %}
+<h2>Overall Results</h2>
+
+<p>The charts below show the geometric average of all benchmark results.</p>
+{% else %}
+{% set bench_info = __BENCHMARK_DESCRIPTIONS__[bench] %}
+<h3>{{ bench_info.title }}</h3>
+
+<p>
+    {{ bench_info.description }}
+</p>
+
+{% endif %}
 
 <svg id="bars-{{ bench }}" class="chart" style="width: 80vw"></svg>
 <svg id="lats-{{ bench }}" class="chart" style="width: 80vw"></svg>
@@ -1238,13 +1265,15 @@ function renderSamples(root_el, data) {
 </script>
 
 {% if bench != "mean" %}
-<h3>Sample Outputs</h3>
+<h4>Sample Outputs</h4>
 
 <div id="samples-{{ bench }}"></div>
 
 <script>
   renderSamples(document.getElementById('samples-{{ bench }}'), DATA_{{ bench }});
 </script>
+{% else %}
+<h2>Individual benchmarks</h2>
 {% endif %}
 {% endfor %}
 

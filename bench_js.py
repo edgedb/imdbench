@@ -128,7 +128,7 @@ def main():
 
     data = []
     for benchmark in ctx.benchmarks:
-        bench_desc = _shared.BENCHMARKS[benchmark]
+        bench_desc = _shared.IMPLEMENTATIONS[benchmark]
         if bench_desc.language != 'js':
             continue
 

@@ -12,3 +12,4 @@ uvloop
 asyncpg
 distro
 numpy
+jinja2

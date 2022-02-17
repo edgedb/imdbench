@@ -30,97 +30,155 @@ from _postgres import queries as postgres_queries
 from _postgres import queries_psycopg as postgres_psycopg_queries
 
 
-class bench(typing.NamedTuple):
+class impl(typing.NamedTuple):
     language: str
     title: str
     module: typing.Optional[types.ModuleType]
 
 
-BENCHMARKS = {
+IMPLEMENTATIONS = {
     'edgedb_json_sync':
-        bench('python', 'EdgeDB Python JSON', edgedb_queries),
+        impl('python', 'EdgeDB Python JSON', edgedb_queries),
 
     'edgedb_json_async':
-        bench('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
+        impl('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
 
     'edgedb_repack_sync':
-        bench('python', 'EdgeDB Python Objects', edgedb_queries_repack),
+        impl('python', 'EdgeDB Python Objects', edgedb_queries_repack),
 
     'edgedb_graphql_go':
-        bench('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
+        impl('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
 
     'edgedb_http_go':
-        bench('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
+        impl('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
 
     'edgedb_json_go':
-        bench('go', 'EdgeDB GO JSON', edgedb_json_golang),
+        impl('go', 'EdgeDB GO JSON', edgedb_json_golang),
 
     'edgedb_repack_go':
-        bench('go', 'EdgeDB GO Structs', edgedb_json_golang),
+        impl('go', 'EdgeDB GO Structs', edgedb_json_golang),
 
     'django':
-        bench('python', 'Django ORM', django_queries),
+        impl('python', 'Django ORM', django_queries),
 
     'django_restfw':
-        bench('python', 'Django Rest Framework', django_queries_restfw),
+        impl('python', 'Django Rest Framework', django_queries_restfw),
 
     'mongodb':
-        bench('python', 'MongoDB Python', mongodb_queries),
+        impl('python', 'MongoDB Python', mongodb_queries),
 
     'sqlalchemy':
-        bench('python', 'SQLAlchemy', sqlalchemy_queries),
+        impl('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        bench('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
+        impl('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
 
     'postgres_psycopg':
-        bench('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
 
     'postgres_pq':
-        bench('go', 'PostgreSQL pq', postgres_pq_golang),
+        impl('go', 'PostgreSQL pq', postgres_pq_golang),
 
     'postgres_pgx':
-        bench('go', 'PostgreSQL pgx', postgres_pgx_golang),
+        impl('go', 'PostgreSQL pgx', postgres_pgx_golang),
 
     'postgres_hasura_go':
-        bench('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
+        impl('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
 
     'postgres_postgraphile_go':
-        bench('go', 'Postgres+Postgraphile Go HTTP',
+        impl('go', 'Postgres+Postgraphile Go HTTP',
               postgres_postgraphile_golang),
 
     'edgedb_json_js':
-        bench('js', 'EdgeDB NodeJS JSON', None),
+        impl('js', 'EdgeDB NodeJS JSON', None),
 
     'edgedb_repack_js':
-        bench('js', 'EdgeDB NodeJS Objects', None),
+        impl('js', 'EdgeDB NodeJS Objects', None),
 
     'edgedb_querybuilder_js':
-        bench('js', 'EdgeDB NodeJS Querybuilder', None),
+        impl('js', 'EdgeDB NodeJS Querybuilder', None),
 
     'edgedb_querybuilder_uncached_js':
-        bench('js', 'EdgeDB NodeJS Querybuilder (uncached)', None),
+        impl('js', 'EdgeDB NodeJS Querybuilder (uncached)', None),
 
     'typeorm':
-        bench('js', 'Typeorm', None),
+        impl('js', 'Typeorm', None),
 
     'sequelize':
-        bench('js', 'Sequelize', None),
+        impl('js', 'Sequelize', None),
 
     'postgres_js':
-        bench('js', 'PostgreSQL NodeJS', None),
+        impl('js', 'PostgreSQL NodeJS', None),
 
     'postgres_prisma_js':
-        bench('js', 'Postgres+Prisma NodeJS', None),
+        impl('js', 'Postgres+Prisma NodeJS', None),
 
     'postgres_prisma_tuned_js':
-        bench('js', 'Postgres+Prisma Tuned NodeJS', None),
+        impl('js', 'Postgres+Prisma Tuned NodeJS', None),
 }
 
 
-QUERIES = ['get_movie', 'get_person', 'get_user',
-           'update_movie',
-           'insert_user', 'insert_movie', 'insert_movie_plus']
+class bench(typing.NamedTuple):
+    title: str
+    description: str
+
+
+BENCHMARKS = {
+    'get_movie':
+        bench(
+            title="GET /movie/:id",
+            description=(
+                "Get information about a given movie: title, year, directors, "
+                "cast, recent reviews, and average review rating."
+            )
+        ),
+    'get_person':
+        bench(
+            title="GET /person/:id",
+            description=(
+                "Get information about a given person: full name, bio, "
+                "list of movies acted in or directed."
+            )
+        ),
+    'get_user':
+        bench(
+            title="GET /user/:id",
+            description=(
+                "Get information about a given user: name and a sample of "
+                "the latest movie reviews this user authored."
+            )
+        ),
+    'update_movie':
+        bench(
+            title="PATCH /movie/:id",
+            description=(
+                "Update the title of a movie."
+            )
+        ),
+    'insert_user':
+        bench(
+            title="POST /user",
+            description=(
+                "Create a new user record.",
+            )
+        ),
+    'insert_movie':
+        bench(
+            title="POST /movie (existing cast)",
+            description=(
+                "Create a new movie record, linking existing directors "
+                "and cast."
+            )
+        ),
+    'insert_movie_plus':
+        bench(
+            title="POST /movie (new cast)",
+            description=(
+                "Create a new movie record, linking newly inserted directors "
+                "and cast."
+            )
+        ),
+}
 
 
 def parse_args(*, prog_desc: str, out_to_json: bool = False,
@@ -150,7 +208,9 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--warmup-time', type=int, default=5,
         help='duration of warmup period for each benchmark in seconds')
-
+    parser.add_argument(
+        '--net-latency', default=0, type=int,
+        help='assumed p0 roundtrip latency between a database and a client')
     parser.add_argument(
         '--pg-port', type=int, default=15432,
         help='PostgreSQL server port')
@@ -170,11 +230,11 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--query', dest='queries', action='append',
         help='queries to benchmark',
-        choices=QUERIES)
+        choices=list(BENCHMARKS.keys()) + ['all'])
 
     parser.add_argument(
         'benchmarks', nargs='+', help='benchmarks names',
-        choices=list(BENCHMARKS.keys()) + ['all'])
+        choices=list(IMPLEMENTATIONS.keys()) + ['all'])
 
     if out_to_json:
         parser.add_argument(
@@ -190,14 +250,14 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     argv = sys.argv[1:]
 
     if not args.queries:
-        args.queries = QUERIES
+        args.queries = list(BENCHMARKS.keys())
 
     if args.concurrency % args.async_split != 0:
         raise Exception(
             "'--concurrency' must be an integer multiple of '--async-split'")
 
     if 'all' in args.benchmarks:
-        args.benchmarks = list(BENCHMARKS.keys())
+        args.benchmarks = list(IMPLEMENTATIONS.keys())
 
     if out_to_json and args.json:
         i = argv.index('--json')

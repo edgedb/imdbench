@@ -51,7 +51,7 @@ class LoopingValues:
 
 
 def run_benchmark_method(ctx, benchname, ids, queryname):
-    queries_mod = _shared.BENCHMARKS[benchname].module
+    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
     if hasattr(queries_mod, 'init'):
         queries_mod.init(ctx)
 
@@ -108,7 +108,7 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
 
 async def run_async_benchmark_method(ctx, benchname, ids, queryname):
-    queries_mod = _shared.BENCHMARKS[benchname].module
+    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
     if hasattr(queries_mod, 'init'):
         queries_mod.init(ctx)
 
@@ -270,7 +270,7 @@ def run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
 
 
 def run_sync(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.BENCHMARKS[benchname].module
+    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
     results = []
 
     if hasattr(queries_mod, 'init'):
@@ -299,7 +299,7 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
 
 
 def run_async(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.BENCHMARKS[benchname].module
+    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
     results = []
 
     async def fetch_ids():
@@ -347,7 +347,7 @@ def run_async(ctx, benchname) -> typing.List[Result]:
 
 
 def run_bench(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.BENCHMARKS[benchname].module
+    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
     if getattr(queries_mod, 'ASYNC', False):
         return run_async(ctx, benchname)
     else:
@@ -381,7 +381,7 @@ def main():
 
     data = []
     for benchmark in ctx.benchmarks:
-        bench_desc = _shared.BENCHMARKS[benchmark]
+        bench_desc = _shared.IMPLEMENTATIONS[benchmark]
         if bench_desc.language != 'python':
             continue
 

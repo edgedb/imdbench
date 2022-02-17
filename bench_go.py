@@ -42,7 +42,7 @@ def print_result(ctx, result: Result):
 
 
 def run_query(ctx, benchmark, queryname, querydata, port):
-    dirn = pathlib.Path(_shared.BENCHMARKS[benchmark].module.__file__)
+    dirn = pathlib.Path(_shared.IMPLEMENTATIONS[benchmark].module.__file__)
     exe = dirn.parent.parent / 'gobench'
 
     # Hasura needs a special GraphQL API path, otherwise it should be ignored
@@ -136,12 +136,12 @@ def main():
     data = []
 
     for benchmark in ctx.benchmarks:
-        bench_desc = _shared.BENCHMARKS[benchmark]
+        bench_desc = _shared.IMPLEMENTATIONS[benchmark]
 
         if bench_desc.language != 'go':
             continue
 
-        queries_mod = _shared.BENCHMARKS[benchmark].module
+        queries_mod = _shared.IMPLEMENTATIONS[benchmark].module
         res = run_bench(ctx, benchmark, queries_mod)
         data.append(res)
 

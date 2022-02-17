@@ -170,7 +170,7 @@ def mean_latency_stats(data):
 def process_results(lat_data, results):
     for bench_data in lat_data['data']:
         impl_name = bench_data['benchmark']
-        impl = _shared.BENCHMARKS[impl_name]
+        impl = _shared.IMPLEMENTATIONS[impl_name]
 
         for query_bench in bench_data['queries']:
             d = calc_latency_stats(
@@ -208,6 +208,9 @@ def format_report_html(data, target_file):
         __BENCHMARK_DATE__=data['date'],
         __BENCHMARK_DURATION__=data['duration'],
         __BENCHMARK_CONCURRENCY__=data['concurrency'],
+        __BENCHMARK_NETLATENCY__=data['netlatency'],
+        __BENCHMARK_IMPLEMENTATIONS__=data['implementations'],
+        __BENCHMARK_DESCRIPTIONS__=data['benchmarks_desc'],
         __BENCHMARK_PLATFORM__=platform,
         __BENCHMARK_DATA__={
             b: json.dumps(v) for b, v in data['benchmarks'].items()
@@ -223,7 +226,7 @@ def format_report_html(data, target_file):
 def run_benchmarks(args, argv):
     lang_args = {}
     for benchname in args.benchmarks:
-        bench = _shared.BENCHMARKS[benchname]
+        bench = _shared.IMPLEMENTATIONS[benchname]
         if bench.language == 'python':
             lang_args['python'] = [
                 'python', 'bench_python.py', '--json', '__tmp.json'
@@ -319,9 +322,15 @@ def main():
     report_data = {
         'date': date,
         'duration': args.duration,
+        'netlatency': args.net_latency,
         'platform': plat_info,
         'concurrency': args.concurrency,
         'benchmarks': benchmarks_data,
+        'benchmarks_desc': _shared.BENCHMARKS,
+        'implementations': [
+            _shared.IMPLEMENTATIONS[benchname].title
+            for benchname in args.benchmarks
+        ]
     }
 
     if args.html:
