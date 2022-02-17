@@ -15,12 +15,14 @@ INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
-    return psycopg2.connect(
+    conn = psycopg2.connect(
         user='postgres_bench',
         dbname='postgres_bench',
         password='edgedbbenchmark',
         host=ctx.db_host,
         port=ctx.pg_port)
+    conn.autocommit = True
+    return conn
 
 
 def close(ctx, conn):
@@ -124,76 +126,77 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    with conn.cursor() as cur:
-        cur.execute('''
-            SELECT
-                movie.id,
-                movie.image,
-                movie.title,
-                movie.year,
-                movie.description,
-                movie.avg_rating
-            FROM
-                movies AS movie
-            WHERE
-                movie.id = %s;
-        ''', [id])
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT
+                    movie.id,
+                    movie.image,
+                    movie.title,
+                    movie.year,
+                    movie.description,
+                    movie.avg_rating
+                FROM
+                    movies AS movie
+                WHERE
+                    movie.id = %s;
+            ''', [id])
 
-        movie_rows = cur.fetchall()
-        movie = movie_rows[0]
+            movie_rows = cur.fetchall()
+            movie = movie_rows[0]
 
-        cur.execute('''
-            SELECT
-                person.id,
-                person.full_name,
-                person.image
-            FROM
-                directors
-                INNER JOIN persons AS person
-                    ON (directors.person_id = person.id)
-            WHERE
-                directors.movie_id = %s
-            ORDER BY
-                directors.list_order NULLS LAST,
-                person.last_name
-        ''', [id])
-        directors_rows = cur.fetchall()
+            cur.execute('''
+                SELECT
+                    person.id,
+                    person.full_name,
+                    person.image
+                FROM
+                    directors
+                    INNER JOIN persons AS person
+                        ON (directors.person_id = person.id)
+                WHERE
+                    directors.movie_id = %s
+                ORDER BY
+                    directors.list_order NULLS LAST,
+                    person.last_name
+            ''', [id])
+            directors_rows = cur.fetchall()
 
-        cur.execute('''
-            SELECT
-                person.id,
-                person.full_name,
-                person.image
-            FROM
-                actors
-                INNER JOIN persons AS person
-                    ON (actors.person_id = person.id)
-            WHERE
-                actors.movie_id = %s
-            ORDER BY
-                actors.list_order NULLS LAST,
-                person.last_name
-        ''', [id])
-        cast_rows = cur.fetchall()
+            cur.execute('''
+                SELECT
+                    person.id,
+                    person.full_name,
+                    person.image
+                FROM
+                    actors
+                    INNER JOIN persons AS person
+                        ON (actors.person_id = person.id)
+                WHERE
+                    actors.movie_id = %s
+                ORDER BY
+                    actors.list_order NULLS LAST,
+                    person.last_name
+            ''', [id])
+            cast_rows = cur.fetchall()
 
-        cur.execute('''
-            SELECT
-                review.id,
-                review.body,
-                review.rating,
-                author.id AS author_id,
-                author.name AS author_name,
-                author.image AS author_image
-            FROM
-                reviews AS review
-                INNER JOIN users AS author
-                    ON (review.author_id = author.id)
-            WHERE
-                review.movie_id = %s
-            ORDER BY
-                review.creation_time DESC
-        ''', [id])
-        reviews_rows = cur.fetchall()
+            cur.execute('''
+                SELECT
+                    review.id,
+                    review.body,
+                    review.rating,
+                    author.id AS author_id,
+                    author.name AS author_name,
+                    author.image AS author_image
+                FROM
+                    reviews AS review
+                    INNER JOIN users AS author
+                        ON (review.author_id = author.id)
+                WHERE
+                    review.movie_id = %s
+                ORDER BY
+                    review.creation_time DESC
+            ''', [id])
+            reviews_rows = cur.fetchall()
 
     return json.dumps({
         'id': movie[0],
@@ -235,56 +238,57 @@ def get_movie(conn, id):
 
 
 def get_person(conn, id):
-    with conn.cursor() as cur:
-        cur.execute('''
-            SELECT
-                p.id,
-                p.full_name,
-                p.image,
-                p.bio
-            FROM
-                persons p
-            WHERE
-                p.id = %s;
-        ''', [id])
-        people_rows = cur.fetchall()
-        person = people_rows[0]
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT
+                    p.id,
+                    p.full_name,
+                    p.image,
+                    p.bio
+                FROM
+                    persons p
+                WHERE
+                    p.id = %s;
+            ''', [id])
+            people_rows = cur.fetchall()
+            person = people_rows[0]
 
-        cur.execute('''
-            SELECT
-                movie.id,
-                movie.image,
-                movie.title,
-                movie.year,
-                movie.avg_rating
-            FROM
-                actors
-                INNER JOIN movies AS movie
-                    ON (actors.movie_id = movie.id)
-            WHERE
-                actors.person_id = %s
-            ORDER BY
-                movie.year ASC, movie.title ASC
-        ''', [id])
-        acted_in_rows = cur.fetchall()
+            cur.execute('''
+                SELECT
+                    movie.id,
+                    movie.image,
+                    movie.title,
+                    movie.year,
+                    movie.avg_rating
+                FROM
+                    actors
+                    INNER JOIN movies AS movie
+                        ON (actors.movie_id = movie.id)
+                WHERE
+                    actors.person_id = %s
+                ORDER BY
+                    movie.year ASC, movie.title ASC
+            ''', [id])
+            acted_in_rows = cur.fetchall()
 
-        cur.execute('''
-            SELECT
-                movie.id,
-                movie.image,
-                movie.title,
-                movie.year,
-                movie.avg_rating
-            FROM
-                directors
-                INNER JOIN movies AS movie
-                    ON (directors.movie_id = movie.id)
-            WHERE
-                directors.person_id = %s
-            ORDER BY
-                movie.year ASC, movie.title ASC
-        ''', [id])
-        directed_rows = cur.fetchall()
+            cur.execute('''
+                SELECT
+                    movie.id,
+                    movie.image,
+                    movie.title,
+                    movie.year,
+                    movie.avg_rating
+                FROM
+                    directors
+                    INNER JOIN movies AS movie
+                        ON (directors.movie_id = movie.id)
+                WHERE
+                    directors.person_id = %s
+                ORDER BY
+                    movie.year ASC, movie.title ASC
+            ''', [id])
+            directed_rows = cur.fetchall()
 
     return json.dumps({
         'id': person[0],
@@ -328,7 +332,6 @@ def update_movie(conn, id):
         ''', dict(id=id, suffix=str(id)[:8]))
 
         rows = cur.fetchall()
-        cur.connection.commit()
 
     return json.dumps({
         'id': rows[0][0],
@@ -347,7 +350,6 @@ def insert_user(conn, val):
         ''', dict(name=f'{val}{num}', image=f'image_{val}{num}'))
 
         rows = cur.fetchall()
-        cur.connection.commit()
 
     return json.dumps({
         'id': rows[0][0],
@@ -358,74 +360,75 @@ def insert_user(conn, val):
 
 def insert_movie(conn, val):
     num = random.randrange(1_000_000)
-    with conn.cursor() as cur:
-        cur.execute(
-            '''
-            INSERT INTO movies AS M (title, image, description, year) VALUES
-                (%(title)s, %(image)s, %(description)s, %(year)s)
-            RETURNING
-                M.id, M.title, M.image, M.description, M.year
-            ''',
-            dict(
-                title=f'{val["prefix"]}{num}',
-                image=f'{val["prefix"]}image{num}.jpeg',
-                description=f'{val["prefix"]}description{num}',
-                year=num,
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''
+                INSERT INTO movies AS M (title, image, description, year)
+                VALUES
+                    (%(title)s, %(image)s, %(description)s, %(year)s)
+                RETURNING
+                    M.id, M.title, M.image, M.description, M.year
+                ''',
+                dict(
+                    title=f'{val["prefix"]}{num}',
+                    image=f'{val["prefix"]}image{num}.jpeg',
+                    description=f'{val["prefix"]}description{num}',
+                    year=num,
+                )
             )
-        )
-        movie = cur.fetchall()[0]
+            movie = cur.fetchall()[0]
 
-        # we don't need the full people records to insert things, but
-        # we'll need them as return values
-        cur.execute(
-            '''
-            SELECT
-                person.id,
-                person.full_name,
-                person.image
-            FROM
-                persons AS person
-            WHERE
-                id IN (%s, %s, %s, %s);
-            ''',
-            val["people"],
-        )
-        people = cur.fetchall()
-
-        directors = []
-        cast = []
-
-        for p in people:
-            if p[0] == val['people'][0]:
-                directors.append(p)
-            else:
-                cast.append(p)
-
-        cur.execute(
-            '''
-            INSERT INTO directors AS M (person_id, movie_id) VALUES
-                (%(d)s, %(m)s);
-            ''',
-            dict(
-                d=directors[0][0],
-                m=movie[0],
+            # we don't need the full people records to insert things, but
+            # we'll need them as return values
+            cur.execute(
+                '''
+                SELECT
+                    person.id,
+                    person.full_name,
+                    person.image
+                FROM
+                    persons AS person
+                WHERE
+                    id IN (%s, %s, %s, %s);
+                ''',
+                val["people"],
             )
-        )
-        cur.execute(
-            '''
-            INSERT INTO actors AS M (person_id, movie_id) VALUES
-                (%(c0)s, %(m)s),
-                (%(c1)s, %(m)s),
-                (%(c2)s, %(m)s);
-            ''',
-            dict(
-                c0=cast[0][0],
-                c1=cast[1][0],
-                c2=cast[2][0],
-                m=movie[0],
+            people = cur.fetchall()
+
+            directors = []
+            cast = []
+
+            for p in people:
+                if p[0] == val['people'][0]:
+                    directors.append(p)
+                else:
+                    cast.append(p)
+
+            cur.execute(
+                '''
+                INSERT INTO directors AS M (person_id, movie_id) VALUES
+                    (%(d)s, %(m)s);
+                ''',
+                dict(
+                    d=directors[0][0],
+                    m=movie[0],
+                )
             )
-        )
-        cur.connection.commit()
+            cur.execute(
+                '''
+                INSERT INTO actors AS M (person_id, movie_id) VALUES
+                    (%(c0)s, %(m)s),
+                    (%(c1)s, %(m)s),
+                    (%(c2)s, %(m)s);
+                ''',
+                dict(
+                    c0=cast[0][0],
+                    c1=cast[1][0],
+                    c2=cast[2][0],
+                    m=movie[0],
+                )
+            )
 
     result = {
         'id': movie[0],
@@ -453,79 +456,81 @@ def insert_movie(conn, val):
 
 def insert_movie_plus(conn, val):
     num = random.randrange(1_000_000)
-    with conn.cursor() as cur:
-        cur.execute(
-            '''
-            INSERT INTO movies AS M (title, image, description, year) VALUES
-                (%(title)s, %(image)s, %(description)s, %(year)s)
-            RETURNING
-                M.id, M.title, M.image, M.description, M.year
-            ''',
-            dict(
-                title=f'{val}{num}',
-                image=f'{val}image{num}.jpeg',
-                description=f'{val}description{num}',
-                year=num,
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''
+                INSERT INTO movies AS M (title, image, description, year)
+                VALUES
+                    (%(title)s, %(image)s, %(description)s, %(year)s)
+                RETURNING
+                    M.id, M.title, M.image, M.description, M.year
+                ''',
+                dict(
+                    title=f'{val}{num}',
+                    image=f'{val}image{num}.jpeg',
+                    description=f'{val}description{num}',
+                    year=num,
+                )
             )
-        )
-        movie = cur.fetchall()[0]
+            movie = cur.fetchall()[0]
 
-        # we don't need the full people records to insert things, but
-        # we'll need them as return values
-        cur.execute(
-            '''
-            INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
-                (%s, %s, %s, ''),
-                (%s, %s, %s, ''),
-                (%s, %s, %s, '')
-            RETURNING
-                P.id, P.full_name, P.image
-            ''',
-            [
-                f'{val}Alice',
-                f'{val}Director',
-                f'{val}image{num}.jpeg',
-                f'{val}Billie',
-                f'{val}Actor',
-                f'{val}image{num+1}.jpeg',
-                f'{val}Cameron',
-                f'{val}Actor',
-                f'{val}image{num+2}.jpeg',
-            ]
-        )
-        people = cur.fetchall()
-
-        directors = []
-        cast = []
-        for p in people:
-            if 'Director' in p[1]:
-                directors.append(p)
-            else:
-                cast.append(p)
-
-        cur.execute(
-            '''
-            INSERT INTO directors AS M (person_id, movie_id) VALUES
-                (%(d)s, %(m)s);
-            ''',
-            dict(
-                d=directors[0][0],
-                m=movie[0],
+            # we don't need the full people records to insert things, but
+            # we'll need them as return values
+            cur.execute(
+                '''
+                INSERT INTO persons AS P (first_name, last_name, image, bio)
+                VALUES
+                    (%s, %s, %s, ''),
+                    (%s, %s, %s, ''),
+                    (%s, %s, %s, '')
+                RETURNING
+                    P.id, P.full_name, P.image
+                ''',
+                [
+                    f'{val}Alice',
+                    f'{val}Director',
+                    f'{val}image{num}.jpeg',
+                    f'{val}Billie',
+                    f'{val}Actor',
+                    f'{val}image{num+1}.jpeg',
+                    f'{val}Cameron',
+                    f'{val}Actor',
+                    f'{val}image{num+2}.jpeg',
+                ]
             )
-        )
-        cur.execute(
-            '''
-            INSERT INTO actors AS M (person_id, movie_id) VALUES
-                (%(c0)s, %(m)s),
-                (%(c1)s, %(m)s);
-            ''',
-            dict(
-                c0=cast[0][0],
-                c1=cast[1][0],
-                m=movie[0],
+            people = cur.fetchall()
+
+            directors = []
+            cast = []
+            for p in people:
+                if 'Director' in p[1]:
+                    directors.append(p)
+                else:
+                    cast.append(p)
+
+            cur.execute(
+                '''
+                INSERT INTO directors AS M (person_id, movie_id) VALUES
+                    (%(d)s, %(m)s);
+                ''',
+                dict(
+                    d=directors[0][0],
+                    m=movie[0],
+                )
             )
-        )
-        cur.connection.commit()
+            cur.execute(
+                '''
+                INSERT INTO actors AS M (person_id, movie_id) VALUES
+                    (%(c0)s, %(m)s),
+                    (%(c1)s, %(m)s);
+                ''',
+                dict(
+                    c0=cast[0][0],
+                    c1=cast[1][0],
+                    m=movie[0],
+                )
+            )
 
     result = {
         'id': movie[0],
