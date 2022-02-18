@@ -159,7 +159,7 @@ BENCHMARKS = {
         bench(
             title="POST /user",
             description=(
-                "Create a new user record.",
+                "Create a new user record."
             )
         ),
     'insert_movie':

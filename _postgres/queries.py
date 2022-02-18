@@ -124,7 +124,7 @@ async def get_movie(conn, id):
     # This query only works on PostgreSQL 11 and
     # only asyncpg can unpack it.
 
-    movie = await conn.fetch('''
+    movie = await conn.fetchrow('''
         SELECT
             movie.id,
             movie.image,
@@ -210,8 +210,6 @@ async def get_movie(conn, id):
             id = $1;
     ''', id)
 
-    movie = movie[0]
-
     return json.dumps({
         'id': movie['id'],
         'image': movie['image'],
@@ -255,7 +253,7 @@ async def get_person(conn, id):
     # This query only works on PostgreSQL 11 and
     # only asyncpg can unpack it.
 
-    person = await conn.fetch('''
+    person = await conn.fetchrow('''
         SELECT
             person.id,
             person.full_name,
@@ -311,8 +309,6 @@ async def get_person(conn, id):
         WHERE
             id = $1;
     ''', id)
-
-    person = person[0]
 
     return json.dumps({
         'id': person['id'],
@@ -378,24 +374,15 @@ async def insert_user(conn, val):
 
 async def insert_movie(conn, val):
     num = random.randrange(1_000_000)
-    async with conn.transaction():
-        movie = (await conn.fetch(
-            '''
-            INSERT INTO movies AS M (title, image, description, year) VALUES
-                ($1, $2, $3, $4)
-            RETURNING
-                M.id, M.title, M.image, M.description, M.year
-            ''',
-            f'{val["prefix"]}{num}',
-            f'{val["prefix"]}image{num}.jpeg',
-            f'{val["prefix"]}description{num}',
-            num,
-        ))[0]
-
-        # we don't need the full people records to insert things, but
-        # we'll need them as return values
-        people = await conn.fetch(
-            '''
+    movie = await conn.fetchrow(
+        '''
+        WITH
+        m AS (
+            INSERT INTO movies AS M (title, image, description, year)
+            VALUES ($1, $2, $3, $4)
+            RETURNING M.id, M.title, M.image, M.description, M.year
+        ),
+        d AS (
             SELECT
                 person.id,
                 person.full_name,
@@ -403,41 +390,63 @@ async def insert_movie(conn, val):
             FROM
                 persons AS person
             WHERE
-                id IN ($1, $2, $3, $4);
-            ''',
-            *val["people"],
+                id = $5
+        ),
+        c AS (
+            SELECT
+                person.id,
+                person.full_name,
+                person.image
+            FROM
+                persons AS person
+            WHERE
+                id IN ($6, $7, $8)
+        ),
+        dl AS (
+            INSERT INTO directors (person_id, movie_id)
+            (SELECT d.id, m.id FROM m, d)
+        ),
+        cl AS (
+            INSERT INTO actors (person_id, movie_id)
+            (SELECT c.id, m.id FROM m, c)
         )
+        SELECT
+            m.id,
+            m.image,
+            m.title,
+            m.year,
+            m.description,
 
-        directors = []
-        cast = []
-        for p in people:
-            if p['id'] == val['people'][0]:
-                directors.append(p)
-            else:
-                cast.append(p)
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+            FROM
+                (SELECT
+                    ROW(id, full_name, image) AS v
+                FROM
+                    d
+                ) AS q
+            ) AS directors,
 
-        await conn.fetch(
-            '''
-            INSERT INTO directors AS M (person_id, movie_id) VALUES
-                ($1, $2);
-            ''',
-            directors[0]['id'],
-            movie['id'],
-        )
-        await conn.fetch(
-            '''
-            INSERT INTO actors AS M (person_id, movie_id) VALUES
-                ($1, $4),
-                ($2, $4),
-                ($3, $4);
-            ''',
-            cast[0]['id'],
-            cast[1]['id'],
-            cast[2]['id'],
-            movie['id'],
-        )
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+            FROM
+                (SELECT
+                    ROW(id, full_name, image) AS v
+                FROM
+                    c
+                ) AS q
+            ) AS actors
+        FROM
+            m
+        ''',
+        f'{val["prefix"]}{num}',
+        f'{val["prefix"]}image{num}.jpeg',
+        f'{val["prefix"]}description{num}',
+        num,
+        *val["people"],
+    )
 
-    result = {
+    return json.dumps({
         'id': movie['id'],
         'image': movie['image'],
         'title': movie['title'],
@@ -445,88 +454,98 @@ async def insert_movie(conn, val):
         'description': movie['description'],
         'directors': [
             {
-                'id': p['id'],
-                'full_name': p['full_name'],
-                'image': p['image'],
-            } for p in directors
+                'id': d[0],
+                'full_name': d[1],
+                'image': d[2],
+            } for d in movie['directors']
         ],
+
         'cast': [
             {
-                'id': p['id'],
-                'full_name': p['full_name'],
-                'image': p['image'],
-            } for p in cast
+                'id': d[0],
+                'full_name': d[1],
+                'image': d[2],
+            } for d in movie['actors']
         ],
-    }
-    return json.dumps(result)
+    })
 
 
 async def insert_movie_plus(conn, val):
     num = random.randrange(1_000_000)
-    async with conn.transaction():
-        movie = (await conn.fetch(
-            '''
-            INSERT INTO movies AS M (title, image, description, year) VALUES
-                ($1, $2, $3, $4)
+    movie = await conn.fetchrow(
+        '''
+        WITH
+        m AS (
+            INSERT INTO movies AS M (title, image, description, year)
+            VALUES ($1, $2, $3, $4)
+            RETURNING M.id, M.title, M.image, M.description, M.year
+        ),
+        p AS (
+            INSERT INTO persons AS P (first_name, last_name, image, bio)
+            VALUES
+                ($5, $6, $7, ''),
+                ($8, $9, $10, ''),
+                ($11, $12, $13, '')
             RETURNING
-                M.id, M.title, M.image, M.description, M.year
-            ''',
-            f'{val}{num}',
-            f'{val}image{num}.jpeg',
-            f'{val}description{num}',
-            num,
-        ))[0]
-
-        # we don't need the full people records to insert things, but
-        # we'll need them as return values
-        people = await conn.fetch(
-            '''
-            INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
-                ($1, $2, $3, ''),
-                ($4, $5, $6, ''),
-                ($7, $8, $9, '')
-            RETURNING
-                P.id, P.full_name, P.image
-            ''',
-            f'{val}Alice',
-            f'{val}Director',
-            f'{val}image{num}.jpeg',
-            f'{val}Billie',
-            f'{val}Actor',
-            f'{val}image{num+1}.jpeg',
-            f'{val}Cameron',
-            f'{val}Actor',
-            f'{val}image{num+2}.jpeg',
+                P.id, P.last_name, P.full_name, P.image
+        ),
+        dl AS (
+            INSERT INTO directors (person_id, movie_id)
+            (SELECT p.id, m.id FROM m, p WHERE p.last_name = 'Director')
+        ),
+        cl AS (
+            INSERT INTO actors (person_id, movie_id)
+            (SELECT p.id, m.id FROM m, p WHERE p.last_name = 'Actor')
         )
+        SELECT
+            m.id,
+            m.image,
+            m.title,
+            m.year,
+            m.description,
 
-        directors = []
-        cast = []
-        for p in people:
-            if 'Director' in p['full_name']:
-                directors.append(p)
-            else:
-                cast.append(p)
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+            FROM
+                (SELECT
+                    ROW(id, full_name, image) AS v
+                FROM
+                    p
+                WHERE
+                    p.last_name = 'Director'
+                ) AS q
+            ) AS directors,
 
-        await conn.fetch(
-            '''
-            INSERT INTO directors AS M (person_id, movie_id) VALUES
-                ($1, $2);
-            ''',
-            directors[0]['id'],
-            movie['id'],
-        )
-        await conn.fetch(
-            '''
-            INSERT INTO actors AS M (person_id, movie_id) VALUES
-                ($1, $3),
-                ($2, $3);
-            ''',
-            cast[0]['id'],
-            cast[1]['id'],
-            movie['id'],
-        )
+            (SELECT
+                COALESCE(array_agg(q.v), (ARRAY[])::record[])
+            FROM
+                (SELECT
+                    ROW(id, full_name, image) AS v
+                FROM
+                    p
+                WHERE
+                    p.last_name = 'Actor'
+                ) AS q
+            ) AS actors
+        FROM
+            m
+        ''',
+        f'{val}{num}',
+        f'{val}image{num}.jpeg',
+        f'{val}description{num}',
+        num,
+        f'{val}Alice',
+        f'{val}Director',
+        f'{val}image{num}.jpeg',
+        f'{val}Billie',
+        f'{val}Actor',
+        f'{val}image{num+1}.jpeg',
+        f'{val}Cameron',
+        f'{val}Actor',
+        f'{val}image{num+2}.jpeg',
+    )
 
-    result = {
+    return json.dumps({
         'id': movie['id'],
         'image': movie['image'],
         'title': movie['title'],
@@ -534,20 +553,20 @@ async def insert_movie_plus(conn, val):
         'description': movie['description'],
         'directors': [
             {
-                'id': p['id'],
-                'full_name': p['full_name'],
-                'image': p['image'],
-            } for p in directors
+                'id': d[0],
+                'full_name': d[1],
+                'image': d[2],
+            } for d in movie['directors']
         ],
+
         'cast': [
             {
-                'id': p['id'],
-                'full_name': p['full_name'],
-                'image': p['image'],
-            } for p in cast
+                'id': d[0],
+                'full_name': d[1],
+                'image': d[2],
+            } for d in movie['actors']
         ],
-    }
-    return json.dumps(result)
+    })
 
 
 async def setup(ctx, conn, queryname):
