@@ -13,17 +13,18 @@ Run the benchmarks
 
 1. Install Python 3.8 and create a virtual environment. We recommend using `pyenv <https://github.com/pyenv/pyenv_>` to avoid conflicts with existing Python versions.
 
-   ```
-   pyenv install 3.8.12
-   pyenv local 3.8.12
-   python -m venv my_venv
-   ```
+   .. code-block::
+   
+      pyenv install 3.8.12
+      pyenv local 3.8.12
+      python -m venv my_venv
+   
 
 2. Install dependencies from ``requirements.txt``
 
-   ```
-   pip install -r requirements.txt
-   ```
+   .. code-block::
+   
+      pip install -r requirements.txt
 
 3. Install EdgeDB, MongoDB, PostgreSQL 13, Golang toolchain.
 
