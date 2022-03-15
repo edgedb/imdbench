@@ -169,7 +169,7 @@ load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
 		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;"
 
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
-	cd .. && $(PP) loaddata.py $(BUILD)/dataset.json
+	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
 load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \

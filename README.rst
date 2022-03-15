@@ -32,16 +32,19 @@ Targets
 The benchmarks target the following set of ORMs and databases.
 
 **Python ORMs**
+
 - `Django ORM v3 <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`_
 - `SQLAlchemy 1.4 <https://www.sqlalchemy.org/>`
 
 **JavaScript ORMs**
+
 - `Prisma v3 <https://www.prisma.io/>`_
 - `TypeORM 0.2.41 <https://typeorm.io/#/>`_
 - `Sequelize v6 <https://sequelize.org/>`
 - `EdgeDB query builder <https://www.edgedb.com/docs/clients/01_js/index>`_
 
 **Databases/CMS**
+
 - `Hasura v2 <https://hasura.io/>`_
 - `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
 - `MongoDB 5.0 + Python client <https://www.mongodb.com/>`_
