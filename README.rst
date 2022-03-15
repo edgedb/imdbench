@@ -34,7 +34,7 @@ The benchmarks target the following set of ORMs and databases.
 **Python ORMs**
 
 - `Django ORM v3 <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`_
-- `SQLAlchemy 1.4 <https://www.sqlalchemy.org/>`
+- `SQLAlchemy 1.4 <https://www.sqlalchemy.org/>`_
 
 **JavaScript ORMs**
 
@@ -49,14 +49,18 @@ The benchmarks target the following set of ORMs and databases.
 - `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
 - `MongoDB 5.0 + Python client <https://www.mongodb.com/>`_
 - `Postgres 13 <https://www.postgresql.org/docs/13/index.html>`_
+
    - with ``asyncpg``
    - with ``psycopg2``
    - with ``pq``
    - with ``pgx``
    - with ``pg`` (Node.js)
+
 - `EdgeDB 1.0 <https://edgedb.com>`_ 
-   - `Go client <https://github.com/edgedb/edgedb-go>`_
+
+   - `Node.js client <https://github.com/edgedb/edgedb-js>`_
    - `Python client <https://github.com/edgedb/edgedb-python>`_
+   - `Go client <https://github.com/edgedb/edgedb-go>`_
    - `GraphQL endpoint <https://www.edgedb.com/docs/graphql/index>`_
    - `EdgeQL-over-HTTP <https://www.edgedb.com/docs/clients/90_edgeql/index>`_
 
