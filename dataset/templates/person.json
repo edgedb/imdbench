@@ -22,20 +22,24 @@
         },
         "middle_name": {
             "type": "one_of",
-            "variants": [ {
-                "weight": 90,
-                "type": "null"
-            }, {
-                "weight": 7,
-                "type": "string",
-                "faker": {
-                    "generator": "first_name"
+            "variants": [
+                {
+                    "weight": 90,
+                    "type": "null"
+                },
+                {
+                    "weight": 7,
+                    "type": "string",
+                    "faker": {
+                        "generator": "first_name"
+                    }
+                },
+                {
+                    "weight": 3,
+                    "type": "string",
+                    "pattern": "[A-Z]\\."
                 }
-            }, {
-                "weight": 3,
-                "type": "string",
-                "pattern": "[A-Z]\\."
-            } ]
+            ]
         },
         "last_name": {
             "type": "string",
@@ -50,7 +54,7 @@
         "bio": {
             "type": "string",
             "faker": {
-                "generator": "paragraph",
+                "generator": "bs",
                 "nb_sentences": 5
             }
         }

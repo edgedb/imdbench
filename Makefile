@@ -2,12 +2,13 @@
 SHELL = /bin/bash
 .SHELLFLAGS += -Ee -o pipefail
 
-.PHONY: all load new-dataset go load-postgres-helpers
+.PHONY: all load new-dataset generate-and-clean go load-postgres-helpers
 .PHONY:	stop-docker reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: js-querybuilder
+
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -29,7 +30,7 @@ directors=$(shell expr ${people} \* 7 / 100)
 # there's some overlap between directors and actors
 directorsonly=$(shell expr ${people} \* 6 / 100)
 movies=$(shell expr ${people} / 4)
-moviesplus=$(shell expr ${movies} + 1)
+moviesplus=$(shell expr ${movies})
 
 
 all:
@@ -42,22 +43,25 @@ $(BUILD)/dataset.json:
 	cd dataset && $(PP) cleandata.py
 
 new-dataset:
-	cd dataset
-	mkdir -p movies
-	cat templates/user.json \
-		| sed "s/%USERS%/$(users)/" > movies/user.json
-	cat templates/person.json \
+	mkdir -p dataset/movies
+	cat dataset/templates/user.json \
+		| sed "s/%USERS%/$(users)/" > dataset/movies/user.json
+	cat dataset/templates/person.json \
 		| sed "s/%PEOPLE%/$(people)/" \
-		| sed "s/%STARTAT%/$(directorsonly)/" > movies/person.json
-	cat templates/director.json \
-		| sed "s/%DIRECTORS%/$(directors)/" > movies/director.json
-	cat templates/movie.json \
-		| sed "s/%MOVIES%/$(movies)/" > movies/movie.json
-	cat templates/review.json \
+		| sed "s/%STARTAT%/$(directorsonly)/" > dataset/movies/person.json
+	cat dataset/templates/director.json \
+		| sed "s/%DIRECTORS%/$(directors)/" > dataset/movies/director.json
+	cat dataset/templates/movie.json \
+		| sed "s/%MOVIES%/$(movies)/" > dataset/movies/movie.json
+	cat dataset/templates/review.json \
 		| sed "s/%REVIEWS%/$(reviews)/" \
-		| sed "s/%MOVIES%/$(moviesplus)/" > movies/review.json
+		| sed "s/%MOVIES%/$(moviesplus)/" > dataset/movies/review.json
+	synth generate dataset/movies > $(BUILD)/protodataset.json
+	$(PP) dataset/cleandata.py
+
+generate-and-clean: 
 	synth generate movies > $(BUILD)/protodataset.json
-	$(PP) cleandata.py
+	$(PP) dataset/cleandata.py
 
 docker-network:
 	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
@@ -123,8 +127,10 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
-	edgedb project info && \
-		(edgedb project unlink; edgedb instance unlink edgedb_bench)
+	
+	-edgedb project info
+	-edgedb project unlink
+	-edgedb instance unlink edgedb_bench
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
 	&& edgedb -H localhost -P 15656 project init --link \
@@ -218,6 +224,7 @@ load-hasura: load-postgres-helpers
 
 load-prisma: docker-postgres
 	cd _prisma
+	npm i
 	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env
 	npx prisma generate && npm i
 

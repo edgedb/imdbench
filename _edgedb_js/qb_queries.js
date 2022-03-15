@@ -1,6 +1,8 @@
-"use strict";
+'use strict';
 
-const e = require("./querybuilder").default;
+const {insertMoviePlus, insertUser} = require('./queries');
+
+const e = require('./querybuilder').default;
 
 const queries = {
   user: () =>
@@ -14,7 +16,7 @@ const queries = {
           name: true,
           image: true,
           latest_reviews: e.select(
-            user["<author[is Review]"],
+            user['<author[is Review]'],
             (userReview) => ({
               id: true,
               body: true,
@@ -32,43 +34,43 @@ const queries = {
               limit: 10,
             })
           ),
-          filter: e.op(user.id, "=", $.id),
+          filter: e.op(user.id, '=', $.id),
         }))
     ),
   person: () =>
-    e.params({ id: e.uuid }, ($) =>
+    e.params({id: e.uuid}, ($) =>
       e.select(e.Person, (person) => ({
         id: true,
         full_name: true,
         image: true,
         bio: true,
-        acted_in: e.select(person["<cast[is Movie]"], (movie) => ({
+        acted_in: e.select(person['<cast[is Movie]'], (movie) => ({
           id: true,
           image: true,
           title: true,
           year: true,
           avg_rating: true,
           order_by: [
-            { expression: movie.year, direction: e.ASC },
-            { expression: movie.title, direction: e.ASC },
+            {expression: movie.year, direction: e.ASC},
+            {expression: movie.title, direction: e.ASC},
           ],
         })),
-        directed: e.select(person["<directors[is Movie]"], (movie) => ({
+        directed: e.select(person['<directors[is Movie]'], (movie) => ({
           id: true,
           image: true,
           title: true,
           year: true,
           avg_rating: true,
           order_by: [
-            { expression: movie.year, direction: e.ASC },
-            { expression: movie.title, direction: e.ASC },
+            {expression: movie.year, direction: e.ASC},
+            {expression: movie.title, direction: e.ASC},
           ],
         })),
-        filter: e.op(person.id, "=", $.id),
+        filter: e.op(person.id, '=', $.id),
       }))
     ),
   movie: () =>
-    e.params({ id: e.uuid }, ($) =>
+    e.params({id: e.uuid}, ($) =>
       e.select(e.Movie, (movie) => ({
         id: true,
         image: true,
@@ -81,8 +83,8 @@ const queries = {
           full_name: true,
           image: true,
           order_by: [
-            { expression: director["@list_order"], empty: e.EMPTY_LAST },
-            { expression: director.last_name },
+            {expression: director['@list_order'], empty: e.EMPTY_LAST},
+            {expression: director.last_name},
           ],
         }),
         cast: (cast) => ({
@@ -90,11 +92,11 @@ const queries = {
           full_name: true,
           image: true,
           order_by: [
-            { expression: cast["@list_order"], empty: e.EMPTY_LAST },
-            { expression: cast.last_name },
+            {expression: cast['@list_order'], empty: e.EMPTY_LAST},
+            {expression: cast.last_name},
           ],
         }),
-        reviews: e.select(movie["<movie[is Review]"], (review) => ({
+        reviews: e.select(movie['<movie[is Review]'], (review) => ({
           id: true,
           body: true,
           rating: true,
@@ -103,9 +105,9 @@ const queries = {
             name: true,
             image: true,
           },
-          order_by: { expression: review.creation_time, direction: e.DESC },
+          order_by: {expression: review.creation_time, direction: e.DESC},
         })),
-        filter: e.op(movie.id, "=", $.id),
+        filter: e.op(movie.id, '=', $.id),
       }))
     ),
   updateMovie: () =>
@@ -117,9 +119,9 @@ const queries = {
       ($) =>
         e.select(
           e.update(e.Movie, (movie) => ({
-            filter: e.op(movie.id, "=", $.id),
+            filter: e.op(movie.id, '=', $.id),
             set: {
-              title: e.op(e.op(movie.title, "++", "---"), "++", $.suffix),
+              title: e.op(e.op(movie.title, '++', '---'), '++', $.suffix),
             },
           })),
           () => ({
@@ -165,10 +167,10 @@ const queries = {
             description: $.description,
             year: $.year,
             directors: e.select(e.Person, (person) => ({
-              filter: e.op(person.id, "=", $.d_id),
+              filter: e.op(person.id, '=', $.d_id),
             })),
             cast: e.select(e.Person, (person) => ({
-              filter: e.op(person.id, "in", e.array_unpack($.cast)),
+              filter: e.op(person.id, 'in', e.array_unpack($.cast)),
             })),
           }),
           () => ({

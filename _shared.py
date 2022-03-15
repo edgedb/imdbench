@@ -65,7 +65,7 @@ IMPLEMENTATIONS = {
         impl('python', 'Django Rest Framework', django_queries_restfw),
 
     'mongodb':
-        impl('python', 'MongoDB Python', mongodb_queries),
+        impl('python', 'MongoDB (Python)', mongodb_queries),
 
     'sqlalchemy':
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
@@ -83,38 +83,38 @@ IMPLEMENTATIONS = {
         impl('go', 'PostgreSQL pgx', postgres_pgx_golang),
 
     'postgres_hasura_go':
-        impl('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
+        impl('go', 'Hasura + Postgres (Go)', postgres_hasura_golang),
 
     'postgres_postgraphile_go':
-        impl('go', 'Postgres+Postgraphile Go HTTP',
-              postgres_postgraphile_golang),
+        impl('go', 'Postgraphile (Go)',
+             postgres_postgraphile_golang),
 
     'edgedb_json_js':
-        impl('js', 'EdgeDB NodeJS JSON', None),
+        impl('js', 'EdgeDB Node.js (JSON)', None),
 
     'edgedb_repack_js':
-        impl('js', 'EdgeDB NodeJS Objects', None),
+        impl('js', 'EdgeDB Node.js (Objects)', None),
 
     'edgedb_querybuilder_js':
-        impl('js', 'EdgeDB NodeJS Querybuilder', None),
+        impl('js', 'EdgeDB Node.js Query Builder', None),
 
     'edgedb_querybuilder_uncached_js':
-        impl('js', 'EdgeDB NodeJS Querybuilder (uncached)', None),
+        impl('js', 'EdgeDB Node.js Query Builder (uncached)', None),
 
     'typeorm':
-        impl('js', 'Typeorm', None),
+        impl('js', 'TypeORM', None),
 
     'sequelize':
         impl('js', 'Sequelize', None),
 
     'postgres_js':
-        impl('js', 'PostgreSQL NodeJS', None),
+        impl('js', 'PostgreSQL Node.js', None),
 
     'postgres_prisma_js':
-        impl('js', 'Postgres+Prisma NodeJS', None),
+        impl('js', 'Postgres + Prisma', None),
 
     'postgres_prisma_tuned_js':
-        impl('js', 'Postgres+Prisma Tuned NodeJS', None),
+        impl('js', 'Postgres + Prisma Tuned Node.js', None),
 }
 
 
