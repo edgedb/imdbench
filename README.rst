@@ -1,16 +1,29 @@
-EdgeDB Benchmark Toolbench
-==========================
+WebAppBench: Realistic benchmarks for ORMs
+==========================================
 
-This is a collection of benchmarks intended to compare EdgeDB
-against different databases and ORMs.
+A collection of benchmarks intended to compare various Python and JavaScript 
+ORMs against EdgeDB and other databases, using realistic queries. It's common 
+for ORMs to perform non-trivial operations by opaquely executing several 
+queries against the underlying database. The incurred latency is rarely 
+reflect in more simplistic ORM benchmarks.
 
 
-Installation and Use
---------------------
+Run the benchmarks
+------------------
 
-1. Make a Python 3.8 venv (to be compatible with ``synth``).
+1. Install Python 3.8 and create a virtual environment. We recommend using `pyenv <https://github.com/pyenv/pyenv_>` to avoid conflicts with existing Python versions.
 
-2. Install dependencies from ``requirements.txt``.
+   ```
+   pyenv install 3.8.12
+   pyenv local 3.8.12
+   python -m venv my_venv
+   ```
+
+2. Install dependencies from ``requirements.txt``
+
+   ```
+   pip install -r requirements.txt
+   ```
 
 3. Install EdgeDB, MongoDB, PostgreSQL 13, Golang toolchain.
 
