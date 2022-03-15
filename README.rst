@@ -69,18 +69,32 @@ Methodology
 
 This benchmark is called "WebAppBench" to simulate the kinds of queries that are required in a non-trivial web application. In this case, we are simulating a Letterboxd-style movie review application. 
 
-**Schema**
+Schema
+^^^^^^
 
-The schema consisting of four main types: ``Movie``, ``Person`` (used to represent the cast and crew), ``Review``, and ``User``. Each type contains a number of properties. Each ``Movie`` contains a "to many" relation to its ``directors`` and ``cast`` (both ``Person``). Each ``Review`` contains "to one" relations to its ``author`` (a ``Person``) and the ``movie`` it is about.
+The schema consists of four main types: ``Movie``, ``Person`` (used to represent the cast and crew), ``Review``, and ``User``. Each type contains a number of properties. Each ``Movie`` contains a "to many" relation to its ``directors`` and ``cast`` (both ``Person``). Each ``Review`` contains "to one" relations to its ``author`` (a ``User``) and the ``movie`` it is about.
 
-**Queries**
+The schema contains some additional complexities that are often encountered in real applications.
+
+- The ``Movie.cast`` and ``Movie.directors`` relations must be able to represent an *ordering*. That is, it must be possible to store the cast/directors of a ``Movie`` in billing order, as on IMDB.
+- The ``Movie.cast`` relation should store the ``character_name``, either in the join table (in relational DBs) or as a link property (EdgeDB).
+- Where possible, the ``Movie`` field should contain a computed property called ``avg_rating`` that returns the average rating of its associated ``Reviews``. For libraries that cannot represent in-database computed properties, this value is computed client-side.
+
+Queries
+^^^^^^^
 
 The following queries have been implemented for each target.
 
-Run the benchmarks
-------------------
+- 
 
-#. Install Python 3.8 and create a virtual environment. We recommend using `pyenv <https://github.com/pyenv/pyenv_>` to avoid conflicts with existing Python versions.
+
+Results
+-------
+
+Running locally
+---------------
+
+#. Install Python 3.8 and create a virtual environment. We recommend using `pyenv <https://github.com/pyenv/pyenv>`_ to avoid conflicts with existing Python versions.
 
    .. code-block::
    
@@ -97,7 +111,7 @@ Run the benchmarks
 
 #. Install the following toolchains:
 
-   - `EdgeDB <https://www.edgedb.com/install_>`
+   - `EdgeDB <https://www.edgedb.com/install>`_
    - `PostgreSQL 13 <https://www.postgresql.org/docs/13/installation.html>`_
    - `Golang <https://go.dev/doc/install>`_
    - (Optional) `MongoDB <https://docs.mongodb.com/manual/installation/>`_
@@ -105,8 +119,6 @@ Run the benchmarks
 #. Install `Node.js <https://nodejs.org/en/download/>`_ v14.16.0+.
 
 #. Install `Docker <https://docs.docker.com/get-docker/>`_ and `docker-compose <https://docs.docker.com/compose/install/>`_ (needed for Hasura).
-
-.. 6. Install Prisma via ``npm install prisma -D``.
 
 #. Install ``synth``. (https://www.getsynth.com)
 
