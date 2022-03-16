@@ -104,52 +104,61 @@ The following queries have been implemented for each target.
     <details>
       <summary>View query</summary>
       <pre>
-        with 
-        new_movie := (
-          insert Movie {
-            title := <str>$title,
-            image := <str>$image,
-            description := <str>$description,
-            year := <int64>$year,
-            directors := (
-              insert Person {
-                first_name := <str>$dfn,
-                last_name := <str>$dln,
-                image := <str>$dimg,
-              }
-            ),
-            cast := {
-              ( insert Person {
-                  first_name := <str>$cfn0,
-                  last_name := <str>$cln0,
-                  image := <str>$cimg0,
-              }),
-              ( insert Person {
-                  first_name := <str>$cfn1,
-                  last_name := <str>$cln1,
-                  image := <str>$cimg1,
-              })
-            }
+    with 
+    new_movie := (
+      insert Movie {
+        title := <str>$title,
+        image := <str>$image,
+        description := <str>$description,
+        year := <int64>$year,
+        directors := (
+          insert Person {
+            first_name := <str>$dfn,
+            last_name := <str>$dln,
+            image := <str>$dimg,
           }
-        )
-        select new_movie {
-          id,
-          title,
-          image,
-          description,
-          year,
-          directors: { id, full_name, image } order by .last_name,
-          cast: { id, full_name, image } order by .last_name,
-        };
+        ),
+        cast := {
+          ( insert Person {
+              first_name := <str>$cfn0,
+              last_name := <str>$cln0,
+              image := <str>$cimg0,
+          }),
+          ( insert Person {
+              first_name := <str>$cfn1,
+              last_name := <str>$cln1,
+              image := <str>$cimg1,
+          })
+        }
+      }
+    )
+    select new_movie {
+      id,
+      title,
+      image,
+      description,
+      year,
+      directors: { id, full_name, image } order by .last_name,
+      cast: { id, full_name, image } order by .last_name,
+    };
       </pre>
     </details>
 
-.. collapse:: Get Movie
 
-  Fetch a ``Movie`` by ID, including all its properties, its ``cast`` (in ``list_order``), its ``directors`` (in ``list_order``), and its associated ``Reviews`` (including basic information about the review ``author``). This query evaluates *deep (3-level) fetches* and *ordered relation fetching*.
 
-  .. code-block::
+- ``get_movie``: Fetch a ``Movie`` by ID, including all its properties, its 
+  ``cast`` (in ``list_order``), its ``directors`` (in ``list_order``), and its 
+  associated ``Reviews`` (including basic information about the review 
+  ``author``). This query evaluates *deep (3-level) fetches* and *ordered 
+  relation fetching*.
 
+  
+  
+  .. raw:: html
+
+    <details>
+      <summary>View query</summary>
+      <pre>
     with m := Movie
     select m {
       id,
@@ -184,7 +193,9 @@ The following queries have been implemented for each target.
       )
     }
     filter .id = <uuid>$id;
-
+    </pre>
+    </details>
+  
 .. collapse:: Get User
 
   Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). This query evaluates *reverse relation fetching* and *relation aggregation*.
