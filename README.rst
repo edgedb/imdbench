@@ -77,14 +77,19 @@ The schema contains some additional complexities that are often encountered in r
 
 - The ``Movie.cast`` and ``Movie.directors`` relations must be able to represent an *ordering*. That is, it must be possible to store the cast/directors of a ``Movie`` in billing order, as on IMDB.
 - The ``Movie.cast`` relation should store the ``character_name``, either in the join table (in relational DBs) or as a link property (EdgeDB).
-- Where possible, the ``Movie`` field should contain a computed property called ``avg_rating`` that returns the average rating of its associated ``Reviews``. For libraries that cannot represent in-database computed properties, this value is computed client-side.
 
 Queries
 ^^^^^^^
 
 The following queries have been implemented for each target.
 
-- 
+.. raw:: html
+
+   <hr />
+
+.. raw:: html
+
+   <p>Hello</p>
 
 
 
