@@ -107,33 +107,22 @@ The following queries have been implemented for each target.
       <summary>View query</summary>
       <pre>
     with 
-    new_movie := (
-      insert Movie {
-        title := &lt;str&gt;$title,
-        image := &lt;str&gt;$image,
-        description := &lt;str&gt;$description,
-        year := &lt;int64&gt;$year,
-        directors := (
-          insert Person {
-            first_name := &lt;str&gt;$dfn,
-            last_name := &lt;str&gt;$dln,
-            image := &lt;str&gt;$dimg,
-          }
-        ),
-        cast := {
-          ( insert Person {
-              first_name := &lt;str&gt;$cfn0,
-              last_name := &lt;str&gt;$cln0,
-              image := &lt;str&gt;$cimg0,
-          }),
-          ( insert Person {
-              first_name := &lt;str&gt;$cfn1,
-              last_name := &lt;str&gt;$cln1,
-              image := &lt;str&gt;$cimg1,
-          })
+      new_movie := (
+        insert Movie {
+          title := &lt;str&gt;$title,
+          image := &lt;str&gt;$image,
+          description := &lt;str&gt;$description,
+          year := &lt;int64&gt;$year,
+          directors := (
+            select Person
+            filter .id = (&lt;uuid&gt;$d_id)
+          ),
+          cast := (
+            select Person
+            filter .id in array_unpack(&lt;array&lt;uuid&gt;&gt;$cast)
+          ),
         }
-      }
-    )
+      )
     select new_movie {
       id,
       title,
@@ -156,8 +145,6 @@ The following queries have been implemented for each target.
   ``author``). This query evaluates *deep (3-level) fetches* and *ordered 
   relation fetching*.
 
-  
-  
   .. raw:: html
 
     <details>
