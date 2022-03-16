@@ -14,72 +14,9 @@ import progress.bar
 import uvloop
 
 
-class Pool:
-
-    _STOP = object()
-
-    def __init__(self, data, *, concurrency: int):
-        self._concurrency = concurrency
-        self.client = edgedb.create_async_client(max_concurrency=concurrency)
-
-        self._results = asyncio.Queue()
-
-        self._queue = asyncio.Queue()
-        for piece in data:
-            self._queue.put_nowait(piece)
-        for _ in range(self._concurrency):
-            self._queue.put_nowait(self._STOP)
-
-        self._workers = []
-
-    def _start(self):
-        for _ in range(self._concurrency):
-            self._workers.append(
-                asyncio.create_task(self._worker()))
-
-    async def _worker(self):
-        try:
-            while True:
-                piece = await self._queue.get()
-                if piece is self._STOP:
-                    self._results.put_nowait(self._STOP)
-                    break
-
-                args, kwargs = piece
-                try:
-                    await self.client.query(*args, **kwargs)
-                except Exception as e:
-                    self._results.put_nowait(e)
-                else:
-                    self._results.put_nowait(True)
-        finally:
-            pass
-
-    @classmethod
-    async def map(cls, data, *, concurrency: int, label: str):
-        pool = cls(data, concurrency=concurrency)
-        pool._start()
-
-        bar = progress.bar.Bar(label[:15].ljust(15), max=len(data))
-
-        stop_cnt = 0
-        while True:
-            piece = await pool._results.get()
-            if piece is cls._STOP:
-                stop_cnt += 1
-                if stop_cnt == concurrency:
-                    bar.finish()
-                    return
-            elif isinstance(piece, Exception):
-                raise piece
-            else:
-                bar.next()
-
-        await pool.client.aclose()
-
-
 async def import_data(data: dict):
     concurrency = 32
+    client = edgedb.create_async_client(concurrency=concurrency)
 
     users = data['user']
     reviews = data['review']
@@ -90,57 +27,107 @@ async def import_data(data: dict):
     for cat in ['user', 'person', 'movie']:
         id2image_maps[cat] = {r['id']: r['image'] for r in data[cat]}
 
-    ppl_insert_query = r'''
-        INSERT Person {
-            first_name := <str>$first_name,
-            middle_name := <str>$middle_name,
-            last_name := <str>$last_name,
-            image := <str>$image,
-            bio := <str>$bio,
-        };
-    '''
+    batch_size = 1000
 
+    #################
+    ## LOAD PEOPLE ##
+    #################
     people_data = [
-        (
-            (ppl_insert_query,),
-            dict(
-                first_name=p['first_name'],
-                middle_name=p['middle_name'],
-                last_name=p['last_name'],
-                image=p['image'],
-                bio=p['bio']
-            )
+        dict(
+            first_name=p['first_name'],
+            middle_name=p['middle_name'],
+            last_name=p['last_name'],
+            image=p['image'],
+            bio=p['bio']
         ) for p in people
-    ]
+    ][0:5000]
 
-    users_insert_query = r'''
-        INSERT User {
-            name := <str>$name,
-            image := <str>$image,
-        };
+    ppl_insert_query = r'''
+        WITH people := <json>$people
+        FOR person IN json_array_unpack(people) UNION (
+        INSERT Person {
+            first_name := <str>person['first_name'],
+            middle_name := <str>person['middle_name'],
+            last_name := <str>person['last_name'],
+            image := <str>person['image'],
+            bio := <str>person['bio'],
+        });
     '''
 
+    start = 0
+    people_bar = progress.bar.Bar("Person", max=len(people_data))
+    people_slice = people_data[start:start+batch_size]
+    while len(people_slice):
+        people_bar.goto(start)
+        await client.query(ppl_insert_query, people=json.dumps(people_slice))
+        start += batch_size
+        people_slice = people_data[start:start+batch_size]
+    people_bar.goto(people_bar.max)
+
+    ################
+    ## LOAD USERS ##
+    ################
     users_data = [
-        (
-            (users_insert_query,),
-            dict(
-                name=u['name'],
-                image=u['image'],
-            )
+        dict(
+            name=u['name'],
+            image=u['image'],
         ) for u in users
     ]
 
-    movies_ord_insert_query = r'''
+    users_insert_query = r'''
+        WITH users := <json>$users
+        FOR user IN json_array_unpack(users) UNION (
+        INSERT User {
+            name := <str>user['name'],
+            image := <str>user['image'],
+        });
+    '''
+
+    start = 0
+    users_bar = progress.bar.Bar("User", max=len(users_data))
+    users_slice = users_data[start:start+batch_size]
+    while len(users_slice):
+        users_bar.goto(start)
+        await client.query(users_insert_query, users=json.dumps(users_slice))
+        start += batch_size
+        users_slice = users_data[start:start+batch_size]
+    users_bar.goto(users_bar.max)
+    #################
+    ## LOAD MOVIES ##
+    #################
+    movies_data = [
+        dict(
+            _id=m['id'],
+            title=m['title'],
+            description=m['description'],
+            year=m['year'],
+            image=m['image'],
+            directors=id2image(id2image_maps['person'], m['directors']),
+            cast=id2image(id2image_maps['person'], m['cast']),
+        ) for m in movies
+    ]
+    ordered = [m for m in movies_data if m['_id'] % 10]
+    unordered = [m for m in movies_data if not m['_id'] % 10]
+
+    start = 0
+    movie_bar = progress.bar.Bar("Movie", max=len(movies_data))
+    total_movies = 0
+    ordered_slice = ordered[start:start+batch_size]
+    while len(ordered_slice):
+        movie_bar.goto(total_movies)
+        await client.query(r'''
+        WITH movies := <json>$movies
+        FOR movie in json_array_unpack(movies) UNION (
         INSERT Movie {
-            title := <str>$title,
-            description := <str>$description,
-            year := <int64>$year,
-            image := <str>$image,
+            title := <str>movie['title'],
+            description := <str>movie['description'],
+            year := <int64>movie['year'],
+            image := <str>movie['image'],
 
             directors := (
                 FOR X IN {
                     enumerate(array_unpack(
-                        <array<str>>$directors
+                        <array<str>>movie['directors']
                     ))
                 }
                 UNION (
@@ -151,7 +138,7 @@ async def import_data(data: dict):
             cast := (
                 FOR X IN {
                     enumerate(array_unpack(
-                        <array<str>>$cast
+                        <array<str>>movie['cast']
                     ))
                 }
                 UNION (
@@ -159,20 +146,29 @@ async def import_data(data: dict):
                     FILTER .image = X.1
                 )
             )
-        };
-    '''
+        });
+      ''', movies=json.dumps(ordered_slice))
+        start += batch_size
+        total_movies += batch_size
+        ordered_slice = ordered[start:start+batch_size]
 
-    movies_unord_insert_query = r'''
+    start = 0
+    unordered_slice = unordered[start:start+batch_size]
+    while len(unordered_slice):
+        bar.goto(total_movies)
+        await client.query(r'''
+        WITH movies := <json>$movies
+        FOR movie in json_array_unpack(movies) UNION (
         INSERT Movie {
-            title := <str>$title,
-            description := <str>$description,
-            year := <int64>$year,
-            image := <str>$image,
+            title := <str>movie['title'],
+            description := <str>movie['description'],
+            year := <int64>movie['year'],
+            image := <str>movie['image'],
 
             directors := (
                 FOR X IN {
                     enumerate(array_unpack(
-                        <array<str>>$directors
+                        <array<str>>movie['directors']
                     ))
                 }
                 UNION (
@@ -183,56 +179,56 @@ async def import_data(data: dict):
             cast := (
                 SELECT Person
                 FILTER .image IN array_unpack(
-                    <array<str>>$cast
+                    <array<str>>movie['cast']
                 )
             )
-        };
-    '''
+        });
+      ''', movies=json.dumps(unordered_slice))
+        start += batch_size
+        total_movies += batch_size
+        unordered_slice = unordered[start:start+batch_size]
 
-    movies_data = [
-        (
-            (
-                (movies_ord_insert_query
-                    if m['id'] % 10 else movies_unord_insert_query),
-            ),
-            dict(
-                title=m['title'],
-                description=m['description'],
-                year=m['year'],
-                image=m['image'],
-                directors=id2image(id2image_maps['person'], m['directors']),
-                cast=id2image(id2image_maps['person'], m['cast']),
-            )
-        ) for m in movies
-    ]
+    movie_bar.goto(movie_bar.max)
 
-    reviews_insert_query = r'''
-        INSERT Review {
-            body := <str>$body,
-            rating := <int64>$rating,
-            author := (SELECT User FILTER .image = <str>$uimage LIMIT 1),
-            movie := (SELECT Movie FILTER .image = <str>$mimage LIMIT 1),
-            creation_time := <cal::local_datetime><str>$creation_time,
-        };
-    '''
+    ##################
+    ## LOAD REVIEWS ##
+    ##################
 
     reviews_data = [
-        (
-            (reviews_insert_query,),
-            dict(
-                body=r['body'],
-                rating=r['rating'],
-                uimage=id2image_maps['user'][r['author']],
-                mimage=id2image_maps['movie'][r['movie']],
-                creation_time=r['creation_time'][:-6],
-            )
+        dict(
+            body=r['body'],
+            rating=r['rating'],
+            uimage=id2image_maps['user'][r['author']],
+            mimage=id2image_maps['movie'][r['movie']],
+            creation_time=r['creation_time'][:-6],
         ) for r in reviews
     ]
 
-    await Pool.map(people_data, concurrency=concurrency, label='people')
-    await Pool.map(users_data, concurrency=concurrency, label='users')
-    await Pool.map(movies_data, concurrency=concurrency, label='movies')
-    await Pool.map(reviews_data, concurrency=concurrency, label='reviews')
+    start = 0
+    review_bar = progress.bar.Bar("Review", max=len(reviews_data))
+    reviews_slice = reviews_data[start:start+batch_size]
+    while len(reviews_slice):
+        review_bar.goto(start)
+        await client.query(r'''
+        WITH reviews := <json>$reviews
+        FOR review in json_array_unpack(reviews) UNION (
+        INSERT Review {
+            body := <str>review['body'],
+            rating := <int64>review['rating'],
+            author := (SELECT User FILTER .image = <str>review['uimage'] LIMIT 1),
+            movie := (SELECT Movie FILTER .image = <str>review['mimage'] LIMIT 1),
+            creation_time := <cal::local_datetime><str>review['creation_time'],
+        });
+      ''', reviews=json.dumps(reviews_slice))
+
+        start += batch_size
+        reviews_slice = reviews_data[start:start+batch_size]
+
+    review_bar.goto(review_bar.max)
+    # await Pool.map(people_data, concurrency=concurrency, label='people')
+    # await Pool.map(users_data, concurrency=concurrency, label='users')
+    # await Pool.map(movies_data, concurrency=concurrency, label='movies')
+    # await Pool.map(reviews_data, concurrency=concurrency, label='reviews')
 
 
 def id2image(idmap, ids):

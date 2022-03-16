@@ -94,15 +94,12 @@ Results
 Running locally
 ---------------
 
-#. Install Python 3.8 and create a virtual environment. We recommend using `pyenv <https://github.com/pyenv/pyenv>`_ to avoid conflicts with existing Python versions.
+#. Install Python 3.8+ and create a virtual environment.
 
    .. code-block::
    
-      pyenv install 3.8.12
-      pyenv local 3.8.12
       python -m venv my_venv
    
-
 #. Install dependencies from ``requirements.txt``
 
    .. code-block::
@@ -122,26 +119,35 @@ Running locally
 
 #. Install ``synth``. (https://www.getsynth.com)
 
-     **Note:**
-     Synth v0.5.0 replaces python faker with fake-rs, and loses
-     support for some generators used by this project.
-     The previous supported version, Synth v0.4.7, can be installed
-     from https://github.com/getsynth/synth/releases/tag/v0.4.7
-
-#. [Optional] A sample dataset consisting of 100000 people, 100000 users, 
-   and 500000 reviews already exists in the ``dataset/build`` directory. Optionally, you can generate a fresh dataset like so: 
+#. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
+   users, and 500k reviews already exists in the ``dataset/build`` 
+   directory. If you wish, you can generate a fresh dataset like so: 
    
    .. code-block::
 
       $ make new-dataset
 
-   You can also customize the number of inserted objects with the arguments ``people``, ``user``, and ``reviews``:
+   You can also customize the number of inserted objects with the arguments ``people``, ``user``, and ``reviews``.
 
    .. code-block::
 
       $ make new-dataset people=5000 user=1000 reviews=100
 
-#. Load the data into the test databases via ``$ make load``.
+#. Load the data into the test databases via ``$ make load``. Alternatively, 
+  you can run the loaders one at a time with the following commands:
+
+  .. code-block::
+
+      $ make load-edgedb 
+      $ make load-postgres
+      $ make load-mongodb 
+      $ make load-django 
+      $ make load-sqlalchemy  
+      $ make load-typeorm 
+      $ make load-sequelize 
+      $ make load-prisma 
+      $ make load-hasura 
+      $ make load-postgraphile
 
 #. Compile Go files: ``$ make go``
 

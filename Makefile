@@ -126,6 +126,22 @@ docker-clean: stop-docker docker-network-destroy \
 load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
+load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
+	
+	-edgedb project info
+	-edgedb project unlink
+	-edgedb instance unlink edgedb_bench
+	edgedb -H localhost -P 15656 instance link \
+		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
+	&& edgedb -H localhost -P 15656 project init --link \
+		--non-interactive --server-instance edgedb_bench
+	edgedb query 'CREATE DATABASE temp'
+	edgedb -d temp query 'DROP DATABASE edgedb'
+	edgedb -d temp query 'CREATE DATABASE edgedb'
+	edgedb query 'DROP DATABASE temp'
+	edgedb migrate
+	$(PP) -m _edgedb.loaddata_nobulk $(BUILD)/edbdataset.json
+
 load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	
 	-edgedb project info
