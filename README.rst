@@ -71,7 +71,16 @@ Schema
 
 .. image:: report/schema.png
 
-The schema consists of four main types: ``Movie``, ``Person`` (used to represent the cast and crew), ``Review``, and ``User``. Each type contains a number of properties. Each ``Movie`` contains a "to many" relation to its ``directors`` and ``cast`` (both ``Person``). Each ``Review`` contains "to one" relations to its ``author`` (a ``User``) and the ``movie`` it is about.
+The schema consists of four main types.
+
+- ``Person`` (used to represent the cast and crew) 
+- ``Movie``
+  - ``directors -> Person`` (to many)
+  - ``cast -> Person`` (to many)
+- ``User``
+- ``Review``
+  - ``author -> User`` (to one)
+  - ``movie -> Movie`` (to one)
 
 The schema contains some additional complexities that are often encountered in real applications.
 
@@ -87,45 +96,49 @@ The following queries have been implemented for each target.
 
   Insert a ``Movie``, nestedly inserting ``Person`` objects for the ``cast`` and ``directors``. Return the new ``Movie``, including all its properties, its ``cast``, and its ``directors``. This query evaluates *nested inserts* and *the ability to insert and query in a single step*.
 
-  .. code-block::
-
-    with 
-      new_movie := (
-        insert Movie {
-          title := <str>$title,
-          image := <str>$image,
-          description := <str>$description,
-          year := <int64>$year,
-          directors := (
-            insert Person {
-              first_name := <str>$dfn,
-              last_name := <str>$dln,
-              image := <str>$dimg,
-            }
-          ),
-          cast := {
-            ( insert Person {
-                first_name := <str>$cfn0,
-                last_name := <str>$cln0,
-                image := <str>$cimg0,
-            }),
-            ( insert Person {
-                first_name := <str>$cfn1,
-                last_name := <str>$cln1,
-                image := <str>$cimg1,
-            })
-          }
-        }
-      )
-    select new_movie {
-      id,
-      title,
-      image,
-      description,
-      year,
-      directors: { id, full_name, image } order by .last_name,
-      cast: { id, full_name, image } order by .last_name,
-    };
+  .. raw:: html
+    <details>
+      <summary>View query</summary>
+      <code>
+with 
+new_movie := (
+  insert Movie {
+    title := <str>$title,
+    image := <str>$image,
+    description := <str>$description,
+    year := <int64>$year,
+    directors := (
+      insert Person {
+        first_name := <str>$dfn,
+        last_name := <str>$dln,
+        image := <str>$dimg,
+      }
+    ),
+    cast := {
+      ( insert Person {
+          first_name := <str>$cfn0,
+          last_name := <str>$cln0,
+          image := <str>$cimg0,
+      }),
+      ( insert Person {
+          first_name := <str>$cfn1,
+          last_name := <str>$cln1,
+          image := <str>$cimg1,
+      })
+    }
+  }
+)
+select new_movie {
+id,
+title,
+image,
+description,
+year,
+directors: { id, full_name, image } order by .last_name,
+cast: { id, full_name, image } order by .last_name,
+};
+      </code>
+    </details>
 
 .. collapse:: Get Movie
 
@@ -260,7 +273,7 @@ Running locally
 
 
 .. collapse:: Local setup instructions
-  
+
   #. Install Python 3.8+ and create a virtual environment.
 
     .. code-block::
