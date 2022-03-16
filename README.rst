@@ -100,43 +100,43 @@ The following queries have been implemented for each target.
     <details>
       <summary>View query</summary>
       <code>
-with 
-new_movie := (
-  insert Movie {
-    title := <str>$title,
-    image := <str>$image,
-    description := <str>$description,
-    year := <int64>$year,
-    directors := (
-      insert Person {
-        first_name := <str>$dfn,
-        last_name := <str>$dln,
-        image := <str>$dimg,
-      }
-    ),
-    cast := {
-      ( insert Person {
-          first_name := <str>$cfn0,
-          last_name := <str>$cln0,
-          image := <str>$cimg0,
-      }),
-      ( insert Person {
-          first_name := <str>$cfn1,
-          last_name := <str>$cln1,
-          image := <str>$cimg1,
-      })
-    }
-  }
-)
-select new_movie {
-id,
-title,
-image,
-description,
-year,
-directors: { id, full_name, image } order by .last_name,
-cast: { id, full_name, image } order by .last_name,
-};
+        with 
+        new_movie := (
+          insert Movie {
+            title := <str>$title,
+            image := <str>$image,
+            description := <str>$description,
+            year := <int64>$year,
+            directors := (
+              insert Person {
+                first_name := <str>$dfn,
+                last_name := <str>$dln,
+                image := <str>$dimg,
+              }
+            ),
+            cast := {
+              ( insert Person {
+                  first_name := <str>$cfn0,
+                  last_name := <str>$cln0,
+                  image := <str>$cimg0,
+              }),
+              ( insert Person {
+                  first_name := <str>$cfn1,
+                  last_name := <str>$cln1,
+                  image := <str>$cimg1,
+              })
+            }
+          }
+        )
+        select new_movie {
+        id,
+        title,
+        image,
+        description,
+        year,
+        directors: { id, full_name, image } order by .last_name,
+        cast: { id, full_name, image } order by .last_name,
+        };
       </code>
     </details>
 
