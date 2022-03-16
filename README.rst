@@ -100,6 +100,7 @@ The following queries have been implemented for each target.
   single step*.
 
   .. raw:: html
+    
     <details>
       <summary>View query</summary>
       <code>
