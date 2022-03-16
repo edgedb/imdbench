@@ -93,7 +93,9 @@ Queries
 The following queries have been implemented for each target.
 
 
-- ``insert_movie``: Insert a ``Movie``, setting its ``cast`` and ``directors`` 
+- ``insert_movie``
+
+  Insert a ``Movie``, setting its ``cast`` and ``directors`` 
   with pre-existing ``Person`` objects. Return the new ``Movie``, including 
   all its properties, its ``cast``, and its ``directors``. This query 
   evaluates *nested mutations* and *the ability to insert and query in a 
@@ -146,7 +148,9 @@ The following queries have been implemented for each target.
 
 
 
-- ``get_movie``: Fetch a ``Movie`` by ID, including all its properties, its 
+- ``get_movie``
+
+  Fetch a ``Movie`` by ID, including all its properties, its 
   ``cast`` (in ``list_order``), its ``directors`` (in ``list_order``), and its 
   associated ``Reviews`` (including basic information about the review 
   ``author``). This query evaluates *deep (3-level) fetches* and *ordered 
@@ -196,12 +200,15 @@ The following queries have been implemented for each target.
     </pre>
     </details>
   
-.. collapse:: Get User
+- ``get_user``
 
   Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). This query evaluates *reverse relation fetching* and *relation aggregation*.
 
-  .. code-block::
+  
+  
+  .. raw:: html
 
+    <details><summary>View query</summary><pre>
     select User {
       id,
       name,
@@ -223,6 +230,7 @@ The following queries have been implemented for each target.
       )
     }
     filter .id = <uuid>$id;
+    </pre></details>
       
 
 Why "Just use SQL" doesn't work
