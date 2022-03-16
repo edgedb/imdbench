@@ -19,11 +19,13 @@ The question of ORM performance is more complex than simply "they generate slow 
 2. Less mature ORMs often don't support functionality like aggregations 
    (that is, counts/statistics/averages of different fields or objects). In these cases, users to use suboptimal or convoluted solutions.
 
-   For instance, in some extreme cases, operations like "count the number of movies in the database" requires running a query for all movie records and manually counting the results client side. Even in advanced ORMs, nested aggregations are rarely possible, such as "find the movie with title X, return its title and the number of reviews about it". 
+   For instance, in some extreme cases, operations like "count the number of movies in the database" requires running a query for all movie records and manually counting the results client side. Even in advanced ORMs, nested aggregations are rarely possible, such as "find the movie where id=X, returning its title and the number of reviews about it".
    
-3. Since ORMs often force users to run several queries to obtain the full set 
-   of data they need, transactions are required to ensure data consistency 
-   among these serially-executed queries. This can rapidly place unacceptable limits on read capacity. However, while dispensing with transactions would simplify the implementation, it can result in hard-to-reproduce data integrity bugs.
+3. Since ORMs users must often run several correlated queries in series to 
+   obtain the full set of data they need, the possibility for 
+   hard-to-reproduce data integrity bugs is introduced. Transactions can 
+   alleviate these bugs but can rapidly place unacceptable limits on read 
+   capacity. 
 
 Targets
 -------
@@ -33,28 +35,31 @@ The benchmarks target the following set of ORMs and databases.
 **Python ORMs**
 
 - `Django ORM v3 <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`_
-- `SQLAlchemy 1.4 <https://www.sqlalchemy.org/>`_
+- `SQLAlchemy v1.4 <https://www.sqlalchemy.org/>`_
+- `EdgeDB v1 + Python client <https://www.edgedb.com/docs/clients/01_js/index>`_
 
 **JavaScript ORMs**
 
 - `Prisma v3 <https://www.prisma.io/>`_
-- `TypeORM 0.2.41 <https://typeorm.io/#/>`_
+- `TypeORM v0.2.41 <https://typeorm.io/#/>`_
 - `Sequelize v6 <https://sequelize.org/>`_
-- `EdgeDB query builder <https://www.edgedb.com/docs/clients/01_js/index>`_
+- `EdgeDB v1 + Node.js query builder <https://www.edgedb.com/docs/clients/01_js/index>`_
 
-**Databases/CMS**
+.. **GraphQL backends**
+.. - `Hasura v2 <https://hasura.io/>`_
+.. - `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
 
-- `Hasura v2 <https://hasura.io/>`_
-- `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
-- `MongoDB 5.0 + Python client <https://www.mongodb.com/>`_
-- `Postgres 13 <https://www.postgresql.org/docs/13/index.html>`_
+**Databases**
+
+- `MongoDB v5.0 <https://www.mongodb.com/>`_
+- `Postgres v13 <https://www.postgresql.org/docs/13/index.html>`_
    - with ``asyncpg``
    - with ``psycopg2``
    - with ``pq``
    - with ``pgx``
    - with ``pg`` (Node.js)
 
-- `EdgeDB 1.0 <https://edgedb.com>`_ 
+- `EdgeDB v1.0 <https://edgedb.com>`_ 
    - `Node.js client <https://github.com/edgedb/edgedb-js>`_
    - `Python client <https://github.com/edgedb/edgedb-python>`_
    - `Go client <https://github.com/edgedb/edgedb-go>`_
@@ -64,7 +69,7 @@ The benchmarks target the following set of ORMs and databases.
 Methodology
 -----------
 
-This benchmark is called RealCruddyBench, as it attempts to quantify performance of realistic queries that will be required be any non-trivial web application. In this case, we are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
+This benchmark is called RealCruddyBench, as it attempts to quantify performance of **realistic** CRUD queries that will be necessary in any non-trivial web application. In this case, we are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
 
 Schema
 ^^^^^^
@@ -91,7 +96,6 @@ Queries
 ^^^^^^^
 
 The following queries have been implemented for each target.
-
 
 - ``insert_movie``
 
@@ -134,8 +138,6 @@ The following queries have been implemented for each target.
     };
       </pre>
     </details>
-
-
 
 - ``get_movie``
 
@@ -191,8 +193,6 @@ The following queries have been implemented for each target.
 
   Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). This query evaluates *reverse relation fetching* and *relation aggregation*.
 
-  
-  
   .. raw:: html
 
     <details><summary>View query</summary><pre>
@@ -219,6 +219,11 @@ The following queries have been implemented for each target.
     filter .id = <uuid>$id;
     </pre></details>
       
+
+Metrics
+^^^^^^^
+
+This benchmark measures the **throughput** (iterations/second) and **latency** (milliseconds) 
 
 Why "Just use SQL" doesn't work
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
