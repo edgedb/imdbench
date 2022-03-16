@@ -237,6 +237,10 @@ However, the limitations of ORMs can be crippling as an application scales in co
     - 🟢
     - 🔴
     - 🟢
+  * - Composable subquerying
+    - 🔴
+    - 🔴
+    - 🟢
   * - Comprehensive standard library
     - 🔴
     - 🟢
@@ -248,15 +252,7 @@ However, the limitations of ORMs can be crippling as an application scales in co
   * - Aggregates
     - 🟡
     - 🟢
-    - 🟢
-  * - Computed properties
-    - 🔴
-    - 🟢
-    - 🟢
-  * - Composable subquerying
-    - 🔴
-    - 🔴
-    - 🟢
+    - 
 
 Running locally
 ---------------
