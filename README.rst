@@ -11,68 +11,46 @@ Why is this needed?
 
 The question of ORM performance is more complex than simply "they generate slow queries".
 
-1. It's common for ORMs to perform non-trivial operations (deep fetching, 
-   nested mutation, inline aggregation, etc) by opaquely executing several 
-   queries under the hood. This may not be obvious to the end user. The 
-   incurred latency is rarely reflected in more simplistic ORM benchmarks.
+**Query splitting**
 
-2. Less mature ORMs often don't support functionality like aggregations 
-   (that is, counts/statistics/averages of different fields or objects). In these cases, users to use suboptimal or convoluted solutions.
+It's common for ORMs to perform non-trivial operations (deep fetching, 
+nested mutation, inline aggregation, etc) by opaquely executing several 
+queries under the hood. This may not be obvious to the end user. The 
+incurred latency is rarely reflected in `more <https://github.com/tortoise/orm-benchmarks>`_ `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ ORM benchmarks.
 
-   For instance, in some extreme cases, operations like "count the number of movies in the database" requires running a query for all movie records and manually counting the results client side. Even in advanced ORMs, nested aggregations are rarely possible, such as "find the movie where id=X, returning its title and the number of reviews about it".
+**Aggregation (or lack thereof)**
+
+Less mature ORMs often don't support functionality like aggregations 
+(counts, statistics, averages, etc), forcing users to overfetch and perform 
+these calculations server-side. Some ORMs provide no aggregation functionality 
+at all; even advanced ORMs rarely support relational aggregations, such as 
+``Find the movie where id=X, returning its title and the number of reviews 
+about it.``
    
-3. Since ORMs users must often run several correlated queries in series to 
-   obtain the full set of data they need, the possibility for 
-   hard-to-reproduce data integrity bugs is introduced. Transactions can 
-   alleviate these bugs but can rapidly place unacceptable limits on read 
-   capacity. 
+**Transactional queries**
 
-Targets
--------
-
-The benchmarks target the following set of ORMs and databases.
-
-**Python ORMs**
-
-- `Django ORM v3 <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`_
-- `SQLAlchemy v1.4 <https://www.sqlalchemy.org/>`_
-- `EdgeDB v1 + Python client <https://www.edgedb.com/docs/clients/01_js/index>`_
-
-**JavaScript ORMs**
-
-- `Prisma v3 <https://www.prisma.io/>`_
-- `TypeORM v0.2.41 <https://typeorm.io/#/>`_
-- `Sequelize v6 <https://sequelize.org/>`_
-- `EdgeDB v1 + Node.js query builder <https://www.edgedb.com/docs/clients/01_js/index>`_
-
-.. **GraphQL backends**
-.. - `Hasura v2 <https://hasura.io/>`_
-.. - `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
-
-**Databases**
-
-- `MongoDB v5.0 <https://www.mongodb.com/>`_
-- `Postgres v13 <https://www.postgresql.org/docs/13/index.html>`_
-   - with ``asyncpg``
-   - with ``psycopg2``
-   - with ``pq``
-   - with ``pgx``
-   - with ``pg`` (Node.js)
-
-- `EdgeDB v1.0 <https://edgedb.com>`_ 
-   - `Node.js client <https://github.com/edgedb/edgedb-js>`_
-   - `Python client <https://github.com/edgedb/edgedb-python>`_
-   - `Go client <https://github.com/edgedb/edgedb-go>`_
-   - `GraphQL endpoint <https://www.edgedb.com/docs/graphql/index>`_
-   - `EdgeQL-over-HTTP <https://www.edgedb.com/docs/clients/90_edgeql/index>`_
+Since ORM users must often run several correlated queries in series to 
+obtain the full set of data they need, the possibility for 
+hard-to-reproduce data integrity bugs is introduced. Transactions can 
+alleviate these bugs but can rapidly place unacceptable limits on read 
+capacity. 
 
 Methodology
 -----------
 
-This benchmark is called RealCruddyBench, as it attempts to quantify performance of **realistic** CRUD queries that will be necessary in any non-trivial web application. In this case, we are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
+This benchmark is called RealCruddyBench, as it attempts to quantify the **throughput** (iterations/second) and **latency** (milliseconds) of a set of **realistic** CRUD queries. These queries are not arcane or complex, nor are they unreasonably simplistic (as benchmarking queries tend to be). Queries of comparable complexity will be necessary in any non-trivial web application. 
+
+Simulated server-database latency
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The execution environment simulates a *1 millisecond* latency between the server and database. This is the `typical latency <https://aws.amazon.com/blogs/architecture/improving-performance-and-reducing-cost-using-availability-zone-affinity/>`_ between zones in a single AWS region. The vast majority of applications do not have the resources to support per-availability-zone replication, so this assumption is reasonable. 
+
+In the "serverless age" it is common for server code to run in Lambda-style function that is executed in a different availability zone from the underlying database, which would incur latencies far greater than 1ms.
 
 Schema
 ^^^^^^
+
+We are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
 
 .. image:: report/schema.png
 
@@ -80,30 +58,24 @@ The schema consists of four main types.
 
 - ``Person`` (used to represent the cast and crew) 
 - ``Movie``
-  - ``directors -> Person`` (to many)
-  - ``cast -> Person`` (to many)
+  - ``directors -> Person`` (to many, orderable with ``list_order``)
+  - ``cast -> Person`` (to many, orderable with ``list_order``)
 - ``User``
 - ``Review``
   - ``author -> User`` (to one)
   - ``movie -> Movie`` (to one)
-
-The schema contains some additional complexities that are often encountered in real applications.
-
-- The ``Movie.cast`` and ``Movie.directors`` relations must be able to be stored and retrieved in a particular *order*. This ordering (called ``list_order``) represent the movie's `billing order <https://en.wikipedia.org/wiki/Billing_(performing_arts)>`_. 
-- The ``Movie.cast`` relation should store the ``character_name``, either in the join table (in relational DBs) or as a link property (EdgeDB).
 
 Queries
 ^^^^^^^
 
 The following queries have been implemented for each target.
 
-- ``insert_movie``
+- ``insert_movie`` Evaluates *nested mutations* and *the ability to insert and 
+  select in a single step*.
 
   Insert a ``Movie``, setting its ``cast`` and ``directors`` 
   with pre-existing ``Person`` objects. Return the new ``Movie``, including 
-  all its properties, its ``cast``, and its ``directors``. This query 
-  evaluates *nested mutations* and *the ability to insert and query in a 
-  single step*.
+  all its properties, its ``cast``, and its ``directors``. 
 
   .. raw:: html
 
@@ -139,13 +111,13 @@ The following queries have been implemented for each target.
       </pre>
     </details>
 
-- ``get_movie``
+- ``get_movie`` Evaluates *deep (3-level) fetches* and *ordered 
+  relation fetching*.
 
   Fetch a ``Movie`` by ID, including all its properties, its 
   ``cast`` (in ``list_order``), its ``directors`` (in ``list_order``), and its 
   associated ``Reviews`` (including basic information about the review 
-  ``author``). This query evaluates *deep (3-level) fetches* and *ordered 
-  relation fetching*.
+  ``author``).
 
   .. raw:: html
 
@@ -189,9 +161,10 @@ The following queries have been implemented for each target.
     </pre>
     </details>
   
-- ``get_user``
+- ``get_user`` Evaluates *reverse relation fetching* and *relation 
+  aggregation*.
 
-  Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). This query evaluates *reverse relation fetching* and *relation aggregation*.
+  Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). 
 
   .. raw:: html
 
@@ -216,19 +189,22 @@ The following queries have been implemented for each target.
         limit 10
       )
     }
-    filter .id = <uuid>$id;
+    filter .id = &lt;uuid&gt;$id;
     </pre></details>
       
 
-Metrics
-^^^^^^^
+Results
+-------
 
-This benchmark measures the **throughput** (iterations/second) and **latency** (milliseconds) 
+Below are the results for 
 
-Why "Just use SQL" doesn't work
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. image:: result/test.svg
 
-The goal of this benchmark is not to attack ORM libraries; they provide a solution to some of SQL's major usability issues. 
+Analysis
+^^^^^^^^
+
+The goal of this benchmark is not to attack ORM libraries; they provide a 
+partial solution to some of SQL's major usability issues. 
 
 1. They can express deep or nested queries in a compact and intuitive way. 
    Queries return objects, instead of a flat list of rows that must be 
@@ -237,7 +213,7 @@ The goal of this benchmark is not to attack ORM libraries; they provide a soluti
 3. They provide idiomatic, code-first data fetching APIs for different 
    languages. This is particularly important as statically typed languages like Go and TypeScript gain popularity; the ability of ORMs to return strongly-typed query results in a DRY, non-reduntant way is increasingly desirable.
 
-However, the limitations of ORMs can be crippling as application complexity and traffic scale. Our goal in designing EdgeDB is to provide a third option with the best of all worlds.
+However, the limitations of ORMs can be crippling as an application scales in complexity and traffic. Our goal in designing EdgeDB is to provide a third option with the best of all worlds.
 
 .. list-table::
 
@@ -281,7 +257,6 @@ However, the limitations of ORMs can be crippling as application complexity and 
     - 🔴
     - 🔴
     - 🟢
-
 
 Running locally
 ---------------
