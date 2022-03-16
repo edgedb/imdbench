@@ -109,27 +109,27 @@ The following queries have been implemented for each target.
     with 
     new_movie := (
       insert Movie {
-        title := <str>$title,
-        image := <str>$image,
-        description := <str>$description,
-        year := <int64>$year,
+        title := &lt;str&gt;$title,
+        image := &lt;str&gt;$image,
+        description := &lt;str&gt;$description,
+        year := &lt;int64&gt;$year,
         directors := (
           insert Person {
-            first_name := <str>$dfn,
-            last_name := <str>$dln,
-            image := <str>$dimg,
+            first_name := &lt;str&gt;$dfn,
+            last_name := &lt;str&gt;$dln,
+            image := &lt;str&gt;$dimg,
           }
         ),
         cast := {
           ( insert Person {
-              first_name := <str>$cfn0,
-              last_name := <str>$cln0,
-              image := <str>$cimg0,
+              first_name := &lt;str&gt;$cfn0,
+              last_name := &lt;str&gt;$cln0,
+              image := &lt;str&gt;$cimg0,
           }),
           ( insert Person {
-              first_name := <str>$cfn1,
-              last_name := <str>$cln1,
-              image := <str>$cimg1,
+              first_name := &lt;str&gt;$cfn1,
+              last_name := &lt;str&gt;$cln1,
+              image := &lt;str&gt;$cimg1,
           })
         }
       }
@@ -184,7 +184,7 @@ The following queries have been implemented for each target.
       } order by @list_order empty last
         then m.cast.last_name,
       reviews := (
-        select m.<movie[is Review] {
+        select m.&lt;movie[is Review] {
           id,
           body,
           rating,
@@ -193,10 +193,10 @@ The following queries have been implemented for each target.
             name,
             image,
           }
-        }  order by .creation_time desc
+        } order by .creation_time desc
       )
     }
-    filter .id = <uuid>$id;
+    filter .id = &lt;uuid&gt;$id;
     </pre>
     </details>
   
@@ -214,7 +214,7 @@ The following queries have been implemented for each target.
       name,
       image,
       latest_reviews := (
-        select .<author[is Review] {
+        select .&lt;author[is Review] {
           id,
           body,
           rating,
@@ -222,7 +222,7 @@ The following queries have been implemented for each target.
             id,
             image,
             title,
-            avg_rating := math::mean(.<movie[is Review].rating)
+            avg_rating := math::mean(.&lt;movie[is Review].rating)
           }
         }
         order by .creation_time desc
