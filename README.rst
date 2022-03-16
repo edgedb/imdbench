@@ -100,10 +100,10 @@ The following queries have been implemented for each target.
   single step*.
 
   .. raw:: html
-    
+
     <details>
       <summary>View query</summary>
-      <code>
+      <pre>
         with 
         new_movie := (
           insert Movie {
@@ -141,7 +141,7 @@ The following queries have been implemented for each target.
           directors: { id, full_name, image } order by .last_name,
           cast: { id, full_name, image } order by .last_name,
         };
-      </code>
+      </pre>
     </details>
 
 .. collapse:: Get Movie
