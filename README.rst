@@ -92,9 +92,12 @@ Queries
 
 The following queries have been implemented for each target.
 
-.. collapse:: Insert Movie
 
-  Insert a ``Movie``, nestedly inserting ``Person`` objects for the ``cast`` and ``directors``. Return the new ``Movie``, including all its properties, its ``cast``, and its ``directors``. This query evaluates *nested inserts* and *the ability to insert and query in a single step*.
+- ``insert_movie``: Insert a ``Movie``, setting its ``cast`` and ``directors`` 
+  with pre-existing ``Person`` objects. Return the new ``Movie``, including 
+  all its properties, its ``cast``, and its ``directors``. This query 
+  evaluates *nested mutations* and *the ability to insert and query in a 
+  single step*.
 
   .. raw:: html
     <details>
@@ -129,13 +132,13 @@ The following queries have been implemented for each target.
           }
         )
         select new_movie {
-        id,
-        title,
-        image,
-        description,
-        year,
-        directors: { id, full_name, image } order by .last_name,
-        cast: { id, full_name, image } order by .last_name,
+          id,
+          title,
+          image,
+          description,
+          year,
+          directors: { id, full_name, image } order by .last_name,
+          cast: { id, full_name, image } order by .last_name,
         };
       </code>
     </details>
