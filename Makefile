@@ -158,6 +158,10 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
 
+load-edgedb-nosetup:
+	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+
+
 load-django: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
 		"DROP DATABASE IF EXISTS django_bench;"

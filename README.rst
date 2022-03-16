@@ -1,5 +1,5 @@
-WebAppBench: Realistic benchmarks for ORMs
-==========================================
+RealCruddyBench: Realistic benchmarks for ORMs
+==============================================
 
 ``Rev. 1.0.0``
 
@@ -11,20 +11,19 @@ Why is this needed?
 
 The question of ORM performance is more complex than simply "they generate slow queries".
 
-1. It's common for ORMs to perform non-trivial operations (deep fetching, nested mutation, inline aggregation, etc) by opaquely executing several queries against the underlying database. These queries rely on The incurred latency is rarely reflected in more simplistic ORM benchmarks.
+1. It's common for ORMs to perform non-trivial operations (deep fetching, 
+   nested mutation, inline aggregation, etc) by opaquely executing several 
+   queries under the hood. This may not be obvious to the end user. The 
+   incurred latency is rarely reflected in more simplistic ORM benchmarks.
 
-2. Less sophisticated ORMs may not support such functionality at all, forcing users to manually compose several simpler queries themselves. Transactions are required to ensure data consistency among these serially-executed queries, which can place unacceptable limits on request throughput. 
+2. Less mature ORMs often don't support functionality like aggregations 
+   (that is, counts/statistics/averages of different fields or objects). In these cases, users to use suboptimal or convoluted solutions.
 
-3. Dispensing with transactions may simplify the implementation but can result in hard-to-reproduce data integrity bugs. 
-
-Why "Just use SQL" isn't enough
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The popularity of ORM libraries is driven by their ability to express deep or nested queries in an approachable way, relative to raw SQL. Their underlying  object-oriented schema allows for more intuitive ways of expressing these operations.
-
-We are sympathetic to this; SQLs lack of composability and `incompatibility <https://en.wikipedia.org/wiki/Object%E2%80%93relational_impedance_mismatch>`_ with the predominantly object-oriented nature of modern languages is a real usability issue. 
-
-While ORMs are largely incapable of expressing complex queries that include computed fields or aggregation, the common refrain of "Just use SQL" is also too simplistic. SQL queries quickly explode in verbosity when expressing operations like deep fetches, subqueries, and aggregations. T declarative/object-oriented approach to schema modeling, and the desire for idiomatic code-first data fetching APIs in different languages. As statically typed languages like Go and TypeScript gain popularity, the ability of ORMs to return strongly-typed query results in a DRY, non-reduntant way is increasingly desirable.
+   For instance, in some extreme cases, operations like "count the number of movies in the database" requires running a query for all movie records and manually counting the results client side. Even in advanced ORMs, nested aggregations are rarely possible, such as "find the movie with title X, return its title and the number of reviews about it". 
+   
+3. Since ORMs often force users to run several queries to obtain the full set 
+   of data they need, transactions are required to ensure data consistency 
+   among these serially-executed queries. This can rapidly place unacceptable limits on read capacity. However, while dispensing with transactions would simplify the implementation, it can result in hard-to-reproduce data integrity bugs.
 
 Targets
 -------
@@ -40,7 +39,7 @@ The benchmarks target the following set of ORMs and databases.
 
 - `Prisma v3 <https://www.prisma.io/>`_
 - `TypeORM 0.2.41 <https://typeorm.io/#/>`_
-- `Sequelize v6 <https://sequelize.org/>`
+- `Sequelize v6 <https://sequelize.org/>`_
 - `EdgeDB query builder <https://www.edgedb.com/docs/clients/01_js/index>`_
 
 **Databases/CMS**
@@ -49,7 +48,6 @@ The benchmarks target the following set of ORMs and databases.
 - `Postgraphile 4.11 <https://www.graphile.org/postgraphile/>`_
 - `MongoDB 5.0 + Python client <https://www.mongodb.com/>`_
 - `Postgres 13 <https://www.postgresql.org/docs/13/index.html>`_
-
    - with ``asyncpg``
    - with ``psycopg2``
    - with ``pq``
@@ -57,7 +55,6 @@ The benchmarks target the following set of ORMs and databases.
    - with ``pg`` (Node.js)
 
 - `EdgeDB 1.0 <https://edgedb.com>`_ 
-
    - `Node.js client <https://github.com/edgedb/edgedb-js>`_
    - `Python client <https://github.com/edgedb/edgedb-python>`_
    - `Go client <https://github.com/edgedb/edgedb-go>`_
@@ -67,10 +64,12 @@ The benchmarks target the following set of ORMs and databases.
 Methodology
 -----------
 
-This benchmark is called "WebAppBench" to simulate the kinds of queries that are required in a non-trivial web application. In this case, we are simulating a Letterboxd-style movie review application. 
+This benchmark is called RealCruddyBench, as it attempts to quantify performance of realistic queries that will be required be any non-trivial web application. In this case, we are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
 
 Schema
 ^^^^^^
+
+.. image:: report/schema.png
 
 The schema consists of four main types: ``Movie``, ``Person`` (used to represent the cast and crew), ``Review``, and ``User``. Each type contains a number of properties. Each ``Movie`` contains a "to many" relation to its ``directors`` and ``cast`` (both ``Person``). Each ``Review`` contains "to one" relations to its ``author`` (a ``User``) and the ``movie`` it is about.
 
@@ -88,8 +87,60 @@ The following queries have been implemented for each target.
 - 
 
 
-Results
--------
+
+Why "Just use SQL" doesn't work
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The goal of this benchmark is not to attack ORM libraries; they provide a solution to some of SQL's major usability issues. 
+
+1. They can express deep or nested queries in a compact and intuitive way. 
+   Queries return objects, instead of a flat list of rows that must be 
+   manually denormalized.
+2. They allow schema to be modeled a declarative, object-oriented way.
+3. They provide idiomatic, code-first data fetching APIs for different 
+   languages. This is particularly important as statically typed languages like Go and TypeScript gain popularity; the ability of ORMs to return strongly-typed query results in a DRY, non-reduntant way is increasingly desirable.
+
+However, the limitations of ORMs can be crippling as application complexity and traffic scale. Our goal in designing EdgeDB is to provide a third option with the best of all worlds.
+
+.. list-table::
+
+   * - 
+     - ORMs
+     - SQL
+     - EdgeDB
+   * - Intuitive nested fetching
+     - 🟢
+     - 🔴
+     - 🟢
+   * - Declarative schema
+     - 🟢
+     - 🔴
+     - 🟢
+   * - Structured query results
+     - 🟢
+     - 🔴
+     - 🟢
+   * - Idiomatic APIs for different languages
+     - 🟢
+     - 🔴
+     - 🟢
+   * - Comprehensive standard library
+     - 🔴
+     - 🟢
+     - 🟢
+   * - Aggregates
+     - 🟡
+     - 🟢
+     - 🟢
+   * - Computed properties
+     - 🔴
+     - 🟢
+     - 🟢
+   * - Composable subquerying
+     - 🔴
+     - 🔴
+     - 🟢
+
 
 Running locally
 ---------------
