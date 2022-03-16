@@ -75,7 +75,7 @@ The schema consists of four main types: ``Movie``, ``Person`` (used to represent
 
 The schema contains some additional complexities that are often encountered in real applications.
 
-- The ``Movie.cast`` and ``Movie.directors`` relations must be able to represent an *ordering*. That is, it must be possible to store the cast/directors of a ``Movie`` in billing order, as on IMDB.
+- The ``Movie.cast`` and ``Movie.directors`` relations must be able to be stored and retrieved in a particular *order*. This ordering (called ``list_order``) represent the movie's `billing order <https://en.wikipedia.org/wiki/Billing_(performing_arts)>`_. 
 - The ``Movie.cast`` relation should store the ``character_name``, either in the join table (in relational DBs) or as a link property (EdgeDB).
 
 Queries
@@ -83,15 +83,119 @@ Queries
 
 The following queries have been implemented for each target.
 
-.. raw:: html
+.. collapse:: Insert Movie
 
-   <hr />
+  Insert a ``Movie``, nestedly inserting ``Person`` objects for the ``cast`` and ``directors``. Return the new ``Movie``, including all its properties, its ``cast``, and its ``directors``. This query evaluates *nested inserts* and *the ability to insert and query in a single step*.
 
-.. raw:: html
+  .. code-block::
 
-   <p>Hello</p>
+    with 
+      new_movie := (
+        insert Movie {
+          title := <str>$title,
+          image := <str>$image,
+          description := <str>$description,
+          year := <int64>$year,
+          directors := (
+            insert Person {
+              first_name := <str>$dfn,
+              last_name := <str>$dln,
+              image := <str>$dimg,
+            }
+          ),
+          cast := {
+            ( insert Person {
+                first_name := <str>$cfn0,
+                last_name := <str>$cln0,
+                image := <str>$cimg0,
+            }),
+            ( insert Person {
+                first_name := <str>$cfn1,
+                last_name := <str>$cln1,
+                image := <str>$cimg1,
+            })
+          }
+        }
+      )
+    select new_movie {
+      id,
+      title,
+      image,
+      description,
+      year,
+      directors: { id, full_name, image } order by .last_name,
+      cast: { id, full_name, image } order by .last_name,
+    };
 
+.. collapse:: Get Movie
 
+  Fetch a ``Movie`` by ID, including all its properties, its ``cast`` (in ``list_order``), its ``directors`` (in ``list_order``), and its associated ``Reviews`` (including basic information about the review ``author``). This query evaluates *deep (3-level) fetches* and *ordered relation fetching*.
+
+  .. code-block::
+
+    with m := Movie
+    select m {
+      id,
+      image,
+      title,
+      year,
+      description,
+      avg_rating,
+      directors: { 
+        id, 
+        full_name, 
+        image 
+      } order by @list_order empty last
+        then m.directors.last_name,
+      cast: {
+        id,
+        full_name,
+        image,
+      } order by @list_order empty last
+        then m.cast.last_name,
+      reviews := (
+        select m.<movie[is Review] {
+          id,
+          body,
+          rating,
+          author: {
+            id,
+            name,
+            image,
+          }
+        }  order by .creation_time desc
+      )
+    }
+    filter .id = <uuid>$id;
+
+.. collapse:: Get User
+
+  Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). This query evaluates *reverse relation fetching* and *relation aggregation*.
+
+  .. code-block::
+
+    select User {
+      id,
+      name,
+      image,
+      latest_reviews := (
+        select .<author[is Review] {
+          id,
+          body,
+          rating,
+          movie: {
+            id,
+            image,
+            title,
+            avg_rating := math::mean(.<movie[is Review].rating)
+          }
+        }
+        order by .creation_time desc
+        limit 10
+      )
+    }
+    filter .id = <uuid>$id;
+      
 
 Why "Just use SQL" doesn't work
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -109,160 +213,167 @@ However, the limitations of ORMs can be crippling as application complexity and 
 
 .. list-table::
 
-   * - 
-     - ORMs
-     - SQL
-     - EdgeDB
-   * - Intuitive nested fetching
-     - 🟢
-     - 🔴
-     - 🟢
-   * - Declarative schema
-     - 🟢
-     - 🔴
-     - 🟢
-   * - Structured query results
-     - 🟢
-     - 🔴
-     - 🟢
-   * - Idiomatic APIs for different languages
-     - 🟢
-     - 🔴
-     - 🟢
-   * - Comprehensive standard library
-     - 🔴
-     - 🟢
-     - 🟢
-   * - Aggregates
-     - 🟡
-     - 🟢
-     - 🟢
-   * - Computed properties
-     - 🔴
-     - 🟢
-     - 🟢
-   * - Composable subquerying
-     - 🔴
-     - 🔴
-     - 🟢
+  * - 
+    - ORMs
+    - SQL
+    - EdgeDB
+  * - Intuitive nested fetching
+    - 🟢
+    - 🔴
+    - 🟢
+  * - Declarative schema
+    - 🟢
+    - 🔴
+    - 🟢
+  * - Structured query results
+    - 🟢
+    - 🔴
+    - 🟢
+  * - Idiomatic APIs for different languages
+    - 🟢
+    - 🔴
+    - 🟢
+  * - Comprehensive standard library
+    - 🔴
+    - 🟢
+    - 🟢
+  * - Computed properties
+    - 🔴
+    - 🟢
+    - 🟢
+  * - Aggregates
+    - 🟡
+    - 🟢
+    - 🟢
+  * - Computed properties
+    - 🔴
+    - 🟢
+    - 🟢
+  * - Composable subquerying
+    - 🔴
+    - 🔴
+    - 🟢
 
 
 Running locally
 ---------------
 
-#. Install Python 3.8+ and create a virtual environment.
 
-   .. code-block::
-   
-      python -m venv my_venv
-   
-#. Install dependencies from ``requirements.txt``
+.. collapse:: Local setup instructions
+  
+  #. Install Python 3.8+ and create a virtual environment.
 
-   .. code-block::
-   
-      pip install -r requirements.txt
+    .. code-block::
+    
+        python -m venv my_venv
+    
+  #. Install dependencies from ``requirements.txt``
 
-#. Install the following toolchains:
+    .. code-block::
+    
+        pip install -r requirements.txt
 
-   - `EdgeDB <https://www.edgedb.com/install>`_
-   - `PostgreSQL 13 <https://www.postgresql.org/docs/13/installation.html>`_
-   - `Golang <https://go.dev/doc/install>`_
-   - (Optional) `MongoDB <https://docs.mongodb.com/manual/installation/>`_
+  #. Install the following toolchains:
 
-#. Install `Node.js <https://nodejs.org/en/download/>`_ v14.16.0+.
+    - `EdgeDB <https://www.edgedb.com/install>`_
+    - `PostgreSQL 13 <https://www.postgresql.org/docs/13/installation.html>`_
+    - `Golang <https://go.dev/doc/install>`_
+    - (Optional) `MongoDB <https://docs.mongodb.com/manual/installation/>`_
 
-#. Install `Docker <https://docs.docker.com/get-docker/>`_ and `docker-compose <https://docs.docker.com/compose/install/>`_ (needed for Hasura).
+  #. Install `Node.js <https://nodejs.org/en/download/>`_ v14.16.0+.
 
-#. Install ``synth``. (https://www.getsynth.com)
+  #. Install `Docker <https://docs.docker.com/get-docker/>`_ and `docker-compose <https://docs.docker.com/compose/install/>`_ (needed for Hasura).
 
-#. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
-   users, and 500k reviews already exists in the ``dataset/build`` 
-   directory. If you wish, you can generate a fresh dataset like so: 
-   
-   .. code-block::
+  #. Install ``synth``. (https://www.getsynth.com)
 
-      $ make new-dataset
+  #. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
+    users, and 500k reviews already exists in the ``dataset/build`` 
+    directory. If you wish, you can generate a fresh dataset like so: 
+    
+    .. code-block::
 
-   You can also customize the number of inserted objects with the arguments ``people``, ``user``, and ``reviews``.
+        $ make new-dataset
 
-   .. code-block::
+    You can also customize the number of inserted objects with the arguments ``people``, ``user``, and ``reviews``.
 
-      $ make new-dataset people=5000 user=1000 reviews=100
+    .. code-block::
 
-#. Load the data into the test databases via ``$ make load``. Alternatively, 
-  you can run the loaders one at a time with the following commands:
+        $ make new-dataset people=5000 user=1000 reviews=100
 
-  .. code-block::
+  #. Load the data into the test databases via ``$ make load``. Alternatively, 
+    you can run the loaders one at a time with the following commands:
 
-      $ make load-edgedb 
-      $ make load-postgres
-      $ make load-mongodb 
-      $ make load-django 
-      $ make load-sqlalchemy  
-      $ make load-typeorm 
-      $ make load-sequelize 
-      $ make load-prisma 
-      $ make load-hasura 
-      $ make load-postgraphile
+    .. code-block::
 
-#. Compile Go files: ``$ make go``
+        $ make load-edgedb 
+        $ make load-postgres
+        $ make load-mongodb 
+        $ make load-django 
+        $ make load-sqlalchemy  
+        $ make load-typeorm 
+        $ make load-sequelize 
+        $ make load-prisma 
+        $ make load-hasura 
+        $ make load-postgraphile
 
-#. Compile TypeScript files: ``$ make ts``
+  #. Compile Go files: ``$ make go``
 
-#. Run the benchmarks via ``bench.py``.
+  #. Compile TypeScript files: ``$ make ts``
 
-   To run all benchmarks:
+  #. Run the benchmarks via ``bench.py``.
 
-   .. code-block::
+    To run all benchmarks:
 
-      python bench.py --html out.html --concurrency 10 -D 10 all
+    .. code-block::
 
-   To run all JavaScript ORM benchmarks:
+        python bench.py --html out.html --concurrency 10 -D 10 all
 
-   .. code-block::
+    To run all JavaScript ORM benchmarks:
 
-      python bench.py --html out.html --concurrency 10 --duration 10 typeorm,sequelize,postgres_prisma_js,edgedb_querybuilder
+    .. code-block::
 
-   To run all Python ORM benchmarks:
+        python bench.py --html out.html --concurrency 10 --duration 10 typeorm,sequelize,postgres_prisma_js,edgedb_querybuilder
 
-   .. code-block::
+    To run all Python ORM benchmarks:
 
-      python bench.py --html out.html --concurrency 10 --duration 10 django,sqlalchemy
-   
-   To customize the targets, just pass a comma-separated list of the following options.
+    .. code-block::
 
-   - ``edgedb_json_sync``
-   - ``edgedb_json_async``
-   - ``edgedb_repack_sync``
-   - ``edgedb_graphql_go``
-   - ``edgedb_http_go``
-   - ``edgedb_json_go``
-   - ``edgedb_repack_go``
-   - ``django``
-   - ``django_restfw``
-   - ``mongodb``
-   - ``sqlalchemy``
-   - ``postgres_asyncpg``
-   - ``postgres_psycopg``
-   - ``postgres_pq``
-   - ``postgres_pgx``
-   - ``postgres_hasura_go``
-   - ``postgres_postgraphile_go``
-   - ``edgedb_json_js``
-   - ``edgedb_repack_js``
-   - ``edgedb_querybuilder_js``
-   - ``edgedb_querybuilder_uncached_js``
-   - ``typeorm``
-   - ``sequelize``
-   - ``postgres_js``
-   - ``postgres_prisma_js``
-   - ``postgres_prisma_tuned_js``
+        python bench.py --html out.html --concurrency 10 --duration 10 django,sqlalchemy
+    
+    To customize the targets, just pass a comma-separated list of the following options.
 
-   You can see a full list of command options like so:
+    - ``edgedb_json_sync``
+    - ``edgedb_json_async``
+    - ``edgedb_repack_sync``
+    - ``edgedb_graphql_go``
+    - ``edgedb_http_go``
+    - ``edgedb_json_go``
+    - ``edgedb_repack_go``
+    - ``django``
+    - ``django_restfw``
+    - ``mongodb``
+    - ``sqlalchemy``
+    - ``postgres_asyncpg``
+    - ``postgres_psycopg``
+    - ``postgres_pq``
+    - ``postgres_pgx``
+    - ``postgres_hasura_go``
+    - ``postgres_postgraphile_go``
+    - ``edgedb_json_js``
+    - ``edgedb_repack_js``
+    - ``edgedb_querybuilder_js``
+    - ``edgedb_querybuilder_uncached_js``
+    - ``typeorm``
+    - ``sequelize``
+    - ``postgres_js``
+    - ``postgres_prisma_js``
+    - ``postgres_prisma_tuned_js``
 
-   .. code-block::
+    You can see a full list of command options like so:
 
-      python bench.py --help
+    .. code-block::
+
+        python bench.py --help
 
 License
 -------
