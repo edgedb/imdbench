@@ -198,7 +198,9 @@ Results
 
 The graphs below present the throughput/latency results for each target as a geometric mean of the three queries. As such, it should be interpreted as a holistic benchmark that represents the target library's collective performance across a range of query functionality.
 
-**For per-query results, interactive charts, and latency jitter statistics, view the full report (linked below the charts).**
+.. note::
+  
+  For per-query results, interactive charts, and latency jitter statistics, view the full report.
 
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
