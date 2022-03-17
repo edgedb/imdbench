@@ -202,16 +202,17 @@ The graphs below present the throughput/latency results for each target as a geo
 
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
-![JavaScript results](./results/js.png)
 
-**[View full report >>](https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/js.html)**
+.. image:: ./results/js.png
+
+`View full report >><https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/js.html>`_
 
 Python ORMs
 ^^^^^^^^^^^
 
-![Python results](./results/py.png)
+.. image:: ./results/py.png
 
-**[View full report >](https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/py.html)**
+`View full report >><https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/py.html>`_
 
 
 Analysis
@@ -274,7 +275,7 @@ Our goal in designing EdgeDB is to provide a third option with the best of all w
     - 🟢
 
 
-Visit [edgedb.com](https://www.edgedb.com) to learn more.
+Visit `edgedb.com <https://www.edgedb.com>`_ to learn more.
 
 Running locally
 ---------------
