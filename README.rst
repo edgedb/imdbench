@@ -203,16 +203,17 @@ The graphs below present the throughput/latency results for each target as a geo
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
 
+`View Full Report<https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/js.html>`_
+
 .. image:: ./results/js.png
 
-`View full report >><https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/js.html>`_
 
 Python ORMs
 ^^^^^^^^^^^
 
-.. image:: ./results/py.png
-
 `View full report >><https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/py.html>`_
+
+.. image:: ./results/py.png
 
 
 Analysis
