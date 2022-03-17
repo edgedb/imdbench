@@ -37,26 +37,27 @@ class impl(typing.NamedTuple):
 
 
 IMPLEMENTATIONS = {
-    'edgedb_json_sync':
+
+    'edgedb_py_json':
         impl('python', 'EdgeDB Python JSON', edgedb_queries_json),
 
-    'edgedb_json_async':
+    'edgedb_py_json_async':
         impl('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
 
-    'edgedb_repack_sync':
+    'edgedb_py_sync':
         impl('python', 'EdgeDB Python Objects', edgedb_queries_repack),
 
-    'edgedb_graphql_go':
-        impl('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
+    'edgedb_go':
+        impl('go', 'EdgeDB GO Structs', edgedb_json_golang),
 
-    'edgedb_http_go':
-        impl('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
-
-    'edgedb_json_go':
+    'edgedb_go_json':
         impl('go', 'EdgeDB GO JSON', edgedb_json_golang),
 
-    'edgedb_repack_go':
-        impl('go', 'EdgeDB GO Structs', edgedb_json_golang),
+    'edgedb_go_graphql':
+        impl('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
+
+    'edgedb_go_http':
+        impl('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
 
     'django':
         impl('python', 'Django ORM', django_queries),
@@ -74,13 +75,13 @@ IMPLEMENTATIONS = {
         impl('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
 
     'postgres_psycopg':
-        impl('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL (psycopg2)', postgres_psycopg_queries),
 
     'postgres_pq':
-        impl('go', 'PostgreSQL pq', postgres_pq_golang),
+        impl('go', 'PostgreSQL (pq)', postgres_pq_golang),
 
     'postgres_pgx':
-        impl('go', 'PostgreSQL pgx', postgres_pgx_golang),
+        impl('go', 'PostgreSQL (pgx)', postgres_pgx_golang),
 
     'postgres_hasura_go':
         impl('go', 'Hasura + Postgres (Go)', postgres_hasura_golang),
@@ -89,17 +90,17 @@ IMPLEMENTATIONS = {
         impl('go', 'Postgraphile (Go)',
              postgres_postgraphile_golang),
 
-    'edgedb_json_js':
-        impl('js', 'EdgeDB Node.js (JSON)', None),
+    'edgedb_js':
+        impl('js', 'EdgeDB (Node.js client)', None),
 
-    'edgedb_repack_js':
-        impl('js', 'EdgeDB Node.js (Objects)', None),
+    'edgedb_js_json':
+        impl('js', 'EdgeDB (Node.js client, JSON mode)', None),
 
-    'edgedb_querybuilder_js':
-        impl('js', 'EdgeDB Node.js Query Builder', None),
+    'edgedb_js_qb':
+        impl('js', 'EdgeDB (Node.js query builder)', None),
 
-    'edgedb_querybuilder_uncached_js':
-        impl('js', 'EdgeDB Node.js Query Builder (uncached)', None),
+    'edgedb_js_qb_uncached':
+        impl('js', 'EdgeDB (Node.js query builder, uncached)', None),
 
     'typeorm':
         impl('js', 'TypeORM', None),
@@ -107,14 +108,14 @@ IMPLEMENTATIONS = {
     'sequelize':
         impl('js', 'Sequelize', None),
 
-    'postgres_js':
-        impl('js', 'PostgreSQL Node.js', None),
+    'postgres_pg':
+        impl('js', 'Postgres', None),
 
-    'postgres_prisma_js':
-        impl('js', 'Postgres + Prisma', None),
+    'prisma_untuned':
+        impl('js', 'Prisma (Untuned)', None),
 
-    'postgres_prisma_tuned_js':
-        impl('js', 'Postgres + Prisma Tuned Node.js', None),
+    'prisma':
+        impl('js', 'Prisma', None),
 }
 
 
@@ -230,7 +231,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--query', dest='queries', action='append',
         help='queries to benchmark',
-        choices=list(BENCHMARKS.keys()) + ['all'])
+        choices=list(BENCHMARKS.keys()) + ['all', 'selected'])
 
     parser.add_argument(
         'benchmarks', nargs='+', help='benchmarks names',
@@ -249,6 +250,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     args = parser.parse_args()
     argv = sys.argv[1:]
 
+    print("queries: " + str(args.queries))
     if not args.queries:
         args.queries = list(BENCHMARKS.keys())
 

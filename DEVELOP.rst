@@ -59,9 +59,7 @@ Run locally
       $ make load-hasura 
       $ make load-postgraphile
 
-#. Compile Go files: ``$ make go``
-
-#. Compile TypeScript files: ``$ make ts``
+#. Compile runner files (Go, TypeScript): ``$ make compile`
 
 #. Run the benchmarks via ``bench.py``.
 
@@ -69,49 +67,58 @@ Run locally
 
    .. code-block::
 
-      python bench.py --html out.html --concurrency 10 -D 10 all
+      python bench.py --html out.html -D 10 all
 
    To run all JavaScript ORM benchmarks:
 
    .. code-block::
 
-      python bench.py --html out.html --concurrency 10 --duration 10 typeorm,sequelize,postgres_prisma_js,edgedb_querybuilder
+      python bench.py --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
 
    To run all Python ORM benchmarks:
 
    .. code-block::
 
-      python bench.py --html out.html --concurrency 10 --duration 10 django,sqlalchemy
+      python bench.py --html results/python.html --json python.html django sqlalchemy
   
-   To customize the targets, just pass a comma-separated list of the following options. 
+   To specify a custom set of targets, pass a space-separated list of the following options:
 
-   - ``edgedb_json_sync``
-   - ``edgedb_json_async``
-   - ``edgedb_repack_sync``
-   - ``edgedb_graphql_go``
-   - ``edgedb_http_go``
-   - ``edgedb_json_go``
-   - ``edgedb_repack_go``
+   - ``typeorm``
+   - ``sequelize``
+   - ``prisma``
+   - ``edgedb_js_qb``
    - ``django``
    - ``django_restfw``
    - ``mongodb``
    - ``sqlalchemy``
+   - ``edgedb_py_sync``
+   - ``edgedb_py_json``
+   - ``edgedb_py_json_async``
+   - ``edgedb_go``
+   - ``edgedb_go_json``
+   - ``edgedb_go_graphql``
+   - ``edgedb_go_http``
+   - ``edgedb_js``
+   - ``edgedb_js_json``
    - ``postgres_asyncpg``
    - ``postgres_psycopg``
    - ``postgres_pq``
    - ``postgres_pgx``
+   - ``postgres_pg``
    - ``postgres_hasura_go``
    - ``postgres_postgraphile_go``
-   - ``edgedb_json_js``
-   - ``edgedb_repack_js``
-   - ``edgedb_querybuilder_js``
-   - ``edgedb_querybuilder_uncached_js``
-   - ``typeorm``
-   - ``sequelize``
-   - ``postgres_js``
-   - ``postgres_prisma_js``
-   - ``postgres_prisma_tuned_js`` 
+  
+   To customize the included queries, use the ``--query`` flag to pass a comma-separated list of the following options.
 
+   - ``get_movie``
+   - ``get_person``
+   - ``get_user``
+   - ``update_movie``
+   - ``insert_user``
+   - ``insert_movie``
+   - ``insert_movie_plus``
+  
+   
    You can see a full list of command options like so:
 
    .. code-block::

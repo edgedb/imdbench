@@ -41,74 +41,70 @@ async def import_data(data: dict):
         ) for m in movies]
     ordered = [m for m in movies_data if m['_id'] % 10]
     unordered = [m for m in movies_data if not m['_id'] % 10]
-    print("Movies" + str(len(movies)))
-    print("Movie data" + str(len(movies_data)))
-    print("Ordered" + str(len(ordered)))
-    print("Unordered" + str(len(unordered)))
 
-    # #################
-    # ## LOAD PEOPLE ##
-    # #################
-    # people_data = [
-    #     dict(
-    #         first_name=p['first_name'],
-    #         middle_name=p['middle_name'],
-    #         last_name=p['last_name'],
-    #         image=p['image'],
-    #         bio=p['bio']
-    #     ) for p in people
-    # ]
+    #################
+    ## LOAD PEOPLE ##
+    #################
+    people_data = [
+        dict(
+            first_name=p['first_name'],
+            middle_name=p['middle_name'],
+            last_name=p['last_name'],
+            image=p['image'],
+            bio=p['bio']
+        ) for p in people
+    ]
 
-    # ppl_insert_query = r'''
-    #     WITH people := <json>$people
-    #     FOR person IN json_array_unpack(people) UNION (
-    #     INSERT Person {
-    #         first_name := <str>person['first_name'],
-    #         middle_name := <str>person['middle_name'],
-    #         last_name := <str>person['last_name'],
-    #         image := <str>person['image'],
-    #         bio := <str>person['bio'],
-    #     });
-    # '''
+    ppl_insert_query = r'''
+        WITH people := <json>$people
+        FOR person IN json_array_unpack(people) UNION (
+        INSERT Person {
+            first_name := <str>person['first_name'],
+            middle_name := <str>person['middle_name'],
+            last_name := <str>person['last_name'],
+            image := <str>person['image'],
+            bio := <str>person['bio'],
+        });
+    '''
 
-    # start = 0
-    # people_bar = progress.bar.Bar("Person", max=len(people_data))
-    # people_slice = people_data[start:start+batch_size]
-    # while len(people_slice):
-    #     people_bar.goto(start)
-    #     await client.query(ppl_insert_query, people=json.dumps(people_slice))
-    #     start += batch_size
-    #     people_slice = people_data[start:start+batch_size]
-    # people_bar.goto(people_bar.max)
+    start = 0
+    people_bar = progress.bar.Bar("Person", max=len(people_data))
+    people_slice = people_data[start:start+batch_size]
+    while len(people_slice):
+        people_bar.goto(start)
+        await client.query(ppl_insert_query, people=json.dumps(people_slice))
+        start += batch_size
+        people_slice = people_data[start:start+batch_size]
+    people_bar.goto(people_bar.max)
 
-    # ################
-    # ## LOAD USERS ##
-    # ################
-    # users_data = [
-    #     dict(
-    #         name=u['name'],
-    #         image=u['image'],
-    #     ) for u in users
-    # ]
+    ################
+    ## LOAD USERS ##
+    ################
+    users_data = [
+        dict(
+            name=u['name'],
+            image=u['image'],
+        ) for u in users
+    ]
 
-    # users_insert_query = r'''
-    #     WITH users := <json>$users
-    #     FOR user IN json_array_unpack(users) UNION (
-    #     INSERT User {
-    #         name := <str>user['name'],
-    #         image := <str>user['image'],
-    #     });
-    # '''
+    users_insert_query = r'''
+        WITH users := <json>$users
+        FOR user IN json_array_unpack(users) UNION (
+        INSERT User {
+            name := <str>user['name'],
+            image := <str>user['image'],
+        });
+    '''
 
-    # start = 0
-    # users_bar = progress.bar.Bar("User", max=len(users_data))
-    # users_slice = users_data[start:start+batch_size]
-    # while len(users_slice):
-    #     users_bar.goto(start)
-    #     await client.query(users_insert_query, users=json.dumps(users_slice))
-    #     start += batch_size
-    #     users_slice = users_data[start:start+batch_size]
-    # users_bar.goto(users_bar.max)
+    start = 0
+    users_bar = progress.bar.Bar("User", max=len(users_data))
+    users_slice = users_data[start:start+batch_size]
+    while len(users_slice):
+        users_bar.goto(start)
+        await client.query(users_insert_query, users=json.dumps(users_slice))
+        start += batch_size
+        users_slice = users_data[start:start+batch_size]
+    users_bar.goto(users_bar.max)
 
     #################
     ## LOAD MOVIES ##
@@ -124,7 +120,7 @@ async def import_data(data: dict):
             cast=id2image(id2image_maps['person'], m['cast']),
         ) for m in movies
     ]
-    ordered = [m for m in movies_data if m['_id'] % 10][0:500]
+    ordered = [m for m in movies_data if m['_id'] % 10]
     unordered = [m for m in movies_data if not m['_id'] % 10]
 
     start = 0
@@ -172,15 +168,9 @@ async def import_data(data: dict):
         ordered_slice = ordered[start:start+batch_size]
 
     start = 0
-    batch_size = 3
-    print("Loading unordered movies")
+    batch_size = 100
     unordered_slice = unordered[start:start+batch_size]
-    print(json.dumps(unordered_slice))
     while len(unordered_slice):
-        print("Loading " + str(start))
-        print(len(unordered_slice))
-        print(start)
-        print(start+batch_size)
         movie_bar.goto(total_movies)
         await client.query(r'''
             WITH movies := <json>$movies
@@ -225,7 +215,6 @@ async def import_data(data: dict):
     ## LOAD REVIEWS ##
     ##################
 
-    print("Loading reviews")
     reviews_data = [
         dict(
             body=r['body'],
@@ -237,6 +226,7 @@ async def import_data(data: dict):
     ]
 
     start = 0
+    batch_size = 1000
     review_bar = progress.bar.Bar("Review", max=len(reviews_data))
     reviews_slice = reviews_data[start:start+batch_size]
     while len(reviews_slice):

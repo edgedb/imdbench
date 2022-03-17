@@ -2,14 +2,14 @@
 SHELL = /bin/bash
 .SHELLFLAGS += -Ee -o pipefail
 
-.PHONY: all load new-dataset generate-and-clean go load-postgres-helpers
+.PHONY: all load new-dataset compile load-postgres-helpers
 .PHONY:	stop-docker reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
-.PHONY: js-querybuilder
+.PHONY: run-js run-py run-orms run-graphql run-edgedb
 
-
+RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 DOCKER ?= docker
@@ -57,10 +57,6 @@ new-dataset:
 		| sed "s/%REVIEWS%/$(reviews)/" \
 		| sed "s/%MOVIES%/$(moviesplus)/" > dataset/movies/review.json
 	synth generate dataset/movies > $(BUILD)/protodataset.json
-	$(PP) dataset/cleandata.py
-
-generate-and-clean: 
-	synth generate movies > $(BUILD)/protodataset.json
 	$(PP) dataset/cleandata.py
 
 docker-network:
@@ -143,13 +139,10 @@ load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
 	$(PP) -m _edgedb.loaddata_nobulk $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
-	
-	-edgedb project info
-	-edgedb project unlink
-	-edgedb instance unlink edgedb_bench
+	edgedb project unlink -D
 	edgedb -H localhost -P 15656 instance link \
-		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
-	&& edgedb -H localhost -P 15656 project init --link \
+		--non-interactive --trust-tls-cert --overwrite edgedb_bench
+	edgedb -H localhost -P 15656 project init --link \
 		--non-interactive --server-instance edgedb_bench
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
@@ -157,6 +150,7 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb query 'DROP DATABASE temp'
 	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+	cd _edgedb_js && npm i && npx edgeql-js --output-dir querybuilder --target cjs
 
 load-edgedb-nosetup:
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
@@ -196,6 +190,7 @@ load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
+	cd _postgres && npm i
 
 reset-postgres: docker-postgres
 	$(PSQL_CMD) -tc \
@@ -243,16 +238,16 @@ load-hasura: load-postgres-helpers
 	(cd _hasura && ./send-metadata.sh)
 
 load-prisma: docker-postgres
-	cd _prisma
-	npm i
-	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env
+	cd _prisma && \
+	npm i && \
+	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env && \
 	npx prisma generate && npm i
 
 load-postgraphile: docker-postgres
-	cd _postgraphile
+	cd _postgraphile && \
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
-			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
-	docker build -t postgraphile_bench:latest .
+			--file=$(CURRENT_DIR)_postgraphile/helpers.sql && \
+	docker build -t postgraphile_bench:latest . && \
 	./run_postgraphile.sh
 
 load-typeorm: $(BUILD)/dataset.json docker-postgres
@@ -266,7 +261,10 @@ load-typeorm: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
 		"CREATE DATABASE typeorm_bench WITH OWNER = typeorm_bench;"
 
-	cd _typeorm && npm i && npm run loaddata $(BUILD)/dataset.json
+	cd _typeorm && \
+	npm i && \
+	npm run loaddata $(BUILD)/dataset.json && \
+	npm run build
 
 load-sequelize: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
@@ -286,11 +284,20 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 
 load-graphql: load-hasura load-postgraphile
 
-go:
+compile:
 	make -C _go
 
-ts:
-	cd _typeorm && npm i && npm run build
+run-js: 
+	$(RUNNER) --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
 
-js-querybuilder:
-	cd _edgedb_js && npx edgeql-js --output-dir querybuilder
+run-py: 
+	$(RUNNER) --html results/py.html --json results/py.json django sqlalchemy edgedb_py_sync
+
+run-graphql:
+	$(RUNNER) --html results/py.html --json results/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
+	
+run-orms: 
+	$(RUNNER) --html results/orms.html --json results/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
+
+run-edgedb: 
+	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb

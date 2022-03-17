@@ -64,7 +64,7 @@ def run_query(ctx, benchmark, queryname):
 
     # If we're running Prisma benchmark we need to update the `.env`
     # file with the pool size and timeout info.
-    if benchmark == 'postgres_prisma_js':
+    if benchmark == 'prisma_untuned':
         with open('_prisma/.env', 'wt') as f:
             f.write(
                 f'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@'
@@ -74,7 +74,8 @@ def run_query(ctx, benchmark, queryname):
                 f'&pool_timeout={ctx.timeout}"')
 
     cmd = [str(c) for c in [exe] + opts + [benchmark]]
-
+    print("Running benchmark...")
+    print(' '.join(cmd))
     try:
         proc = subprocess.run(
             cmd, text=True, capture_output=True, check=True,
@@ -83,7 +84,8 @@ def run_query(ctx, benchmark, queryname):
         print(e.stderr)
         raise
 
-    data = json.loads(proc.stdout)
+    output = proc.stdout
+    data = json.loads(output)
 
     avg_latency = np.average(
         np.arange(len(data['latency_stats'])),

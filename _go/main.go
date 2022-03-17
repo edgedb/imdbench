@@ -165,9 +165,9 @@ func main() {
 	var worker bench.Worker
 
 	switch args.Benchmark {
-	case "edgedb_repack_go":
+	case "edgedb_go":
 		worker = edgedb.RepackWorker
-	case "edgedb_json_go":
+	case "edgedb_go_json":
 		worker = edgedb.JSONWorker
 	case "postgres_pq":
 		worker = postgres.PQWorker
