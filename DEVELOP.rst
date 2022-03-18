@@ -14,11 +14,17 @@ Run locally
    Environment <https://docs.python.org/3/tutorial/venv.html>`_ docs 
    for details.
   
-#. Install dependencies from ``requirements.txt``
+#. Install Python dependencies
 
    .. code-block::
   
       pip install -r requirements.txt
+
+#. Install Node.js dependencies
+
+   .. code-block::
+  
+      npm install
 
 #. Install the following toolchains:
 
