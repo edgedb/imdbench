@@ -20,6 +20,8 @@ Run locally
   
       pip install -r requirements.txt
 
+#. Install `Node.js <https://nodejs.org/en/download/>`_ v14.16.0+.
+
 #. Install Node.js dependencies
 
    .. code-block::
@@ -33,12 +35,10 @@ Run locally
    - `Golang <https://go.dev/doc/install>`_
    - (Optional) `MongoDB <https://docs.mongodb.com/manual/installation/>`_
 
-#. Install `Node.js <https://nodejs.org/en/download/>`_ v14.16.0+.
-
 #. Install `Docker <https://docs.docker.com/get-docker/>`_ and `docker-compose 
-   <https://docs.docker.com/compose/install/>`_ (needed for Hasura).
+   <https://docs.docker.com/compose/install/>`_
 
-#. Install ``synth``. (https://www.getsynth.com)
+#. Install `Synth <https://www.getsynth.com>`_
 
 #. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
    users, and 500k reviews already exists in the ``dataset/build`` 
@@ -60,16 +60,16 @@ Run locally
 
    .. code-block::
 
-      $ make load-edgedb 
-      $ make load-postgres
-      $ make load-mongodb 
       $ make load-django 
       $ make load-sqlalchemy  
       $ make load-typeorm 
       $ make load-sequelize 
       $ make load-prisma 
-      $ make load-hasura 
+      $ make load-hasura
       $ make load-postgraphile
+      $ make load-edgedb 
+      $ make load-postgres
+      $ make load-mongodb 
 
 #. Compile runner files (Go, TypeScript): ``$ make compile`
 
