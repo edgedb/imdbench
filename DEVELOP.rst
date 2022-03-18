@@ -56,7 +56,7 @@ Run locally
       $ make new-dataset people=5000 users=1000 reviews=100
 
 #. Load the data into the test databases via ``$ make load``. Alternatively, 
-   you can run the loaders one at a time with the following commands:
+   you can run only the loaders you care about:
 
    .. code-block::
 
@@ -73,27 +73,70 @@ Run locally
 
 #. Compile runner files (Go, TypeScript): ``$ make compile`
 
-#. Run the benchmarks via ``bench.py``.
+#. Run the benchmarks
 
-   To run all benchmarks:
+   - To execute the JavaScript ORM benchmarks, you must first run the folowing loaders:
+   
+      .. code-block::
+
+         $ make load-typeorm 
+         $ make load-sequelize 
+         $ make load-prisma 
+         $ make load-edgedb       
+   
+      Then run the benchmarks:
+   
+      .. code-block::
+         
+         $ make run-js
+      
+      The results will be generated into ``results/js.html``.
+
+   - To execute the Python ORM benchmarks, you must first run 
+     the following loaders:
+   
+      .. code-block::
+
+         $ make load-django 
+         $ make load-sqlalchemy 
+         $ make load-edgedb       
+   
+      Then run the benchmarks:
+   
+      .. code-block::
+         
+         $ make run-py
+      
+      The results will be generated into ``results/py.html``.
+
+#. [Optional] Customize the benchmark
+
+   The benchmarking system can be customized by directly running ``python 
+   bench.py``.
 
    .. code-block::
 
-      python bench.py --html out.html -D 10 all
-
-   To run all JavaScript ORM benchmarks:
-
-   .. code-block::
-
-      python bench.py --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
-
-   To run all Python ORM benchmarks:
-
-   .. code-block::
-
-      python bench.py --html results/python.html --json python.html django sqlalchemy
+      python bench.py 
+        --html <path/to/file> 
+        --json <path/to/file> 
+        --concurrency <seconds>
+        --query <query_name>
+        [targets]
   
-   To specify a custom set of targets, pass a space-separated list of the following options:
+      
+   The ``query_name`` must be one of the folowing options. To pick multiple 
+   queries, you can use the ``--query`` flag multiple times.
+
+   - ``get_movie``
+   - ``get_person``
+   - ``get_user``
+   - ``update_movie``
+   - ``insert_user``
+   - ``insert_movie``
+   - ``insert_movie_plus``
+
+   Specify a custom set of ``targets`` with a space-separated list of the 
+   following options:
 
    - ``typeorm``
    - ``sequelize``
@@ -120,18 +163,7 @@ Run locally
    - ``postgres_hasura_go``
    - ``postgres_postgraphile_go``
   
-   To customize the included queries, use the ``--query`` flag to pass a comma-separated list of the following options.
-
-   - ``get_movie``
-   - ``get_person``
-   - ``get_user``
-   - ``update_movie``
-   - ``insert_user``
-   - ``insert_movie``
-   - ``insert_movie_plus``
-  
-   
-   You can see a full list of command options like so:
+   You can see a full list of options like so:
 
    .. code-block::
 
