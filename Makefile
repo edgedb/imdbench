@@ -104,7 +104,7 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:1
+		edgedb/edgedb:latest
 	sleep 3
 
 docker-edgedb-stop:
@@ -301,3 +301,6 @@ run-orms:
 
 run-edgedb: 
 	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
+
+run-scratch: 
+	python bench.py --concurrency 1 --duration 10 --html results/scratch.html edgedb_js sequelize

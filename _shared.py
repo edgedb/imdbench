@@ -231,7 +231,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--query', dest='queries', action='append',
         help='queries to benchmark',
-        choices=list(BENCHMARKS.keys()) + ['all', 'selected'])
+        choices=list(BENCHMARKS.keys()) + ['all'])
 
     parser.add_argument(
         'benchmarks', nargs='+', help='benchmarks names',
@@ -250,7 +250,6 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     args = parser.parse_args()
     argv = sys.argv[1:]
 
-    print("queries: " + str(args.queries))
     if not args.queries:
         args.queries = list(BENCHMARKS.keys())
 

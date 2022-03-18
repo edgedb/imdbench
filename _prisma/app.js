@@ -9,7 +9,6 @@ async function main() {
   const data = await prisma.benchQuery('get_user', 90);
   // const data = await prisma.benchQuery('get_person', 120)
   // const data = await prisma.benchQuery('get_movie', 25)
-  // console.log(data)
 }
 
 main()

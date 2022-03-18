@@ -211,11 +211,3 @@ const queries = {
   `,
 };
 module.exports = queries;
-
-queries.insertMovie; // insert movie with all properties + connect cast and directors (pre-existing)
-queries.insertMoviePlus; // insert movie with all properties + create cast and directors (create new Person)
-queries.updateMovie;
-queries.insertUser;
-queries.movie;
-queries.person;
-queries.user;

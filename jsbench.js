@@ -103,8 +103,6 @@ async function runner(args, app) {
   var data = null;
   var samples = [];
 
-  // console.log(app);
-  // console.log(app.getIDs);
   var ids = (await app.getIDs())[args.query];
   if (ids.length > args.numner_of_ids) {
     ids = ids.slice(0, args.numner_of_ids);
@@ -169,11 +167,9 @@ async function runner(args, app) {
       // execute queries one after the other in a loop
       do {
         reqStart = _now();
-        // console.log(ids);
         var id = ids[idIndex];
         idIndex += 1;
         idIndex %= ids.length;
-        // console.log(`ID: ${id}`);
         var data = await app.benchQuery(query, id);
 
         // record the sample if needed

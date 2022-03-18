@@ -68,7 +68,7 @@ async def import_data(data: dict):
     '''
 
     start = 0
-    people_bar = progress.bar.Bar("Person", max=len(people_data))
+    people_bar = progress.bar.Bar("Person", max=len(people))
     people_slice = people_data[start:start+batch_size]
     while len(people_slice):
         people_bar.goto(start)
@@ -97,7 +97,7 @@ async def import_data(data: dict):
     '''
 
     start = 0
-    users_bar = progress.bar.Bar("User", max=len(users_data))
+    users_bar = progress.bar.Bar("User", max=len(users))
     users_slice = users_data[start:start+batch_size]
     while len(users_slice):
         users_bar.goto(start)
@@ -124,7 +124,7 @@ async def import_data(data: dict):
     unordered = [m for m in movies_data if not m['_id'] % 10]
 
     start = 0
-    movie_bar = progress.bar.Bar("Movie", max=len(movies_data))
+    movie_bar = progress.bar.Bar("Movie", max=len(movies))
     total_movies = 0
     ordered_slice = ordered[start:start+batch_size]
     while len(ordered_slice):
@@ -227,7 +227,7 @@ async def import_data(data: dict):
 
     start = 0
     batch_size = 1000
-    review_bar = progress.bar.Bar("Review", max=len(reviews_data))
+    review_bar = progress.bar.Bar("Review", max=len(reviews))
     reviews_slice = reviews_data[start:start+batch_size]
     while len(reviews_slice):
         review_bar.goto(start)

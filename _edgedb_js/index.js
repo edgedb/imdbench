@@ -357,7 +357,6 @@ class App {
           people := array_agg((SELECT P ORDER BY P.r).id),
       );
     `);
-    // console.log(ids);
 
     return {
       get_user: ids.users,
