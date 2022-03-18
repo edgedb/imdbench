@@ -123,10 +123,7 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
-	
-	-edgedb project info
-	-edgedb project unlink
-	-edgedb instance unlink edgedb_bench
+	-edgedb project unlink --non-interactive -D
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
 	&& edgedb -H localhost -P 15656 project init --link \
@@ -139,7 +136,7 @@ load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
 	$(PP) -m _edgedb.loaddata_nobulk $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
-	edgedb project unlink -D
+	-edgedb project unlink --non-interactive -D
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench
 	edgedb -H localhost -P 15656 project init --link \
