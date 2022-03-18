@@ -32,7 +32,6 @@ directorsonly=$(shell expr ${people} \* 6 / 100)
 movies=$(shell expr ${people} / 4)
 moviesplus=$(shell expr ${movies})
 
-
 all:
 	@echo "pick a target"
 
@@ -123,7 +122,8 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
-	-edgedb project unlink --non-interactive -D
+	-edgedb project unlink --non-interactive
+	-edgedb instance destroy edgedb_bench --force
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
 	&& edgedb -H localhost -P 15656 project init --link \
@@ -136,7 +136,8 @@ load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
 	$(PP) -m _edgedb.loaddata_nobulk $(BUILD)/edbdataset.json
 
 load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
-	-edgedb project unlink --non-interactive -D
+	-edgedb project unlink --non-interactive
+	-edgedb instance destroy edgedb_bench --force
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench
 	edgedb -H localhost -P 15656 project init --link \
@@ -179,7 +180,7 @@ load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
 		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;"
 
-	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
+	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
 load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
