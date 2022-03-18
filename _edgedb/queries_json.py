@@ -8,36 +8,25 @@
 
 import edgedb
 import random
-import threading
 
 from . import queries
 
-ASYNC = True
+
 INSERT_PREFIX = 'insert_test__'
-thread_data = threading.local()
 
 
-async def connect(ctx):
-    client = getattr(thread_data, 'client', None)
-    if client is None:
-        client = (
-            edgedb.create_async_client(max_concurrency=ctx.concurrency)
-            .with_retry_options(
-                edgedb.RetryOptions(attempts=10)
-            )
-        )
-
-    return client
+def connect(ctx):
+    return edgedb.create_client().with_retry_options(
+        edgedb.RetryOptions(attempts=10),
+    )
 
 
-async def close(ctx, conn):
-    # Don't bother closing individual pool connections, they'll be
-    # closed automatically.
-    pass
+def close(ctx, conn):
+    conn.close()
 
 
-async def load_ids(ctx, conn):
-    d = await conn.query_single('''
+def load_ids(ctx, conn):
+    d = conn.query_single('''
         WITH
             U := User {id, r := random()},
             M := Movie {id, r := random()},
@@ -69,32 +58,32 @@ async def load_ids(ctx, conn):
     )
 
 
-async def get_user(conn, id):
-    return await conn.query_single_json(queries.GET_USER, id=id)
+def get_user(conn, id):
+    return conn.query_single_json(queries.GET_USER, id=id)
 
 
-async def get_movie(conn, id):
-    return await conn.query_single_json(queries.GET_MOVIE, id=id)
+def get_movie(conn, id):
+    return conn.query_single_json(queries.GET_MOVIE, id=id)
 
 
-async def get_person(conn, id):
-    return await conn.query_single_json(queries.GET_PERSON, id=id)
+def get_person(conn, id):
+    return conn.query_single_json(queries.GET_PERSON, id=id)
 
 
-async def update_movie(conn, id):
-    return await conn.query_single_json(
+def update_movie(conn, id):
+    return conn.query_single_json(
         queries.UPDATE_MOVIE, id=id, suffix=str(id)[:8])
 
 
-async def insert_user(conn, val):
+def insert_user(conn, val):
     num = random.randrange(1_000_000)
-    return await conn.query_single_json(
+    return conn.query_single_json(
         queries.INSERT_USER, name=f'{val}{num}', image=f'image_{val}{num}')
 
 
-async def insert_movie(conn, val):
+def insert_movie(conn, val):
     num = random.randrange(1_000_000)
-    return await conn.query_single_json(
+    return conn.query_single_json(
         queries.INSERT_MOVIE,
         title=f'{val["prefix"]}{num}',
         image=f'{val["prefix"]}image{num}.jpeg',
@@ -105,9 +94,9 @@ async def insert_movie(conn, val):
     )
 
 
-async def insert_movie_plus(conn, val):
+def insert_movie_plus(conn, val):
     num = random.randrange(1_000_000)
-    return await conn.query_single_json(
+    return conn.query_single_json(
         queries.INSERT_MOVIE_PLUS,
         title=f'{val}{num}',
         image=f'{val}image{num}.jpeg',
@@ -125,38 +114,38 @@ async def insert_movie_plus(conn, val):
     )
 
 
-async def setup(ctx, conn, queryname):
+def setup(ctx, conn, queryname):
     if queryname == 'update_movie':
-        await conn.execute('''
+        conn.execute('''
             update Movie
             filter contains(.title, '---')
             set {
                 title := str_split(.title, '---')[0]
-            }
+            };
         ''')
     elif queryname == 'insert_user':
-        await conn.query('''
+        conn.query('''
             delete User
             filter .name LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}%')
     elif queryname == 'insert_movie':
-        await conn.query('''
+        conn.query('''
             delete Movie
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')
     elif queryname == 'insert_movie_plus':
-        await conn.query('''
+        conn.query('''
             delete Movie
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')
-        await conn.query('''
+        conn.query('''
             delete Person
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')
 
 
-async def cleanup(ctx, conn, queryname):
+def cleanup(ctx, conn, queryname):
     if queryname in {'update_movie', 'insert_user', 'insert_movie',
                      'insert_movie_plus'}:
         # The clean up is the same as setup for mutation benchmarks
-        await setup(ctx, conn, queryname)
+        setup(ctx, conn, queryname)

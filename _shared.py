@@ -12,7 +12,7 @@ import types
 import typing
 
 
-from _edgedb import queries as edgedb_queries
+from _edgedb import queries_json as edgedb_queries_json
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
 from _go.edgedb import queries_edgedb as edgedb_json_golang
@@ -38,7 +38,7 @@ class impl(typing.NamedTuple):
 
 IMPLEMENTATIONS = {
     'edgedb_json_sync':
-        impl('python', 'EdgeDB Python JSON', edgedb_queries),
+        impl('python', 'EdgeDB Python JSON', edgedb_queries_json),
 
     'edgedb_json_async':
         impl('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),

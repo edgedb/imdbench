@@ -20,7 +20,7 @@ class Pool:
 
     def __init__(self, data, *, concurrency: int):
         self._concurrency = concurrency
-        self.client = edgedb.create_async_client(concurrency=concurrency)
+        self.client = edgedb.create_async_client(max_concurrency=concurrency)
 
         self._results = asyncio.Queue()
 

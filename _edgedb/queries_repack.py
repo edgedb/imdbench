@@ -10,12 +10,15 @@ import edgedb
 import json
 import random
 
+from . import queries
 
 INSERT_PREFIX = 'insert_test__'
 
 
 def connect(ctx):
-    return edgedb.connect()
+    return edgedb.create_client().with_retry_options(
+        edgedb.RetryOptions(attempts=10),
+    )
 
 
 def close(ctx, conn):
@@ -56,31 +59,7 @@ def load_ids(ctx, conn):
 
 
 def get_user(conn, id):
-    u = conn.query_single('''
-        SELECT User {
-            id,
-            name,
-            image,
-            latest_reviews := (
-                WITH UserReviews := User.<author[IS Review]
-                SELECT UserReviews {
-                    id,
-                    body,
-                    rating,
-                    movie: {
-                        id,
-                        image,
-                        title,
-                        avg_rating
-                    }
-                }
-                ORDER BY .creation_time DESC
-                LIMIT 10
-            )
-        }
-        FILTER .id = <uuid>$id
-    ''', id=id)
-
+    u = conn.query_single(queries.GET_USER, id=id)
     return json.dumps({
         'id': str(u.id),
         'name': u.name,
@@ -102,48 +81,7 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    m = conn.query_single('''
-        SELECT Movie {
-            id,
-            image,
-            title,
-            year,
-            description,
-            avg_rating,
-
-            directors: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY Movie.directors@list_order EMPTY LAST
-                THEN Movie.directors.last_name,
-
-            cast: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY Movie.cast@list_order EMPTY LAST
-                THEN Movie.cast.last_name,
-
-            reviews := (
-                SELECT Movie.<movie[IS Review] {
-                    id,
-                    body,
-                    rating,
-                    author: {
-                        id,
-                        name,
-                        image,
-                    }
-                }
-                ORDER BY .creation_time DESC
-            ),
-        }
-        FILTER .id = <uuid>$id
-    ''', id=id)
-
+    m = conn.query_single(queries.GET_MOVIE, id=id)
     return json.dumps({
         'id': str(m.id),
         'image': m.image,
@@ -184,40 +122,7 @@ def get_movie(conn, id):
 
 
 def get_person(conn, id):
-    p = conn.query_single('''
-        SELECT Person {
-            id,
-            full_name,
-            image,
-            bio,
-
-            acted_in := (
-                WITH M := Person.<cast[IS Movie]
-                SELECT M {
-                    id,
-                    image,
-                    title,
-                    year,
-                    avg_rating
-                }
-                ORDER BY .year ASC THEN .title ASC
-            ),
-
-            directed := (
-                WITH M := Person.<directors[IS Movie]
-                SELECT M {
-                    id,
-                    image,
-                    title,
-                    year,
-                    avg_rating
-                }
-                ORDER BY .year ASC THEN .title ASC
-            ),
-        }
-        FILTER .id = <uuid>$id
-    ''', id=id)
-
+    p = conn.query_single(queries.GET_PERSON, id=id)
     return json.dumps({
         'id': str(p.id),
         'full_name': p.full_name,
@@ -247,19 +152,7 @@ def get_person(conn, id):
 
 
 def update_movie(conn, id):
-    u = conn.query_single('''
-        SELECT (
-            UPDATE Movie
-            FILTER .id = <uuid>$id
-            SET {
-                title := .title ++ '---' ++ <str>$suffix
-            }
-        ) {
-            id,
-            title
-        }
-    ''', id=id, suffix=str(id)[:8])
-
+    u = conn.query_single(queries.UPDATE_MOVIE, id=id, suffix=str(id)[:8])
     return json.dumps({
         'id': str(u.id),
         'title': u.title,
@@ -268,19 +161,8 @@ def update_movie(conn, id):
 
 def insert_user(conn, val):
     num = random.randrange(1_000_000)
-    u = conn.query_single('''
-        SELECT (
-            INSERT User {
-                name := <str>$name,
-                image := <str>$image,
-            }
-        ) {
-            id,
-            name,
-            image,
-        }
-    ''', name=f'{val}{num}', image=f'image_{val}{num}')
-
+    u = conn.query_single(
+        queries.INSERT_USER, name=f'{val}{num}', image=f'image_{val}{num}')
     return json.dumps({
         'id': str(u.id),
         'name': u.name,
@@ -291,51 +173,13 @@ def insert_user(conn, val):
 def insert_movie(conn, val):
     num = random.randrange(1_000_000)
     m = conn.query_single(
-        r'''
-        SELECT (
-            INSERT Movie {
-                title := <str>$title,
-                image := <str>$image,
-                description := <str>$description,
-                year := <int64>$year,
-                directors := (
-                    SELECT Person
-                    FILTER .id = (<uuid>$d_id)
-                ),
-                cast := (
-                    SELECT Person
-                    FILTER .id IN {<uuid>$c_id0, <uuid>$c_id1, <uuid>$c_id2}
-                ),
-            }
-        ) {
-            id,
-            title,
-            image,
-            description,
-            year,
-            directors: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY .last_name,
-
-            cast: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY .last_name,
-        }
-        ''',
+        queries.INSERT_MOVIE,
         title=f'{val["prefix"]}{num}',
         image=f'{val["prefix"]}image{num}.jpeg',
         description=f'{val["prefix"]}description{num}',
         year=num,
         d_id=val["people"][0],
-        c_id0=val["people"][1],
-        c_id1=val["people"][2],
-        c_id2=val["people"][3],
+        cast=val["people"][1:3],
     )
 
     return json.dumps({
@@ -366,55 +210,7 @@ def insert_movie(conn, val):
 def insert_movie_plus(conn, val):
     num = random.randrange(1_000_000)
     m = conn.query_single(
-        r'''
-        SELECT (
-            INSERT Movie {
-                title := <str>$title,
-                image := <str>$image,
-                description := <str>$description,
-                year := <int64>$year,
-                directors := (
-                    INSERT Person {
-                        first_name := <str>$dfn,
-                        last_name := <str>$dln,
-                        image := <str>$dimg,
-                    }
-                ),
-                cast := {(
-                    INSERT Person {
-                        first_name := <str>$cfn0,
-                        last_name := <str>$cln0,
-                        image := <str>$cimg0,
-                    }
-                ), (
-                    INSERT Person {
-                        first_name := <str>$cfn1,
-                        last_name := <str>$cln1,
-                        image := <str>$cimg1,
-                    }
-                )},
-            }
-        ) {
-            id,
-            title,
-            image,
-            description,
-            year,
-            directors: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY .last_name,
-
-            cast: {
-                id,
-                full_name,
-                image,
-            }
-            ORDER BY .last_name,
-        }
-        ''',
+        queries.INSERT_MOVIE_PLUS,
         title=f'{val}{num}',
         image=f'{val}image{num}.jpeg',
         description=f'{val}description{num}',
