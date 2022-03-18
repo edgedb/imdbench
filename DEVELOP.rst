@@ -2,11 +2,17 @@ Run locally
 ###########
 
 
-#. Install Python 3.8+ and create a virtual environment.
+#. Install Python 3.8+, then create and activate a virtual environment.
 
    .. code-block::
   
-      python -m venv my_venv
+      $ python -m venv my_venv
+      $ source my_venv/bin/activate
+   
+   The steps below assume your virtual environment is activated. To deactivate 
+   the venv, just run ``deactivate`` at any time. Read the full `Virtual 
+   Environment <https://docs.python.org/3/tutorial/venv.html>`_ docs 
+   for details.
   
 #. Install dependencies from ``requirements.txt``
 
@@ -41,7 +47,7 @@ Run locally
 
    .. code-block::
 
-      $ make new-dataset people=5000 user=1000 reviews=100
+      $ make new-dataset people=5000 users=1000 reviews=100
 
 #. Load the data into the test databases via ``$ make load``. Alternatively, 
    you can run the loaders one at a time with the following commands:

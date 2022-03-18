@@ -225,7 +225,7 @@ solution (albeit a limited one) to many of SQL's major usability issues. It is a
 1. They can express deep or nested queries in a compact and intuitive way. 
    Queries return objects, instead of a flat list of rows that must be 
    manually denormalized.
-2. They allow schema to be modeled a declarative, object-oriented way.
+2. They allow schema to be modeled in a declarative, object-oriented way.
 3. They provide idiomatic, code-first data fetching APIs for different 
    languages. This is particularly important as statically typed languages like Go and TypeScript gain popularity; the ability of ORMs to return strongly-typed query results in a DRY, non-reduntant way is increasingly desirable.
 
