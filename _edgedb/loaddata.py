@@ -16,7 +16,7 @@ import uvloop
 
 async def import_data(data: dict):
     concurrency = 32
-    client = edgedb.create_async_client(concurrency=concurrency)
+    client = edgedb.create_async_client(max_concurrency=concurrency)
 
     users = data['user']
     reviews = data['review']
