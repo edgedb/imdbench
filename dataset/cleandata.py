@@ -120,9 +120,18 @@ def normalize(data: dict, appname='webapp'):
                 }
             })
 
-    for r in reviews:
+    for i, r in enumerate(reviews):
         r['author_id'] = get_id(r.pop('author'), 'user')
-        r['movie_id'] = get_id(r.pop('movie'), 'movie')
+
+        # The first reviews just get linked to each movie in turn to
+        # avoid having a Movie without reviews. This is to simplify
+        # the average score queries for all the versions of the
+        # benchmarks. It's a smaller change to adjust the dataset than
+        # it is to adjust all the benchmarks.
+        if i < len(movies):
+            r['movie_id'] = get_id(i, 'movie')
+        else:
+            r['movie_id'] = get_id(r.pop('movie'), 'movie')
 
         r['id'] = new_id(r['id'], 'review')
         output.append({

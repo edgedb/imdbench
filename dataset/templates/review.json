@@ -146,7 +146,7 @@
             "subtype": "u64",
             "range": {
                 "high": %MOVIES%,
-                "low": 1,
+                "low": 0,
                 "step": 1
             }
         }

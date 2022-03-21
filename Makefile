@@ -30,7 +30,6 @@ directors=$(shell expr ${people} \* 7 / 100)
 # there's some overlap between directors and actors
 directorsonly=$(shell expr ${people} \* 6 / 100)
 movies=$(shell expr ${people} / 4)
-moviesplus=$(shell expr ${movies})
 
 all:
 	@echo "pick a target"
@@ -54,7 +53,7 @@ new-dataset:
 		| sed "s/%MOVIES%/$(movies)/" > dataset/movies/movie.json
 	cat dataset/templates/review.json \
 		| sed "s/%REVIEWS%/$(reviews)/" \
-		| sed "s/%MOVIES%/$(moviesplus)/" > dataset/movies/review.json
+		| sed "s/%MOVIES%/$(movies)/" > dataset/movies/review.json
 	synth generate dataset/movies > $(BUILD)/protodataset.json
 	$(PP) dataset/cleandata.py
 
