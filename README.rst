@@ -11,32 +11,32 @@ Why is this needed?
 
 The question of ORM performance is more complex than simply "they generate slow queries".
 
-1. **Query splitting**
+1. **⛓ Query splitting**
 
-  It's common for ORMs to perform non-trivial operations (deep fetching, 
-  nested mutation, inline aggregation, etc) by opaquely executing several 
-  queries under the hood. This may not be obvious to the end user. The 
-  incurred latency is rarely reflected in 
-  `more <https://github.com/tortoise/orm-benchmarks>`_ 
-  `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ ORM 
-  benchmarks.
+   It's common for ORMs to perform non-trivial operations (deep fetching, 
+   nested mutation, inline aggregation, etc) by opaquely executing several 
+   queries under the hood. This may not be obvious to the end user. The 
+   incurred latency is rarely reflected in 
+   `more <https://github.com/tortoise/orm-benchmarks>`_ 
+   `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ 
+   ORM benchmarks.
 
-2. **Aggregation (or lack thereof)**
+2. **🪣 Aggregation (or lack thereof)**
 
-  Less mature ORMs often don't support functionality like aggregations 
-  (counts, statistics, averages, etc), forcing users to overfetch and perform 
-  these calculations server-side. Some ORMs provide no aggregation 
-  functionality at all; even advanced ORMs rarely support relational 
-  aggregations, such as ``Find the movie where id=X, returning its title and 
-  the number of reviews about it.``
+   Less mature ORMs often don't support functionality like aggregations 
+   (counts, statistics, averages, etc), forcing users to overfetch and perform 
+   these calculations server-side. Some ORMs provide no aggregation 
+   functionality at all; even advanced ORMs rarely support relational 
+   aggregations, such as ``Find the movie where id=X, returning its title and 
+   the number of reviews about it.``
    
-3. **Transactional queries**
+3. **🏦 Transactional queries**
 
-  Since ORM users must often run several correlated queries in series to 
-  obtain the full set of data they need, the possibility for 
-  hard-to-reproduce data integrity bugs is introduced. Transactions can 
-  alleviate these bugs but can rapidly place unacceptable limits on read 
-  capacity. 
+   Since ORM users must often run several correlated queries in series to 
+   obtain the full set of data they need, the possibility for 
+   hard-to-reproduce data integrity bugs is introduced. Transactions can 
+   alleviate these bugs but can rapidly place unacceptable limits on read 
+   capacity. 
 
 Methodology
 -----------
