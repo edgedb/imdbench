@@ -58,7 +58,10 @@ new-dataset:
 
 docker-network:
 	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
-		|| $(DOCKER) network create --driver=bridge webapp-bench
+		|| $(DOCKER) network create \
+			--driver=bridge \
+			--opt com.docker.network.bridge.name=br-webapp-bench \
+			webapp-bench
 
 docker-network-destroy:
 	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
@@ -285,10 +288,10 @@ compile:
 
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
 
-run-js: 
+run-js:
 	$(RUNNER) --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
 
-run-py: 
+run-py:
 	$(RUNNER) --html results/py.html --json results/py.json django sqlalchemy edgedb_py_sync
 
 run-pysql:
@@ -296,13 +299,12 @@ run-pysql:
 
 run-graphql:
 	$(RUNNER) --html results/py.html --json results/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
-	
-run-orms: 
+
+run-orms:
 	$(RUNNER) --html results/orms.html --json results/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
 
-run-edgedb: 
+run-edgedb:
 	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
-run-scratch: 
+run-scratch:
 	python bench.py --query get_user --concurrency 4 --duration 10 --html results/js.html typeorm sequelize prisma edgedb_js_qb
-	
