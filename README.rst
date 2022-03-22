@@ -58,12 +58,20 @@ The schema consists of four main types.
 
 - ``Person`` (used to represent the cast and crew) 
 - ``Movie``
+  
   - ``directors -> Person`` (to many, orderable with ``list_order``)
   - ``cast -> Person`` (to many, orderable with ``list_order``)
 - ``User``
 - ``Review``
+  
   - ``author -> User`` (to one)
   - ``movie -> Movie`` (to one)
+
+Dataset
+^^^^^^^
+
+The sample dataset consists of 25k movies, 100k people, 100k users, and 500k 
+reviews already exists in the ``dataset/build`` directory. 
 
 Queries
 ^^^^^^^

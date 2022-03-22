@@ -53,7 +53,7 @@ Run locally
 
    .. code-block::
 
-      $ make new-dataset people=5000 users=1000 reviews=100
+      $ make new-dataset people=5000 users=1000 reviews=2000
 
 #. Load the data into the test databases via ``$ make load``. Alternatively, 
    you can run only the loaders you care about:
@@ -61,15 +61,15 @@ Run locally
    .. code-block::
 
       $ make load-django 
+      $ make load-edgedb 
+      $ make load-hasura
+      $ make load-mongodb 
+      $ make load-postgraphile
+      $ make load-postgres
+      $ make load-prisma 
+      $ make load-sequelize 
       $ make load-sqlalchemy  
       $ make load-typeorm 
-      $ make load-sequelize 
-      $ make load-prisma 
-      $ make load-hasura
-      $ make load-postgraphile
-      $ make load-edgedb 
-      $ make load-postgres
-      $ make load-mongodb 
 
 #. Compile runner files (Go, TypeScript): ``$ make compile`
 
@@ -81,6 +81,7 @@ Run locally
 
          $ make load-typeorm 
          $ make load-sequelize 
+         $ make load-postgres
          $ make load-prisma 
          $ make load-edgedb       
    

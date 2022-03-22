@@ -9,7 +9,6 @@ SHELL = /bin/bash
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: run-js run-py run-orms run-graphql run-edgedb
 
-RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 DOCKER ?= docker
@@ -102,8 +101,8 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:latest
-	sleep 3
+		edgedb/edgedb:1
+	sleep 30
 
 docker-edgedb-stop:
 	$(DOCKER) stop webapp-bench-edgedb
@@ -121,7 +120,7 @@ load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
 load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
-	-edgedb project unlink --non-interactive
+	-edgedb project unlink
 	-edgedb instance destroy edgedb_bench --force
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
@@ -182,7 +181,7 @@ load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
-load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
+load-postgres: docker-postgres-stop reset-postgres $(BUILD)/dataset.json
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
@@ -284,6 +283,8 @@ load-graphql: load-hasura load-postgraphile
 compile:
 	make -C _go
 
+RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
+
 run-js: 
 	$(RUNNER) --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
 
@@ -300,4 +301,5 @@ run-edgedb:
 	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
 run-scratch: 
-	python bench.py --concurrency 1 --duration 10 --html results/scratch.html edgedb_js sequelize
+	python bench.py --query get_user --concurrency 4 --duration 10 --html results/js.html typeorm sequelize prisma edgedb_js_qb
+	
