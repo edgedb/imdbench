@@ -39,31 +39,31 @@ class impl(typing.NamedTuple):
 IMPLEMENTATIONS = {
 
     'edgedb_py_json':
-        impl('python', 'EdgeDB Python (JSON)', edgedb_queries_json),
+        impl('python', 'EdgeDB (Python, JSON)', edgedb_queries_json),
 
     'edgedb_py_json_async':
-        impl('python', 'EdgeDB Python (JSON, asyncio)', edgedb_queries_async),
+        impl('python', 'EdgeDB (Python, JSON, asyncio)', edgedb_queries_async),
 
     'edgedb_py_sync':
-        impl('python', 'EdgeDB Python', edgedb_queries_repack),
+        impl('python', 'EdgeDB (Python)', edgedb_queries_repack),
 
     'edgedb_go':
-        impl('go', 'EdgeDB Go (Structs)', edgedb_json_golang),
+        impl('go', 'EdgeDB (Go)', edgedb_json_golang),
 
     'edgedb_go_json':
-        impl('go', 'EdgeDB Go (JSON)', edgedb_json_golang),
+        impl('go', 'EdgeDB (Go, JSON)', edgedb_json_golang),
 
     'edgedb_go_graphql':
-        impl('go', 'EdgeDB Go (GraphQL+HTTP)', edgedb_graphql_golang),
+        impl('go', 'EdgeDB (GraphQL)', edgedb_graphql_golang),
 
     'edgedb_go_http':
-        impl('go', 'EdgeDB Go (EdgeQL+HTTP)', edgedb_edgeql_golang),
+        impl('go', 'EdgeDB (HTTP)', edgedb_edgeql_golang),
 
     'django':
         impl('python', 'Django ORM', django_queries),
 
     'django_restfw':
-        impl('python', 'Django Rest Framework', django_queries_restfw),
+        impl('python', 'Django (Rest Framework)', django_queries_restfw),
 
     'mongodb':
         impl('python', 'MongoDB (Python)', mongodb_queries),

@@ -58,13 +58,14 @@ Run locally
 #. Load the data into the test databases via ``$ make load``. Alternatively, 
    you can run only the loaders you care about:
 
+   .. $ make load-postgraphile
+
    .. code-block::
 
       $ make load-django 
       $ make load-edgedb 
       $ make load-hasura
       $ make load-mongodb 
-      $ make load-postgraphile
       $ make load-postgres
       $ make load-prisma 
       $ make load-sequelize 
@@ -162,7 +163,7 @@ Run locally
    - ``postgres_pgx``
    - ``postgres_pg``
    - ``postgres_hasura_go``
-   - ``postgres_postgraphile_go``
+   .. - ``postgres_postgraphile_go``
   
    You can see a full list of options like so:
 
