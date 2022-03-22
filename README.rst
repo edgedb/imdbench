@@ -73,7 +73,7 @@ Dataset 🍿
 ^^^^^^^^^
 
 We are simulating an `IMDB <https://imdb.com>`_-style movie database
-website. 
+website. The sample dataset consists of 25k movies, 100k people, 100k users, and 500k reviews.
 
 .. image:: results/schema.png
 
@@ -91,13 +91,7 @@ The schema consists of four tables/models/types:
   - ``movie -> Movie`` (to one)
 
 
-Size
-^^^^
-
-The sample dataset consists of 25k movies, 100k people, 100k users, and 500k 
-reviews.
-
-Queries
+Queries 
 ^^^^^^^
 
 The following queries have been implemented for each target.
@@ -228,16 +222,16 @@ The following queries have been implemented for each target.
     </pre></details>
       
 
-Results
--------
+Results 📊
+---------
 
 The graphs below present the throughput/latency results for each target as a 
 geometric mean of the three queries. As such, it should be interpreted as a 
 holistic benchmark that represents the target library's collective performance 
 across a range of query functionality.
   
-**For per-query results, interactive charts, and latency jitter statistics, 
-view the full report.**
+👀 For per-query results, interactive charts, and latency jitter statistics, 
+view the full report!
 
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
@@ -260,8 +254,8 @@ Python ORMs
 .. image:: ./results/py_lat.png
 
 
-SQL Comparison
-^^^^^^^^^^^^^^
+Raw SQL
+^^^^^^^
 
 For comparison, below are the benchmark results for a tuned 
 PostgreSQL implementation of the benchmark queries, executed using two popular 
@@ -280,10 +274,12 @@ EdgeDB results (using the `Python client
 Analysis
 --------
 
-Predictably, ORMs perform poorly on this benchmark relative to raw SQL, which 
-can express more complicated operations in a single query. However, *the goal 
-of this benchmark is not to pick on ORM libraries*. They provide a 
-solution (albeit a limited one) to some of SQL's biggest usability issues. 
+Predictably, ORMs perform poorly on this benchmark relative to EdgeDB or raw 
+SQL, both of which can express more complex operations in a single query. 
+
+However, *the goal of this benchmark is not to pick on ORM libraries*. ORMs 
+provide a solution (albeit a limited one) to some of very real usability 
+issues with relational databases.
 
 1. They can express deep or nested queries in a compact and intuitive way. 
    Queries return objects, instead of a flat list of rows that must be 
@@ -297,8 +293,7 @@ solution (albeit a limited one) to some of SQL's biggest usability issues.
 
 It is a valid decision to prioritize developer experience over performance, 
 especially when your expected traffic is low. However, the limitations of ORMs 
-can be crippling as an application scales in complexity and traffic, as this 
-benchmark demonstrates.
+can be crippling as an application scales in complexity and traffic. 
 
 The third way
 ^^^^^^^^^^^^^
