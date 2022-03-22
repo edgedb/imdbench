@@ -39,25 +39,25 @@ class impl(typing.NamedTuple):
 IMPLEMENTATIONS = {
 
     'edgedb_py_json':
-        impl('python', 'EdgeDB Python JSON', edgedb_queries_json),
+        impl('python', 'EdgeDB Python (JSON)', edgedb_queries_json),
 
     'edgedb_py_json_async':
-        impl('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
+        impl('python', 'EdgeDB Python (JSON, asyncio)', edgedb_queries_async),
 
     'edgedb_py_sync':
-        impl('python', 'EdgeDB Python Objects', edgedb_queries_repack),
+        impl('python', 'EdgeDB Python', edgedb_queries_repack),
 
     'edgedb_go':
-        impl('go', 'EdgeDB GO Structs', edgedb_json_golang),
+        impl('go', 'EdgeDB Go (Structs)', edgedb_json_golang),
 
     'edgedb_go_json':
-        impl('go', 'EdgeDB GO JSON', edgedb_json_golang),
+        impl('go', 'EdgeDB Go (JSON)', edgedb_json_golang),
 
     'edgedb_go_graphql':
-        impl('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
+        impl('go', 'EdgeDB Go (GraphQL+HTTP)', edgedb_graphql_golang),
 
     'edgedb_go_http':
-        impl('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
+        impl('go', 'EdgeDB Go (EdgeQL+HTTP)', edgedb_edgeql_golang),
 
     'django':
         impl('python', 'Django ORM', django_queries),
@@ -72,7 +72,7 @@ IMPLEMENTATIONS = {
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        impl('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
+        impl('python', 'PostgreSQL (asyncpg)', postgres_queries),
 
     'postgres_psycopg':
         impl('python', 'PostgreSQL (psycopg2)', postgres_psycopg_queries),
@@ -91,16 +91,16 @@ IMPLEMENTATIONS = {
              postgres_postgraphile_golang),
 
     'edgedb_js':
-        impl('js', 'EdgeDB (Node.js client)', None),
+        impl('js', 'EdgeDB (Node.js)', None),
 
     'edgedb_js_json':
-        impl('js', 'EdgeDB (Node.js client, JSON mode)', None),
+        impl('js', 'EdgeDB (Node.js, JSON mode)', None),
 
     'edgedb_js_qb':
-        impl('js', 'EdgeDB (Node.js query builder)', None),
+        impl('js', 'EdgeDB (Node.js, query builder)', None),
 
     'edgedb_js_qb_uncached':
-        impl('js', 'EdgeDB (Node.js query builder, uncached)', None),
+        impl('js', 'EdgeDB (Node.js, query builder, uncached)', None),
 
     'typeorm':
         impl('js', 'TypeORM', None),

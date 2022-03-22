@@ -87,7 +87,7 @@ docker-postgres: docker-network docker-postgres-volume
 	$(DOCKER) exec webapp-bench-postgres pg_isready -t10
 
 docker-postgres-stop:
-	$(DOCKER) stop webapp-bench-postgres
+	-$(DOCKER) stop webapp-bench-postgres
 
 docker-edgedb-volume:
 	$(DOCKER) volume inspect webapp-bench-edgedb >/dev/null 2>&1 \
@@ -104,8 +104,8 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:1
-	sleep 30
+		edgedb/edgedb:latest
+	sleep 60
 
 docker-edgedb-stop:
 	$(DOCKER) stop webapp-bench-edgedb
@@ -183,6 +183,7 @@ load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
 
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
+
 
 load-postgres: docker-postgres-stop reset-postgres $(BUILD)/dataset.json
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
@@ -306,5 +307,5 @@ run-orms:
 run-edgedb:
 	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
-run-scratch:
-	python bench.py --query get_user --concurrency 4 --duration 10 --html results/js.html typeorm sequelize prisma edgedb_js_qb
+run-scratch: 
+	python bench.py --query get_user --concurrency 1 --duration 5 --html results/scratch.html typeorm sequelize prisma edgedb_js_qb
