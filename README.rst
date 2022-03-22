@@ -9,7 +9,8 @@ ORMs against EdgeDB and other databases, using realistic queries.
 Why is this needed? 🧐
 ---------------------
 
-The question of ORM performance is more complex than simply "they generate slow queries".
+The question of ORM performance is more complex than simply "they generate 
+slow queries".
 
 - **Query splitting ⛓**
 
@@ -234,8 +235,8 @@ geometric mean of the three queries. As such, it should be interpreted as a
 holistic benchmark that represents the target library's collective performance 
 across a range of query functionality.
   
-  For per-query results, interactive charts, and latency jitter statistics, 
-  view the full report.
+**For per-query results, interactive charts, and latency jitter statistics, 
+view the full report.**
 
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
@@ -261,7 +262,7 @@ Python ORMs
 SQL Comparison
 ^^^^^^^^^^^^^^
 
-For comparison, below are the benchmakr results of a tuned 
+For comparison, below are the benchmark results for a tuned 
 PostgreSQL implementation of the benchmark queries, executed using two popular 
 Postgres Python drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_ 
 and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the 
@@ -278,22 +279,37 @@ EdgeDB results (using the `Python client
 Analysis
 --------
 
-Predictably, ORMs perform poorly on this benchmark relative to raw SQL, which can express more complicated operations in a single query. However, *the goal of this benchmark is not to pick on ORM libraries*. They provide a 
-solution (albeit a limited one) to many of SQL's major usability issues. It is a valid decision to prioritize developer experience over performance, especially when your expected traffic is low.
+Predictably, ORMs perform poorly on this benchmark relative to raw SQL, which 
+can express more complicated operations in a single query. However, *the goal 
+of this benchmark is not to pick on ORM libraries*. They provide a 
+solution (albeit a limited one) to some of SQL's biggest usability issues. 
 
 1. They can express deep or nested queries in a compact and intuitive way. 
    Queries return objects, instead of a flat list of rows that must be 
    manually denormalized.
 2. They allow schema to be modeled in a declarative, object-oriented way.
 3. They provide idiomatic, code-first data fetching APIs for different 
-   languages. This is particularly important as statically typed languages like Go and TypeScript gain popularity; the ability of ORMs to return strongly-typed query results in a DRY, non-reduntant way is increasingly desirable.
+   languages. This is particularly important as statically typed languages 
+   like Go and TypeScript gain popularity; the ability of ORMs to return 
+   strongly-typed query results in a DRY, non-reduntant way is increasingly 
+   desirable.
 
-However, the limitations of ORMs can be crippling as an application scales in complexity and traffic, as this benchmark demonstrates.
+It is a valid decision to prioritize developer experience over performance, 
+especially when your expected traffic is low. However, the limitations of ORMs 
+can be crippling as an application scales in complexity and traffic, as this 
+benchmark demonstrates.
 
 The third way
 ^^^^^^^^^^^^^
 
-Our goal in designing EdgeDB is to provide a third option with the best of all worlds. Using EdgeDB feels like using an ORM: your schema is declarative, your queries return structured objects, and you don't need to deal with the hairiness of SQL. (If you're using our `TypeScript query builder <https://www.edgedb.com/docs/clients/01_js/index#the-query-builder>`_, you even get full static typing.) But, vitally, you can reap these benefits without the losing the power and performance of raw SQL. 
+Our goal in designing EdgeDB is to provide a third option that combines the 
+best of all worlds. Using EdgeDB feels like using an ORM: your schema is 
+declarative, your queries return structured objects, and you don't need to 
+deal with the hairiness of SQL. (If you're using our `TypeScript query builder 
+<https://www.edgedb.com/docs/clients/01_js/index#the-query-builder>`_, you 
+even get full static typing.) But, vitally, you can reap these benefits 
+without the sacrificing performance or the power of a full-fledged query 
+language. 
 
 .. list-table::
 
@@ -340,7 +356,8 @@ Visit `edgedb.com <https://www.edgedb.com>`_ to learn more.
 Running locally
 ---------------
 
-Follow the instructions in the `Run Locally <DEVELOP.rst>`_ guide to execute these benchmarks on your local machine.
+Follow the instructions in the `Run Locally <DEVELOP.rst>`_ guide to execute 
+these benchmarks on your local machine.
 
 License
 -------
