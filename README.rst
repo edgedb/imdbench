@@ -11,41 +11,57 @@ Why is this needed?
 
 The question of ORM performance is more complex than simply "they generate slow queries".
 
-**Query splitting**
+1. **Query splitting**
 
-It's common for ORMs to perform non-trivial operations (deep fetching, 
-nested mutation, inline aggregation, etc) by opaquely executing several 
-queries under the hood. This may not be obvious to the end user. The 
-incurred latency is rarely reflected in `more <https://github.com/tortoise/orm-benchmarks>`_ `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ ORM benchmarks.
+  It's common for ORMs to perform non-trivial operations (deep fetching, 
+  nested mutation, inline aggregation, etc) by opaquely executing several 
+  queries under the hood. This may not be obvious to the end user. The 
+  incurred latency is rarely reflected in 
+  `more <https://github.com/tortoise/orm-benchmarks>`_ 
+  `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ ORM 
+  benchmarks.
 
-**Aggregation (or lack thereof)**
+2. **Aggregation (or lack thereof)**
 
-Less mature ORMs often don't support functionality like aggregations 
-(counts, statistics, averages, etc), forcing users to overfetch and perform 
-these calculations server-side. Some ORMs provide no aggregation functionality 
-at all; even advanced ORMs rarely support relational aggregations, such as 
-``Find the movie where id=X, returning its title and the number of reviews 
-about it.``
+  Less mature ORMs often don't support functionality like aggregations 
+  (counts, statistics, averages, etc), forcing users to overfetch and perform 
+  these calculations server-side. Some ORMs provide no aggregation 
+  functionality at all; even advanced ORMs rarely support relational 
+  aggregations, such as ``Find the movie where id=X, returning its title and 
+  the number of reviews about it.``
    
-**Transactional queries**
+3. **Transactional queries**
 
-Since ORM users must often run several correlated queries in series to 
-obtain the full set of data they need, the possibility for 
-hard-to-reproduce data integrity bugs is introduced. Transactions can 
-alleviate these bugs but can rapidly place unacceptable limits on read 
-capacity. 
+  Since ORM users must often run several correlated queries in series to 
+  obtain the full set of data they need, the possibility for 
+  hard-to-reproduce data integrity bugs is introduced. Transactions can 
+  alleviate these bugs but can rapidly place unacceptable limits on read 
+  capacity. 
 
 Methodology
 -----------
 
-This benchmark is called RealCruddyBench, as it attempts to quantify the **throughput** (iterations/second) and **latency** (milliseconds) of a set of **realistic** CRUD queries. These queries are not arcane or complex, nor are they unreasonably simplistic (as benchmarking queries tend to be). Queries of comparable complexity will be necessary in any non-trivial web application. 
+This benchmark is called RealCruddyBench, as it attempts to quantify the 
+**throughput** (iterations/second) and **latency** (milliseconds) of a set of 
+**realistic** CRUD queries. These queries are not arcane or complex, nor are 
+they unreasonably simplistic (as benchmarking queries tend to be). Queries of 
+comparable complexity will be necessary in any non-trivial web application. 
 
 Simulated server-database latency
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The execution environment simulates a *1 millisecond* latency between the server and database. This is the `typical latency <https://aws.amazon.com/blogs/architecture/improving-performance-and-reducing-cost-using-availability-zone-affinity/>`_ between zones in a single AWS region. The vast majority of applications do not have the resources to support per-availability-zone replication, so this assumption is reasonable. 
+The execution environment simulates a *1 millisecond* latency between the server and database. This is the `typical latency <https://aws.amazon.com/blogs/architecture/improving-performance-and-reducing-cost-using-availability-zone-affinity/>`_ 
+between zones in a single AWS region. The vast majority of applications do not 
+have the resources to support per-availability-zone replication, so this 
+assumption is reasonable.
 
-In the "serverless age" it is common for server code to run in Lambda-style function that is executed in a different availability zone from the underlying database, which would incur latencies far greater than 1ms.
+With serverless architectures, it's common for server code to run inside Lambda-style functions in a different availability zone from the underlying database, which would incur latencies far greater than 1ms.
+
+On Linux, this latency can be simulated with ``tc`` like so:
+
+.. code-block::
+
+  sudo tc qdisc add dev br-webapp-bench root netem delay 1ms
 
 Schema
 ^^^^^^
