@@ -308,4 +308,4 @@ run-edgedb:
 	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
 run-scratch: 
-	python bench.py --query get_user --concurrency 1 --duration 5 --html results/scratch.html typeorm sequelize prisma edgedb_js_qb
+python bench.py --query get_user --concurrency 1 --warmup-time 2 --duration 5 --html results/scratch.html typeorm sequelize prisma edgedb_js_qb
