@@ -1,6 +1,6 @@
 .. raw:: html
 
-  <h1 align="center">Zod</h1>
+  <h1 align="center">IMDBench</h1>
   <p align="center">Benchmarking ORMs with realistic queries</p>
 
 ``Rev. 1.0.0``
