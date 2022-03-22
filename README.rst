@@ -11,18 +11,13 @@ ORMs with realistic queries required for a hypothetical IMDB-style movie databas
 Why is this needed? 🧐
 ---------------------
 
-The question of ORM performance is more complex than simply "they generate 
-slow queries".
+Object-relational mapping (ORM) libraries solve some important usability issues with relational databases and continue to grow in popularity. However, they come with important performance tradeoffs that are often poorly understood or quantified. The question of ORM performance is more complex than simply "they generate slow queries".
 
 - **Query splitting ⛓**
 
    It's common for ORMs to perform non-trivial operations (deep fetching, 
    nested mutation, inline aggregation, etc) by opaquely executing several 
-   queries under the hood. This may not be obvious to the end user. The 
-   incurred latency is rarely reflected in 
-   `more <https://github.com/tortoise/orm-benchmarks>`_ 
-   `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ 
-   ORM benchmarks.
+   queries under the hood. This may not be obvious to the end user. 
 
 - **Aggregation (or lack thereof) 🪣**
 
@@ -38,16 +33,21 @@ slow queries".
    Since ORM users must often run several correlated queries in series to 
    obtain the full set of data they need, the possibility for 
    hard-to-reproduce data integrity bugs is introduced. Transactions can 
-   alleviate these bugs but can rapidly place unacceptable limits on read 
+   alleviate these bugs, but this rapidly places unacceptable limits on read 
    capacity. 
+
+Most existing benchmarks use queries that are 
+`too <https://github.com/tortoise/orm-benchmarks>`_ 
+`simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ 
+to capture these performance characteristics. 
 
 Methodology 👷
 -------------
 
-This benchmark attempts to quantify the **throughput** (iterations/second) and 
-**latency** (milliseconds) of a set of **realistic** CRUD queries. These 
-queries are not arcane or complex, nor are they unreasonably simplistic (as 
-benchmarking queries tend to be). Queries of comparable complexity will be 
+Our goal with this benchmark is to quantify the **throughput** (iterations/
+second) and **latency** (milliseconds) of a set of **realistic** CRUD queries. 
+These queries are not arcane or complex, nor are they unreasonably simplistic 
+(as benchmarking queries tend to be). Queries of comparable complexity will be 
 necessary in any non-trivial web application. 
 
 
