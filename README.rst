@@ -242,7 +242,10 @@ JavaScript ORMs
 
 `View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/js.html>`_
 
-.. image:: ./results/js.png
+.. image:: ./results/js_thru.png
+
+.. image:: ./results/js_lat.png
+
 
 
 Python ORMs
@@ -250,22 +253,26 @@ Python ORMs
 
 `View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/py.html>`_
 
-.. image:: ./results/py.png
+.. image:: ./results/py_thru.png
+
+.. image:: ./results/py_lat.png
 
 
 SQL Comparison
 ^^^^^^^^^^^^^^
 
-For comparison, below is a report comparing the performance of a tuned 
+For comparison, below are the benchmakr results of a tuned 
 PostgreSQL implementation of the benchmark queries, executed using two popular 
 Postgres Python drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_ 
 and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the 
-EdgeDB benchmarks (using the `Python client 
-<https://github.com/edgedb/edgedb-python>`_) are included.
+EdgeDB results (using the `Python client 
+<https://github.com/edgedb/edgedb-python>`_) are also included.
 
 `View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/pysql.html>`_
 
-.. image:: ./results/pysql.png
+.. image:: ./results/sql_thru.png
+
+.. image:: ./results/sql_lat.png
 
 
 Analysis
