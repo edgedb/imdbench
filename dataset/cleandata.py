@@ -128,10 +128,11 @@ def normalize(data: dict, appname='webapp'):
         # the average score queries for all the versions of the
         # benchmarks. It's a smaller change to adjust the dataset than
         # it is to adjust all the benchmarks.
+        r_id = r.pop('movie')
         if i < len(movies):
             r['movie_id'] = get_id(i, 'movie')
         else:
-            r['movie_id'] = get_id(r.pop('movie'), 'movie')
+            r['movie_id'] = get_id(r_id, 'movie')
 
         r['id'] = new_id(r['id'], 'review')
         output.append({

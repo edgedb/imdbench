@@ -56,7 +56,7 @@ def get_queries(ctx):
 
 
 def connect(ctx):
-    return edgedb.connect()
+    return edgedb.create_client(max_concurrency=1)
 
 
 def close(ctx, conn):
