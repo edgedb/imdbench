@@ -78,7 +78,7 @@ class ConnectionJSON extends _BaseConnection {
       description: val.prefix + 'description' + num,
       year: num,
       d_id: val.people[0],
-      cast: val.people.slice(1, 3),
+      cast: val.people.slice(1, 4),
     });
   }
 
@@ -150,7 +150,7 @@ class ConnectionRepack extends _BaseConnection {
         description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }
@@ -219,7 +219,7 @@ class ConnectionQB extends _BaseConnection {
         description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }
@@ -288,7 +288,7 @@ class ConnectionQBUncached extends _BaseConnection {
         description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }

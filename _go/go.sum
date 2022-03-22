@@ -23,6 +23,8 @@ github.com/edgedb/edgedb-go v0.8.2 h1:geJs8wtApTJN1K3+ZVW5YS1Y/SY5ZKcwWnQydm7FTr
 github.com/edgedb/edgedb-go v0.8.2/go.mod h1:kHbAnYmOUAXn0jmlGHfM0Bbswjmt8UZrq0GNsouiEOY=
 github.com/edgedb/edgedb-go v0.9.0 h1:wENhwcUcl5vqKbQzRyoyDOWRU8ldccH0VcdJD6L0AJY=
 github.com/edgedb/edgedb-go v0.9.0/go.mod h1:kHbAnYmOUAXn0jmlGHfM0Bbswjmt8UZrq0GNsouiEOY=
+github.com/edgedb/edgedb-go v0.9.4 h1:fI4LQVAPrOKEC0qUiGEeLk3CzLFR/WVUoUOChRnpQnw=
+github.com/edgedb/edgedb-go v0.9.4/go.mod h1:kHbAnYmOUAXn0jmlGHfM0Bbswjmt8UZrq0GNsouiEOY=
 github.com/fatih/pool v3.0.0+incompatible h1:3xXzI/t5o6aEU/R+xe7ed44CTw41lV3oB0gB5pNXS5U=
 github.com/fatih/pool v3.0.0+incompatible/go.mod h1:v+kkrv3f2oJ1P9NHaKArMYdTVtNCwfR0DlXwnhA2L4k=
 github.com/go-kit/log v0.1.0/go.mod h1:zbhenjAZHb184qTLMA9ZjW7ThYL0H2mk7Q6pNt4vbaY=
