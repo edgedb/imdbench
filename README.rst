@@ -72,7 +72,7 @@ On Linux, this latency can be simulated with ``tc`` like so:
 Dataset 🍿
 ^^^^^^^^^
 
-We are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review 
+We are simulating an `IMDB <https://imdb.com>`_-style movie database
 website. 
 
 .. image:: results/schema.png
@@ -91,7 +91,8 @@ The schema consists of four tables/models/types:
   - ``movie -> Movie`` (to one)
 
 
-**Size**
+Size
+^^^^
 
 The sample dataset consists of 25k movies, 100k people, 100k users, and 500k 
 reviews.
