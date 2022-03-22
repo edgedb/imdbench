@@ -9,6 +9,46 @@
     <script src="https://d3js.org/d3.v3.js" charset="utf-8"></script>
 
     <style>
+      code {
+        display: inline;
+      }
+      ul {
+        padding-left: 0px;
+      }
+      ul li {
+        padding: 2px 0px;
+      }
+      dt {
+        font-weight: bold;
+        margin: 5px 0px;
+      }
+      h2 {
+        text-align: center;
+        padding: 30px 0px;
+        margin: 30px 0px;
+        background-color: lightgrey;
+        border-radius: 8px;
+      }
+      h3 {
+        margin: 40px 0px 10px 0px;
+        text-align: center;
+      }
+      .bench-description {
+        font-style: italic;
+        text-align: center;
+        margin: 0px auto 40px auto;
+        max-width: 450px;
+      }
+      .chart-title {
+        font-family: monospace;
+        font-size: 13pt;
+        font-weight: bold;
+      }
+      svg {
+        background-color: rgb(245, 245, 245);
+        padding: 30px 0px 0px 10px;
+        border-radius: 8px;
+      }
       .json-formatter-row {
         font-family: monospace;
       }
@@ -864,7 +904,7 @@
       }
       .chart .axis text,
       .chart .legend text {
-        font: 12px sans-serif;
+        font: 12pt sans-serif;
         fill: #333;
       }
       .chart .axis.x path {
@@ -884,7 +924,7 @@
       }
       .chart .focus text {
         fill: #900;
-        font: 12px sans-serif;
+        font: 12pt sans-serif;
       }
 
       .json-out {
@@ -1052,7 +1092,7 @@
           .attr('y', 6)
           .attr('dy', '.71em')
           .style('text-anchor', 'end')
-          .text('Iterations / sec');
+          .text('Throughput (iterations / sec)');
 
         chart
           .selectAll('rect')
@@ -1412,34 +1452,44 @@
     <h1>Benchmark Report</h1>
 
     <p>
-      Below are the results of running
+      The results below were generating using the IMDBench benchmarking suite:
       <a href="https://github.com/edgedb/webapp-bench" target="_blank"
-        >webapp-bench</a
-      >
-      benchmarks on these implementations:
+        >github.com/edgedb/webapp-bench</a
+      >.
     </p>
-    <ul>
-      {% for impl in __BENCHMARK_IMPLEMENTATIONS__ %}
-      <li>{{ impl }}</li>
-      {% endfor %}
-    </ul>
+    <br /><br />
 
-    <p>Test environment: {{ __BENCHMARK_PLATFORM__ }}</p>
-    <p>Duration of each benchmark: {{ __BENCHMARK_DURATION__ }} seconds</p>
-    <p>Concurrency: {{ __BENCHMARK_CONCURRENCY__ }} clients</p>
-    <p>
-      Minimum client-to-database roundtrip network latency: ~{{
-      __BENCHMARK_NETLATENCY__ }}ms
-    </p>
+    <dl>
+      <dt>Targets</dt>
+      <dd>
+        <ul>
+          {% for impl in __BENCHMARK_IMPLEMENTATIONS__ %}
+          <li>{{ impl }}</li>
+          {% endfor %}
+        </ul>
+      </dd>
+      <dt>Test environment</dt>
+      <dd>
+        <code>{{ __BENCHMARK_PLATFORM__ }}</code>
+      </dd>
+      <dt>Duration (per benchmark)</dt>
+      <dd>{{ __BENCHMARK_DURATION__ }} seconds</dd>
+      <dt>Concurrency</dt>
+      <dd>{{ __BENCHMARK_CONCURRENCY__ }} clients</dd>
+      <dt>Simulated client-to-database latency</dt>
+      <dd>~{{ __BENCHMARK_NETLATENCY__ }}ms</dd>
+    </dl>
+    <br />
 
     {% for bench, data in __BENCHMARK_DATA__.items() %} {% if bench == "mean" %}
     <h2>Overall Results</h2>
 
-    <p>The charts below show the geometric average of all benchmark results.</p>
+    <p class="bench-description">
+      The charts below show the geometric average of all benchmark results.
+    </p>
     {% else %} {% set bench_info = __BENCHMARK_DESCRIPTIONS__[bench] %}
     <h3>{{ bench_info.title }}</h3>
-
-    <p>{{ bench_info.description }}</p>
+    <p class="bench-description">{{ bench_info.description }}</p>
 
     {% endif %}
 

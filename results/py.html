@@ -9,6 +9,46 @@
     <script src="https://d3js.org/d3.v3.js" charset="utf-8"></script>
 
     <style>
+      code {
+        display: inline;
+      }
+      ul {
+        padding-left: 0px;
+      }
+      ul li {
+        padding: 2px 0px;
+      }
+      dt {
+        font-weight: bold;
+        margin: 5px 0px;
+      }
+      h2 {
+        text-align: center;
+        padding: 30px 0px;
+        margin: 30px 0px;
+        background-color: lightgrey;
+        border-radius: 8px;
+      }
+      h3 {
+        margin: 40px 0px 10px 0px;
+        text-align: center;
+      }
+      .bench-description {
+        font-style: italic;
+        text-align: center;
+        margin: 0px auto 40px auto;
+        max-width: 450px;
+      }
+      .chart-title {
+        font-family: monospace;
+        font-size: 13pt;
+        font-weight: bold;
+      }
+      svg {
+        background-color: rgb(245, 245, 245);
+        padding: 30px 0px 0px 10px;
+        border-radius: 8px;
+      }
       .json-formatter-row {
         font-family: monospace;
       }
@@ -864,7 +904,7 @@
       }
       .chart .axis text,
       .chart .legend text {
-        font: 12px sans-serif;
+        font: 12pt sans-serif;
         fill: #333;
       }
       .chart .axis.x path {
@@ -884,7 +924,7 @@
       }
       .chart .focus text {
         fill: #900;
-        font: 12px sans-serif;
+        font: 12pt sans-serif;
       }
 
       .json-out {
@@ -1052,7 +1092,7 @@
           .attr('y', 6)
           .attr('dy', '.71em')
           .style('text-anchor', 'end')
-          .text('Iterations / sec');
+          .text('Throughput (iterations/sec)');
 
         chart
           .selectAll('rect')
@@ -1410,35 +1450,48 @@
     <p><em>Tue Mar 22 13:14:38 2022</em></p>
 
     <h1>Benchmark Report</h1>
-
     <p>
-      Below are the results of running
+      The results below were generating using the IMDBench benchmarking suite:
       <a href="https://github.com/edgedb/webapp-bench" target="_blank"
-        >webapp-bench</a
-      >
-      benchmarks on these implementations:
+        >github.com/edgedb/webapp-bench</a
+      >.
     </p>
-    <ul>
-      <li>Django ORM</li>
+    <br />
+    <br />
 
-      <li>SQLAlchemy</li>
-
-      <li>EdgeDB (Python)</li>
-    </ul>
-
-    <p>
-      Test environment: Linux 5.16.15+ (Gentoo 2.7, x86_64) on AMD Ryzen
-      Threadripper 3970X 32-Core Processor
-    </p>
-    <p>Duration of each benchmark: 10 seconds</p>
-    <p>Concurrency: 4 clients</p>
-    <p>Minimum client-to-database roundtrip network latency: ~1ms</p>
+    <dl>
+      <dt>Targets</dt>
+      <dd>
+        <ul>
+          <li>Django ORM</li>
+          <li>SQLAlchemy</li>
+          <li>EdgeDB (Python)</li>
+        </ul>
+      </dd>
+      <dt>Test environment</dt>
+      <dd>
+        <code
+          >Linux 5.16.15+ (Gentoo 2.7, x86_64) on AMD Ryzen Threadripper 3970X
+          32-Core Processor</code
+        >
+      </dd>
+      <dt>Duration (per benchmark)</dt>
+      <dd>10 seconds</dd>
+      <dt>Concurrency</dt>
+      <dd>4 clients</dd>
+      <dt>Simulated client-to-database latency</dt>
+      <dd>~1ms</dd>
+    </dl>
 
     <h2>Overall Results</h2>
 
-    <p>The charts below show the geometric average of all benchmark results.</p>
+    <p class="bench-description">
+      The charts below show the geometric average of all benchmark results.
+    </p>
+    <p class="chart-title">Throughput (more is better)</p>
 
     <svg id="bars-mean" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-mean" class="chart" style="width: 80vw"></svg>
 
     <script>
@@ -1508,10 +1561,12 @@
     <h2>Individual benchmarks</h2>
 
     <h3>POST /movie (existing cast)</h3>
-
-    <p>Create a new movie record, linking existing directors and cast.</p>
-
+    <p class="bench-description">
+      Create a new movie record, linking existing directors and cast.
+    </p>
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-insert_movie" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-insert_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
@@ -1605,13 +1660,13 @@
     </script>
 
     <h3>GET /movie/:id</h3>
-
-    <p>
+    <p class="bench-description">
       Get information about a given movie: title, year, directors, cast, recent
       reviews, and average review rating.
     </p>
-
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-get_movie" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-get_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
@@ -1705,13 +1760,13 @@
     </script>
 
     <h3>GET /user/:id</h3>
-
-    <p>
+    <p class="bench-description">
       Get information about a given user: name and a sample of the latest movie
       reviews this user authored.
     </p>
-
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-get_user" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-get_user" class="chart" style="width: 80vw"></svg>
 
     <script>

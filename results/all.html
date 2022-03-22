@@ -1052,7 +1052,7 @@
           .attr('y', 6)
           .attr('dy', '.71em')
           .style('text-anchor', 'end')
-          .text('Iterations / sec');
+          .text('Throughput (iterations/sec)');
 
         chart
           .selectAll('rect')
@@ -1416,62 +1416,99 @@
       <a href="https://github.com/edgedb/webapp-bench" target="_blank"
         >webapp-bench</a
       >
-      benchmarks on these implementations:
+      benchmarks on the following targets:
     </p>
     <ul>
-      
       <li>Postgres</li>
-      
     </ul>
 
     <p>Test environment: Darwin 21.1.0 (None, x86_64) on i386</p>
     <p>Duration of each benchmark: 1 seconds</p>
     <p>Concurrency: 1 clients</p>
-    <p>
-      Minimum client-to-database roundtrip network latency: ~0ms
-    </p>
+    <p>Simulated client-to-database roundtrip network latency: ~0ms</p>
 
-     
     <h2>Overall Results</h2>
 
     <p>The charts below show the geometric average of all benchmark results.</p>
-    
 
     <svg id="bars-mean" class="chart" style="width: 80vw"></svg>
     <svg id="lats-mean" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_mean = [{"implementation": "Postgres", "duration": 1.0, "queries": 212.0, "qps": 211.08, "latency_min": 3.09, "latency_mean": 4.668, "latency_max": 48.86, "latency_std": 3.396, "latency_cv": 72.75, "latency_percentiles": [[25, 3.65], [50, 4.12], [75, 4.65], [90, 5.706], [99, 10.548], [99.99, 48.87]]}];
+      var DATA_mean = [
+        {
+          implementation: 'Postgres',
+          duration: 1.0,
+          queries: 212.0,
+          qps: 211.08,
+          latency_min: 3.09,
+          latency_mean: 4.668,
+          latency_max: 48.86,
+          latency_std: 3.396,
+          latency_cv: 72.75,
+          latency_percentiles: [
+            [25, 3.65],
+            [50, 4.12],
+            [75, 4.65],
+            [90, 5.706],
+            [99, 10.548],
+            [99.99, 48.87],
+          ],
+        },
+      ];
       drawBars('#bars-mean', DATA_mean);
       drawLats('#lats-mean', DATA_mean);
     </script>
 
-    
     <h2>Individual benchmarks</h2>
-       
+
     <h3>POST /movie (existing cast)</h3>
 
     <p>Create a new movie record, linking existing directors and cast.</p>
-
-    
 
     <svg id="bars-insert_movie" class="chart" style="width: 80vw"></svg>
     <svg id="lats-insert_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_insert_movie = [{"duration": 1.0, "queries": 212, "qps": 211.08, "latency_min": 3.09, "latency_mean": 4.668, "latency_max": 48.86, "latency_std": 3.396, "latency_cv": 72.75, "latency_percentiles": [[25, 3.65], [50, 4.12], [75, 4.65], [90, 5.706], [99, 10.548], [99.99, 48.87]], "samples": ["{\"id\":35232,\"title\":\"insert_test__531944\",\"image\":\"insert_test__image531944.jpeg\",\"description\":\"insert_test__description531944\",\"year\":531944,\"directors\":[{\"id\":48650,\"full_name\":\"Hollie Kertzmann\",\"image\":\"pl476894424739.jpeg\"}],\"cast\":[{\"id\":7069,\"full_name\":\"Sierra Monahan\",\"image\":\"pq350212303736.jpeg\"},{\"id\":20638,\"full_name\":\"Bethel Marquardt\",\"image\":\"pe948571481919.jpeg\"},{\"id\":24370,\"full_name\":\"Adella Sauer\",\"image\":\"pd722921296857.jpeg\"}]}", "{\"id\":35229,\"title\":\"insert_test__814195\",\"image\":\"insert_test__image814195.jpeg\",\"description\":\"insert_test__description814195\",\"year\":814195,\"directors\":[{\"id\":48650,\"full_name\":\"Hollie Kertzmann\",\"image\":\"pl476894424739.jpeg\"}],\"cast\":[{\"id\":7069,\"full_name\":\"Sierra Monahan\",\"image\":\"pq350212303736.jpeg\"},{\"id\":20638,\"full_name\":\"Bethel Marquardt\",\"image\":\"pe948571481919.jpeg\"},{\"id\":24370,\"full_name\":\"Adella Sauer\",\"image\":\"pd722921296857.jpeg\"}]}", "{\"id\":35227,\"title\":\"insert_test__291203\",\"image\":\"insert_test__image291203.jpeg\",\"description\":\"insert_test__description291203\",\"year\":291203,\"directors\":[{\"id\":48650,\"full_name\":\"Hollie Kertzmann\",\"image\":\"pl476894424739.jpeg\"}],\"cast\":[{\"id\":7069,\"full_name\":\"Sierra Monahan\",\"image\":\"pq350212303736.jpeg\"},{\"id\":20638,\"full_name\":\"Bethel Marquardt\",\"image\":\"pe948571481919.jpeg\"},{\"id\":24370,\"full_name\":\"Adella Sauer\",\"image\":\"pd722921296857.jpeg\"}]}"], "implementation": "Postgres"}];
+      var DATA_insert_movie = [
+        {
+          duration: 1.0,
+          queries: 212,
+          qps: 211.08,
+          latency_min: 3.09,
+          latency_mean: 4.668,
+          latency_max: 48.86,
+          latency_std: 3.396,
+          latency_cv: 72.75,
+          latency_percentiles: [
+            [25, 3.65],
+            [50, 4.12],
+            [75, 4.65],
+            [90, 5.706],
+            [99, 10.548],
+            [99.99, 48.87],
+          ],
+          samples: [
+            '{"id":35232,"title":"insert_test__531944","image":"insert_test__image531944.jpeg","description":"insert_test__description531944","year":531944,"directors":[{"id":48650,"full_name":"Hollie Kertzmann","image":"pl476894424739.jpeg"}],"cast":[{"id":7069,"full_name":"Sierra Monahan","image":"pq350212303736.jpeg"},{"id":20638,"full_name":"Bethel Marquardt","image":"pe948571481919.jpeg"},{"id":24370,"full_name":"Adella Sauer","image":"pd722921296857.jpeg"}]}',
+            '{"id":35229,"title":"insert_test__814195","image":"insert_test__image814195.jpeg","description":"insert_test__description814195","year":814195,"directors":[{"id":48650,"full_name":"Hollie Kertzmann","image":"pl476894424739.jpeg"}],"cast":[{"id":7069,"full_name":"Sierra Monahan","image":"pq350212303736.jpeg"},{"id":20638,"full_name":"Bethel Marquardt","image":"pe948571481919.jpeg"},{"id":24370,"full_name":"Adella Sauer","image":"pd722921296857.jpeg"}]}',
+            '{"id":35227,"title":"insert_test__291203","image":"insert_test__image291203.jpeg","description":"insert_test__description291203","year":291203,"directors":[{"id":48650,"full_name":"Hollie Kertzmann","image":"pl476894424739.jpeg"}],"cast":[{"id":7069,"full_name":"Sierra Monahan","image":"pq350212303736.jpeg"},{"id":20638,"full_name":"Bethel Marquardt","image":"pe948571481919.jpeg"},{"id":24370,"full_name":"Adella Sauer","image":"pd722921296857.jpeg"}]}',
+          ],
+          implementation: 'Postgres',
+        },
+      ];
       drawBars('#bars-insert_movie', DATA_insert_movie);
       drawLats('#lats-insert_movie', DATA_insert_movie);
     </script>
 
-    
     <h4>Sample Outputs</h4>
 
     <div id="samples-insert_movie"></div>
 
     <script>
-      renderSamples(document.getElementById('samples-insert_movie'), DATA_insert_movie);
+      renderSamples(
+        document.getElementById('samples-insert_movie'),
+        DATA_insert_movie
+      );
     </script>
-     
   </body>
 </html>

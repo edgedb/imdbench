@@ -1052,7 +1052,7 @@
           .attr('y', 6)
           .attr('dy', '.71em')
           .style('text-anchor', 'end')
-          .text('Iterations / sec');
+          .text('Throughput (iterations/sec)');
 
         chart
           .selectAll('rect')
@@ -1416,62 +1416,99 @@
       <a href="https://github.com/edgedb/webapp-bench" target="_blank"
         >webapp-bench</a
       >
-      benchmarks on these implementations:
+      benchmarks on the following targets:
     </p>
     <ul>
-      
       <li>EdgeDB Go (Structs)</li>
-      
     </ul>
 
     <p>Test environment: Darwin 21.1.0 (None, x86_64) on i386</p>
     <p>Duration of each benchmark: 5 seconds</p>
     <p>Concurrency: 1 clients</p>
-    <p>
-      Minimum client-to-database roundtrip network latency: ~0ms
-    </p>
+    <p>Simulated client-to-database roundtrip network latency: ~0ms</p>
 
-     
     <h2>Overall Results</h2>
 
     <p>The charts below show the geometric average of all benchmark results.</p>
-    
 
     <svg id="bars-mean" class="chart" style="width: 80vw"></svg>
     <svg id="lats-mean" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_mean = [{"implementation": "EdgeDB Go (Structs)", "duration": 5.0, "queries": 314.0, "qps": 62.8, "latency_min": 14.13, "latency_mean": 15.942, "latency_max": 48.36, "latency_std": 2.59, "latency_cv": 16.25, "latency_percentiles": [[25, 15.204], [50, 15.451], [75, 15.882], [90, 16.832], [99, 25.627], [99.99, 48.369]]}];
+      var DATA_mean = [
+        {
+          implementation: 'EdgeDB Go (Structs)',
+          duration: 5.0,
+          queries: 314.0,
+          qps: 62.8,
+          latency_min: 14.13,
+          latency_mean: 15.942,
+          latency_max: 48.36,
+          latency_std: 2.59,
+          latency_cv: 16.25,
+          latency_percentiles: [
+            [25, 15.204],
+            [50, 15.451],
+            [75, 15.882],
+            [90, 16.832],
+            [99, 25.627],
+            [99.99, 48.369],
+          ],
+        },
+      ];
       drawBars('#bars-mean', DATA_mean);
       drawLats('#lats-mean', DATA_mean);
     </script>
 
-    
     <h2>Individual benchmarks</h2>
-       
+
     <h3>POST /movie (existing cast)</h3>
 
     <p>Create a new movie record, linking existing directors and cast.</p>
-
-    
 
     <svg id="bars-insert_movie" class="chart" style="width: 80vw"></svg>
     <svg id="lats-insert_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_insert_movie = [{"duration": 5, "queries": 314, "qps": 62.8, "latency_min": 14.13, "latency_mean": 15.942, "latency_max": 48.36, "latency_std": 2.59, "latency_cv": 16.25, "latency_percentiles": [[25, 15.204], [50, 15.451], [75, 15.882], [90, 16.832], [99, 25.627], [99.99, 48.369]], "samples": ["{\"id\":\"ebde5c32-aa1d-11ec-bc5a-8f46aaa5b54c\",\"image\":\"insert_test__image55166\",\"title\":\"insert_test__55166\",\"year\":55166,\"description\":\"\",\"avg_rating\":0,\"directors\":[{\"id\":\"8361b300-aa15-11ec-bff2-c729bbe0ee84\",\"full_name\":\"Clark Raynor\",\"image\":\"py739065092171.jpeg\"}],\"cast\":[{\"id\":\"84c380b6-aa15-11ec-bff2-5b107cf7e7d4\",\"full_name\":\"Royal Cole\",\"image\":\"pa222444124308.jpeg\"},{\"id\":\"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a\",\"full_name\":\"Scot Cruickshank\",\"image\":\"pi068513456909.jpeg\"},{\"id\":\"8365b84c-aa15-11ec-bff2-23b4d7fc9951\",\"full_name\":\"Treva Nolan\",\"image\":\"pm209928326125.jpeg\"}],\"reviews\":null}", "{\"id\":\"ebdb8958-aa1d-11ec-bc5a-9f7f3e56e03f\",\"image\":\"insert_test__image965343\",\"title\":\"insert_test__965343\",\"year\":965343,\"description\":\"\",\"avg_rating\":0,\"directors\":[{\"id\":\"8361b300-aa15-11ec-bff2-c729bbe0ee84\",\"full_name\":\"Clark Raynor\",\"image\":\"py739065092171.jpeg\"}],\"cast\":[{\"id\":\"84c380b6-aa15-11ec-bff2-5b107cf7e7d4\",\"full_name\":\"Royal Cole\",\"image\":\"pa222444124308.jpeg\"},{\"id\":\"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a\",\"full_name\":\"Scot Cruickshank\",\"image\":\"pi068513456909.jpeg\"},{\"id\":\"8365b84c-aa15-11ec-bff2-23b4d7fc9951\",\"full_name\":\"Treva Nolan\",\"image\":\"pm209928326125.jpeg\"}],\"reviews\":null}", "{\"id\":\"ebd7a720-aa1d-11ec-bc5a-93d288835734\",\"image\":\"insert_test__image460855\",\"title\":\"insert_test__460855\",\"year\":460855,\"description\":\"\",\"avg_rating\":0,\"directors\":[{\"id\":\"8361b300-aa15-11ec-bff2-c729bbe0ee84\",\"full_name\":\"Clark Raynor\",\"image\":\"py739065092171.jpeg\"}],\"cast\":[{\"id\":\"84c380b6-aa15-11ec-bff2-5b107cf7e7d4\",\"full_name\":\"Royal Cole\",\"image\":\"pa222444124308.jpeg\"},{\"id\":\"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a\",\"full_name\":\"Scot Cruickshank\",\"image\":\"pi068513456909.jpeg\"},{\"id\":\"8365b84c-aa15-11ec-bff2-23b4d7fc9951\",\"full_name\":\"Treva Nolan\",\"image\":\"pm209928326125.jpeg\"}],\"reviews\":null}"], "implementation": "EdgeDB Go (Structs)"}];
+      var DATA_insert_movie = [
+        {
+          duration: 5,
+          queries: 314,
+          qps: 62.8,
+          latency_min: 14.13,
+          latency_mean: 15.942,
+          latency_max: 48.36,
+          latency_std: 2.59,
+          latency_cv: 16.25,
+          latency_percentiles: [
+            [25, 15.204],
+            [50, 15.451],
+            [75, 15.882],
+            [90, 16.832],
+            [99, 25.627],
+            [99.99, 48.369],
+          ],
+          samples: [
+            '{"id":"ebde5c32-aa1d-11ec-bc5a-8f46aaa5b54c","image":"insert_test__image55166","title":"insert_test__55166","year":55166,"description":"","avg_rating":0,"directors":[{"id":"8361b300-aa15-11ec-bff2-c729bbe0ee84","full_name":"Clark Raynor","image":"py739065092171.jpeg"}],"cast":[{"id":"84c380b6-aa15-11ec-bff2-5b107cf7e7d4","full_name":"Royal Cole","image":"pa222444124308.jpeg"},{"id":"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a","full_name":"Scot Cruickshank","image":"pi068513456909.jpeg"},{"id":"8365b84c-aa15-11ec-bff2-23b4d7fc9951","full_name":"Treva Nolan","image":"pm209928326125.jpeg"}],"reviews":null}',
+            '{"id":"ebdb8958-aa1d-11ec-bc5a-9f7f3e56e03f","image":"insert_test__image965343","title":"insert_test__965343","year":965343,"description":"","avg_rating":0,"directors":[{"id":"8361b300-aa15-11ec-bff2-c729bbe0ee84","full_name":"Clark Raynor","image":"py739065092171.jpeg"}],"cast":[{"id":"84c380b6-aa15-11ec-bff2-5b107cf7e7d4","full_name":"Royal Cole","image":"pa222444124308.jpeg"},{"id":"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a","full_name":"Scot Cruickshank","image":"pi068513456909.jpeg"},{"id":"8365b84c-aa15-11ec-bff2-23b4d7fc9951","full_name":"Treva Nolan","image":"pm209928326125.jpeg"}],"reviews":null}',
+            '{"id":"ebd7a720-aa1d-11ec-bc5a-93d288835734","image":"insert_test__image460855","title":"insert_test__460855","year":460855,"description":"","avg_rating":0,"directors":[{"id":"8361b300-aa15-11ec-bff2-c729bbe0ee84","full_name":"Clark Raynor","image":"py739065092171.jpeg"}],"cast":[{"id":"84c380b6-aa15-11ec-bff2-5b107cf7e7d4","full_name":"Royal Cole","image":"pa222444124308.jpeg"},{"id":"83f46e5c-aa15-11ec-bff2-5389fc9d0c2a","full_name":"Scot Cruickshank","image":"pi068513456909.jpeg"},{"id":"8365b84c-aa15-11ec-bff2-23b4d7fc9951","full_name":"Treva Nolan","image":"pm209928326125.jpeg"}],"reviews":null}',
+          ],
+          implementation: 'EdgeDB Go (Structs)',
+        },
+      ];
       drawBars('#bars-insert_movie', DATA_insert_movie);
       drawLats('#lats-insert_movie', DATA_insert_movie);
     </script>
 
-    
     <h4>Sample Outputs</h4>
 
     <div id="samples-insert_movie"></div>
 
     <script>
-      renderSamples(document.getElementById('samples-insert_movie'), DATA_insert_movie);
+      renderSamples(
+        document.getElementById('samples-insert_movie'),
+        DATA_insert_movie
+      );
     </script>
-     
   </body>
 </html>

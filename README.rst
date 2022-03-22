@@ -1,17 +1,17 @@
-RealCruddyBench: Realistic benchmarks for ORMs
-==============================================
+CruddyBench: Benchmarking ORMs with realistic queries
+=====================================================
 
 ``Rev. 1.0.0``
 
 A benchmark intended to compare various Python and JavaScript 
 ORMs against EdgeDB and other databases, using realistic queries. 
 
-Why is this needed?
--------------------
+Why is this needed? 🧐
+---------------------
 
 The question of ORM performance is more complex than simply "they generate slow queries".
 
-1. **⛓ Query splitting**
+- **Query splitting ⛓**
 
    It's common for ORMs to perform non-trivial operations (deep fetching, 
    nested mutation, inline aggregation, etc) by opaquely executing several 
@@ -21,7 +21,7 @@ The question of ORM performance is more complex than simply "they generate slow 
    `simplistic <https://github.com/emanuelcasco/typescript-orm-benchmark>`_ 
    ORM benchmarks.
 
-2. **🪣 Aggregation (or lack thereof)**
+- **Aggregation (or lack thereof) 🪣**
 
    Less mature ORMs often don't support functionality like aggregations 
    (counts, statistics, averages, etc), forcing users to overfetch and perform 
@@ -30,7 +30,7 @@ The question of ORM performance is more complex than simply "they generate slow 
    aggregations, such as ``Find the movie where id=X, returning its title and 
    the number of reviews about it.``
    
-3. **🏦 Transactional queries**
+- **Transactional queries 🏦**
 
    Since ORM users must often run several correlated queries in series to 
    obtain the full set of data they need, the possibility for 
@@ -38,24 +38,29 @@ The question of ORM performance is more complex than simply "they generate slow 
    alleviate these bugs but can rapidly place unacceptable limits on read 
    capacity. 
 
-Methodology
------------
+Methodology 👷
+-------------
 
-This benchmark is called RealCruddyBench, as it attempts to quantify the 
-**throughput** (iterations/second) and **latency** (milliseconds) of a set of 
-**realistic** CRUD queries. These queries are not arcane or complex, nor are 
-they unreasonably simplistic (as benchmarking queries tend to be). Queries of 
-comparable complexity will be necessary in any non-trivial web application. 
+This benchmark attempts to quantify the **throughput** (iterations/second) and 
+**latency** (milliseconds) of a set of **realistic** CRUD queries. These 
+queries are not arcane or complex, nor are they unreasonably simplistic (as 
+benchmarking queries tend to be). Queries of comparable complexity will be 
+necessary in any non-trivial web application. 
 
-Simulated server-database latency
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The execution environment simulates a *1 millisecond* latency between the server and database. This is the `typical latency <https://aws.amazon.com/blogs/architecture/improving-performance-and-reducing-cost-using-availability-zone-affinity/>`_ 
+Simulated server-database latency 🐇
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The execution environment simulates a *1 millisecond* latency between the 
+server and database. This is the 
+`typical latency <https://aws.amazon.com/blogs/architecture/improving-performance-and-reducing-cost-using-availability-zone-affinity/>`_ 
 between zones in a single AWS region. The vast majority of applications do not 
 have the resources to support per-availability-zone replication, so this 
 assumption is reasonable.
 
-With serverless architectures, it's common for server code to run inside Lambda-style functions in a different availability zone from the underlying database, which would incur latencies far greater than 1ms.
+With serverless architectures, it's common for server code to run inside 
+Lambda-style functions in a different availability zone from the underlying 
+database, which would incur latencies far greater than 1ms.
 
 On Linux, this latency can be simulated with ``tc`` like so:
 
@@ -63,14 +68,15 @@ On Linux, this latency can be simulated with ``tc`` like so:
 
   sudo tc qdisc add dev br-webapp-bench root netem delay 1ms
 
-Schema
-^^^^^^
+Dataset 🍿
+^^^^^^^^^
 
-We are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review website. 
+We are simulating a `Letterboxd <https://letterboxd.com/>`_-style movie review 
+website. 
 
 .. image:: results/schema.png
 
-The schema consists of four main types.
+The schema consists of four tables/models/types:
 
 - ``Person`` (used to represent the cast and crew) 
 - ``Movie``
@@ -83,11 +89,11 @@ The schema consists of four main types.
   - ``author -> User`` (to one)
   - ``movie -> Movie`` (to one)
 
-Dataset
-^^^^^^^
+
+**Size**
 
 The sample dataset consists of 25k movies, 100k people, 100k users, and 500k 
-reviews already exists in the ``dataset/build`` directory. 
+reviews.
 
 Queries
 ^^^^^^^
@@ -188,7 +194,10 @@ The following queries have been implemented for each target.
 - ``get_user`` Evaluates *reverse relation fetching* and *relation 
   aggregation*.
 
-  Fetch a ``User`` by ID, including all its properties and 10 most recently written ``Reviews``. For each review, fetch all its properties, the properties of the ``Movie`` it is about, and the *average rating* of that movie (averaged across all reviews in the database). 
+  Fetch a ``User`` by ID, including all its properties and 10 most recently 
+  written ``Reviews``. For each review, fetch all its properties, the 
+  properties of the ``Movie`` it is about, and the *average rating* of that 
+  movie (averaged across all reviews in the database). 
 
   .. raw:: html
 
@@ -220,9 +229,13 @@ The following queries have been implemented for each target.
 Results
 -------
 
-The graphs below present the throughput/latency results for each target as a geometric mean of the three queries. As such, it should be interpreted as a holistic benchmark that represents the target library's collective performance across a range of query functionality.
+The graphs below present the throughput/latency results for each target as a 
+geometric mean of the three queries. As such, it should be interpreted as a 
+holistic benchmark that represents the target library's collective performance 
+across a range of query functionality.
   
-  For per-query results, interactive charts, and latency jitter statistics, view the full report.
+  For per-query results, interactive charts, and latency jitter statistics, 
+  view the full report.
 
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
@@ -238,6 +251,21 @@ Python ORMs
 `View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/py.html>`_
 
 .. image:: ./results/py.png
+
+
+SQL Comparison
+^^^^^^^^^^^^^^
+
+For comparison, below is a report comparing the performance of a tuned 
+PostgreSQL implementation of the benchmark queries, executed using two popular 
+Postgres Python drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_ 
+and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the 
+EdgeDB benchmarks (using the `Python client 
+<https://github.com/edgedb/edgedb-python>`_) are included.
+
+`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/webapp-bench/blob/master/results/pysql.html>`_
+
+.. image:: ./results/pysql.png
 
 
 Analysis
