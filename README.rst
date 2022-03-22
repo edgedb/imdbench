@@ -1,10 +1,12 @@
-CruddyBench: Benchmarking ORMs with realistic queries
-=====================================================
+.. raw:: html
+
+  <h1 align="center">Zod</h1>
+  <p align="center">Benchmarking ORMs with realistic queries</p>
 
 ``Rev. 1.0.0``
 
 A benchmark intended to compare various Python and JavaScript 
-ORMs against EdgeDB and other databases, using realistic queries. 
+ORMs with realistic queries required for a hypothetical IMDB-style movie database application.
 
 Why is this needed? 🧐
 ---------------------
