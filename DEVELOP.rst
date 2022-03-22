@@ -38,6 +38,9 @@ Run locally
 #. Install `Docker <https://docs.docker.com/get-docker/>`_ and `docker-compose 
    <https://docs.docker.com/compose/install/>`_
 
+   **Note:** On macOS, Docker containers are run inside a virtual machine. 
+   This incurs significant overhead and can skew results unpredictably.
+
 #. Install `Synth <https://www.getsynth.com>`_
 
 #. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
@@ -76,7 +79,8 @@ Run locally
 
 #. Run the benchmarks
 
-   - To execute the JavaScript ORM benchmarks, you must first run the folowing loaders:
+   - To execute the JavaScript ORM benchmarks, you must first run the folowing 
+   loaders:
    
       .. code-block::
 
