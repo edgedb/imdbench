@@ -309,11 +309,11 @@ For reference the EdgeDB results (using the `Python client
 
 .. 
 
-  The ``psycopg2`` driver cannot properly decode the results of queries 
+  Most drivers cannot properly decode the results of queries 
   containing array-aggregated subqueries. This is necessary to retrieve usable 
-  results from deep queries in a performant way; as such certain benchmark 
-  operations require multiple serially-executed queries. By contrast, 
-  ``asyncpg`` (which was originally designed as the Postgres IO layer for 
+  results from deep queries in a performant way; as such, certain benchmark 
+  operations are implemented as 2+ serially-executed queries. By contrast, 
+  ``asyncpg`` (which was originally designed as the Postgres interface for 
   EdgeDB) can express all operations as a single highly-optimized SQL query 
   and represents the high-water mark for this benchmark.
 
