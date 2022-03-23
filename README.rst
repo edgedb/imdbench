@@ -241,8 +241,8 @@ across a range of query functionality.
 👀 For per-query results, interactive charts, and latency jitter statistics, 
 view the full report!
 
-JavaScript ORMs `Full Report <https://edgedb.github.io/imdbench/js.html>`_
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+JavaScript ORMs [`Full Report <https://edgedb.github.io/imdbench/js.html>`_]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The libraries tested are:
 
@@ -261,14 +261,14 @@ The libraries tested are:
   :alt: JavaScript ORM latency results
 
 
-Python ORMs `<https://edgedb.github.io/imdbench/py.html>`_
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Python ORMs [`Full Report <https://edgedb.github.io/imdbench/py.html>`_]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The libraries tested are:
 
-- `Django <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`
-- `SQLAlchemy <https://www.sqlalchemy.org/>`
-- `EdgeDB (Python client) <https://www.edgedb.com/docs/clients/00_python/index>`
+- `Django <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`_
+- `SQLAlchemy <https://www.sqlalchemy.org/>`_
+- `EdgeDB (Python client) <https://www.edgedb.com/docs/clients/00_python/index>`_
 
 .. image:: ./docs/py_thru.png
   :target: https://edgedb.github.io/imdbench/py.html
@@ -279,7 +279,7 @@ The libraries tested are:
   :alt: Python ORM latency results
 
 
-Raw SQL `Full Report <https://edgedb.github.io/imdbench/sql.html>`_
+Raw SQL [`Full Report <https://edgedb.github.io/imdbench/sql.html>`_]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -290,7 +290,7 @@ Postgres drivers:
 - `asyncpg <https://github.com/MagicStack/asyncpg>`_
 - `psycopg2 <https://pypi.org/project/psycopg2/>`_
 - `go-pgx <https://github.com/jackc/pgx>`_
-- `node-postgres <https://node-postgres.com/`_
+- `node-postgres <https://node-postgres.com/>`_
 
 For reference the EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
