@@ -241,8 +241,8 @@ across a range of query functionality.
 👀 For per-query results, interactive charts, and latency jitter statistics, 
 view the full report!
 
-JavaScript ORMs
-^^^^^^^^^^^^^^^
+JavaScript ORMs `Full Report <https://edgedb.github.io/imdbench/js.html>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The libraries tested are:
 
@@ -251,8 +251,6 @@ The libraries tested are:
 - `Sequelize <https://sequelize.org/>`_
 - `EdgeDB (TypeScript query builder) <https://www.edgedb.com/docs/clients/01_js/index>`_
 
-`View Full Report <https://edgedb.github.io/imdbench/js.html>`_
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ./docs/js_thru.png
   :target: https://edgedb.github.io/imdbench/js.html
@@ -263,16 +261,14 @@ The libraries tested are:
   :alt: JavaScript ORM latency results
 
 
-Python ORMs
-^^^^^^^^^^^
+Python ORMs `<https://edgedb.github.io/imdbench/py.html>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The libraries tested are:
 
 - `Django <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`
 - `SQLAlchemy <https://www.sqlalchemy.org/>`
 - `EdgeDB (Python client) <https://www.edgedb.com/docs/clients/00_python/index>`
-
-`View Full Report <https://edgedb.github.io/imdbench/py.html>`_
 
 .. image:: ./docs/py_thru.png
   :target: https://edgedb.github.io/imdbench/py.html
@@ -283,8 +279,8 @@ The libraries tested are:
   :alt: Python ORM latency results
 
 
-Raw SQL
-^^^^^^^
+Raw SQL `Full Report <https://edgedb.github.io/imdbench/sql.html>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 For comparison, below are the benchmark results for a tuned 
@@ -298,8 +294,6 @@ Postgres drivers:
 
 For reference the EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
-
-`View Full Report <https://edgedb.github.io/imdbench/sql.html>`_
 
 .. image:: ./docs/sql_thru.png
   :target: https://edgedb.github.io/imdbench/sql.html
