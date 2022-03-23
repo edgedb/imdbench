@@ -70,10 +70,11 @@ Run locally
 
 #. Run the benchmarks
 
-   - To execute the JavaScript ORM benchmarks, you must first run the folowing 
-     loaders:
+   - To execute the JavaScript ORM benchmarks, you must first run the 
+     following loaders:
    
      .. code-block::
+        
         $ make load-typeorm 
         $ make load-sequelize 
         $ make load-postgres
