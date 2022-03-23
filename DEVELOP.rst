@@ -127,9 +127,9 @@ Run locally
 
    .. code-block::
       
-      $ make run-pysql
+      $ make run-sql
    
-   The results will be generated into ``docs/pysql.html``.
+   The results will be generated into ``docs/sql.html``.
 
 #. [Optional] Run a custom benchmark
 

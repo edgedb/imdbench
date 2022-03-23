@@ -260,13 +260,15 @@ Raw SQL
 ^^^^^^^
 
 For comparison, below are the benchmark results for a tuned 
-PostgreSQL implementation of the benchmark queries, executed using two popular 
-Postgres Python drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_ 
-and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the 
+PostgreSQL implementation of the benchmark queries, executed using popular 
+Postgres drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_,
+`psycopg2 <https://pypi.org/project/psycopg2/>`_,
+`go-pgx <https://github.com/jackc/pgx>`_,
+`node-postgres <https://node-postgres.com/`_). For reference the 
 EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
 
-`View Full Report <https://edgedb.github.io/imdbench/pysql.html>`_
+`View Full Report <https://edgedb.github.io/imdbench/sql.html>`_
 
 .. image:: ./docs/sql_thru.png
 

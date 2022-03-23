@@ -187,7 +187,7 @@ def process_results(lat_data, results):
 
 
 def format_report_html(data, target_file):
-    tpl_dir = pathlib.Path(__file__).parent / 'results'
+    tpl_dir = pathlib.Path(__file__).parent / 'docs'
     tpl_path = tpl_dir / 'TEMPLATE.html'
 
     env = jinja2.Environment(
