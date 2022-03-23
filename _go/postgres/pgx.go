@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/edgedb/webapp-bench/_go/bench"
-	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/edgedb/imdbench/_go/bench"
+	"github.com/edgedb/imdbench/_go/cli"
 	"github.com/jackc/pgx/v4"
 )
 

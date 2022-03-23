@@ -1,4 +1,4 @@
-module github.com/edgedb/webapp-bench/_go
+module github.com/edgedb/imdbench/_go
 
 go 1.15
 

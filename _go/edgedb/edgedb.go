@@ -10,8 +10,8 @@ import (
 
 	"github.com/edgedb/edgedb-go"
 
-	"github.com/edgedb/webapp-bench/_go/bench"
-	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/edgedb/imdbench/_go/bench"
+	"github.com/edgedb/imdbench/_go/cli"
 )
 
 type User struct {
