@@ -303,8 +303,12 @@ For reference the EdgeDB results (using the `Python client
   :target: https://edgedb.github.io/imdbench/sql.html
   :alt: SQL latency results
 
-..
+.. raw:: html
 
+  <br />
+
+.. 
+  
   The ``psycopg2`` driver cannot properly decode the results of queries 
   containing array-aggregated subqueries. This is necessary to retrieve usable 
   results from deep queries in a performant way; as such certain benchmark 
