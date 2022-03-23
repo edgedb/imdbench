@@ -43,20 +43,11 @@ Run locally
 
 #. Install `Synth <https://www.getsynth.com>`_
 
-#. [Optional] A sample dataset consisting of 25k movies, 100k people, 100k 
-   users, and 500k reviews already exists in the ``dataset/build`` 
-   directory. If you wish, you can generate a fresh dataset like so: 
+#. Generate the dataset.
   
    .. code-block::
 
       $ make new-dataset
-
-   You can also customize the number of inserted objects with the arguments 
-   ``people``, ``user``, and ``reviews``.
-
-   .. code-block::
-
-      $ make new-dataset people=5000 users=1000 reviews=2000
 
 #. Load the data into the test databases via ``$ make load``. Alternatively, 
    you can run only the loaders you care about:
@@ -80,7 +71,7 @@ Run locally
 #. Run the benchmarks
 
    - To execute the JavaScript ORM benchmarks, you must first run the folowing 
-   loaders:
+     loaders:
    
       .. code-block::
 
