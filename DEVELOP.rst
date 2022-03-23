@@ -86,7 +86,7 @@ Run locally
       
       $ make run-js
    
-   The results will be generated into ``results/js.html``.
+   The results will be generated into ``docs/js.html``.
 
 #. Run the Python benchmarks
 
@@ -105,7 +105,7 @@ Run locally
       
       $ make run-py
    
-   The results will be generated into ``results/py.html``.
+   The results will be generated into ``docs/py.html``.
    
 #. Run the SQL benchmarks
 
@@ -122,7 +122,7 @@ Run locally
       
       $ make run-pysql
    
-   The results will be generated into ``results/pysql.html``.
+   The results will be generated into ``docs/pysql.html``.
 
 #. [Optional] Run a custom benchmark
 

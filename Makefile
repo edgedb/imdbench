@@ -290,22 +290,22 @@ compile:
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
 
 run-js:
-	$(RUNNER) --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
+	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
 
 run-py:
-	$(RUNNER) --html results/py.html --json results/py.json django sqlalchemy edgedb_py_sync
+	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
 
 run-pysql:
-	$(RUNNER) --html results/pysql.html --json results/pysql.json edgedb_py_sync postgres_psycopg postgres_asyncpg
+	$(RUNNER) --html docs/pysql.html --json docs/pysql.json edgedb_py_sync postgres_psycopg postgres_asyncpg
 
 run-graphql:
-	$(RUNNER) --html results/py.html --json results/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
+	$(RUNNER) --html docs/py.html --json docs/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
 
 run-orms:
-	$(RUNNER) --html results/orms.html --json results/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
+	$(RUNNER) --html docs/orms.html --json docs/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
 
 run-edgedb:
-	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
+	$(RUNNER) --html docs/edgedb.html --json docs/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
 run-scratch: 
-	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html results/scratch.html edgedb_go
+	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go

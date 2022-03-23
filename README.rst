@@ -77,7 +77,7 @@ Dataset 🍿
 We are simulating an `IMDB <https://imdb.com>`_-style movie database
 website. The sample dataset consists of 25k movies, 100k people, 100k users, and 500k reviews.
 
-.. image:: results/schema.png
+.. image:: docs/schema.png
 
 The schema consists of four tables/models/types:
 
@@ -238,22 +238,22 @@ view the full report!
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/results/js.html>`_
+`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/js.html>`_
 
-.. image:: ./results/js_thru.png
+.. image:: ./docs/js_thru.png
 
-.. image:: ./results/js_lat.png
+.. image:: ./docs/js_lat.png
 
 
 
 Python ORMs
 ^^^^^^^^^^^
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/results/py.html>`_
+`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/py.html>`_
 
-.. image:: ./results/py_thru.png
+.. image:: ./docs/py_thru.png
 
-.. image:: ./results/py_lat.png
+.. image:: ./docs/py_lat.png
 
 
 Raw SQL
@@ -266,11 +266,11 @@ and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the
 EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/results/pysql.html>`_
+`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/pysql.html>`_
 
-.. image:: ./results/sql_thru.png
+.. image:: ./docs/sql_thru.png
 
-.. image:: ./results/sql_lat.png
+.. image:: ./docs/sql_lat.png
 
 
 Analysis
