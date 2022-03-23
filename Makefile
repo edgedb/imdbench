@@ -104,8 +104,10 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:latest
-	sleep 60
+		edgedb/edgedb:opt
+	edgedb -H localhost -P 15656 \
+		--tls-security=insecure --wait-until-available=120s \
+		query "SELECT 'EdgeDB ready'"
 
 docker-edgedb-stop:
 	$(DOCKER) stop webapp-bench-edgedb
@@ -287,7 +289,7 @@ load-graphql: load-hasura load-postgraphile
 compile:
 	make -C _go
 
-RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
+RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 1 --duration 10 --net-latency 1
 
 run-js:
 	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
@@ -295,8 +297,8 @@ run-js:
 run-py:
 	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
 
-run-pysql:
-	$(RUNNER) --html docs/pysql.html --json docs/pysql.json edgedb_py_sync postgres_psycopg postgres_asyncpg
+run-sql:
+	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgres_pg postgres_pgx
 
 run-graphql:
 	$(RUNNER) --html docs/py.html --json docs/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
@@ -307,5 +309,5 @@ run-orms:
 run-edgedb:
 	$(RUNNER) --html docs/edgedb.html --json docs/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
 
-run-scratch: 
+run-scratch:
 	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go

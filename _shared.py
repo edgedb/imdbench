@@ -72,16 +72,16 @@ IMPLEMENTATIONS = {
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        impl('python', 'PostgreSQL (asyncpg)', postgres_queries),
+        impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),
 
     'postgres_psycopg':
-        impl('python', 'PostgreSQL (psycopg2)', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL (Pyhton, psycopg2)', postgres_psycopg_queries),
 
     'postgres_pq':
-        impl('go', 'PostgreSQL (pq)', postgres_pq_golang),
+        impl('go', 'PostgreSQL (Go, pq)', postgres_pq_golang),
 
     'postgres_pgx':
-        impl('go', 'PostgreSQL (pgx)', postgres_pgx_golang),
+        impl('go', 'PostgreSQL (Go, pgx)', postgres_pgx_golang),
 
     'postgres_hasura_go':
         impl('go', 'Hasura + Postgres (Go)', postgres_hasura_golang),
@@ -109,7 +109,7 @@ IMPLEMENTATIONS = {
         impl('js', 'Sequelize', None),
 
     'postgres_pg':
-        impl('js', 'Postgres', None),
+        impl('js', 'PostgreSQL (Node.js, pg)', None),
 
     'prisma_untuned':
         impl('js', 'Prisma (Untuned)', None),
@@ -189,7 +189,7 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
-        '-C', '--concurrency', type=int, default=4,
+        '-C', '--concurrency', type=int, default=1,
         help='number of concurrent connections')
 
     parser.add_argument(
