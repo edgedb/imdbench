@@ -238,7 +238,7 @@ view the full report!
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/js.html>`_
+`View Full Report <https://edgedb.github.io/imdbench/js.html>`_
 
 .. image:: ./docs/js_thru.png
 
@@ -249,7 +249,7 @@ JavaScript ORMs
 Python ORMs
 ^^^^^^^^^^^
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/py.html>`_
+`View Full Report <https://edgedb.github.io/imdbench/py.html>`_
 
 .. image:: ./docs/py_thru.png
 
@@ -266,7 +266,7 @@ and `psycopg2 <https://pypi.org/project/psycopg2/>`_). For reference the
 EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
 
-`View Full Report <https://htmlpreview.github.io/?https://github.com/edgedb/imdbench/blob/master/docs/pysql.html>`_
+`View Full Report <https://edgedb.github.io/imdbench/pysql.html>`_
 
 .. image:: ./docs/sql_thru.png
 
