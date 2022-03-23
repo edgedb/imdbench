@@ -72,16 +72,16 @@ IMPLEMENTATIONS = {
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        impl('python', 'PostgreSQL (py-asyncpg)', postgres_queries),
+        impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),
 
     'postgres_psycopg':
-        impl('python', 'PostgreSQL (py-psycopg2)', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL (Pyhton, psycopg2)', postgres_psycopg_queries),
 
     'postgres_pq':
-        impl('go', 'PostgreSQL (go-pq)', postgres_pq_golang),
+        impl('go', 'PostgreSQL (Go, pq)', postgres_pq_golang),
 
     'postgres_pgx':
-        impl('go', 'PostgreSQL (go-pgx)', postgres_pgx_golang),
+        impl('go', 'PostgreSQL (Go, pgx)', postgres_pgx_golang),
 
     'postgres_hasura_go':
         impl('go', 'Hasura + Postgres (Go)', postgres_hasura_golang),
@@ -109,7 +109,7 @@ IMPLEMENTATIONS = {
         impl('js', 'Sequelize', None),
 
     'postgres_pg':
-        impl('js', 'PostgreSQL (js-pg)', None),
+        impl('js', 'PostgreSQL (Node.js, pg)', None),
 
     'prisma_untuned':
         impl('js', 'Prisma (Untuned)', None),

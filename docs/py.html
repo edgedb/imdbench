@@ -1463,18 +1463,19 @@
       <dt>Targets</dt>
       <dd>
         <ul>
-          
           <li>Django ORM</li>
-          
+
           <li>SQLAlchemy</li>
-          
+
           <li>EdgeDB (Python)</li>
-          
         </ul>
       </dd>
       <dt>Test environment</dt>
       <dd>
-        <code>Linux 5.16.15+ (Gentoo 2.7, x86_64) on AMD Ryzen Threadripper 3970X 32-Core Processor</code>
+        <code
+          >Linux 5.16.15+ (Gentoo 2.7, x86_64) on AMD Ryzen Threadripper 3970X
+          32-Core Processor</code
+        >
       </dd>
       <dt>Duration (per benchmark)</dt>
       <dd>10 seconds</dd>
@@ -1485,87 +1486,356 @@
     </dl>
     <br />
 
-     
     <h2>Overall Results</h2>
 
     <p class="bench-description">
       The charts below show the geometric average of all benchmark results.
     </p>
-    
 
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-mean" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-mean" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_mean = [{"implementation": "Django ORM", "duration": 10.0, "queries": 632.08, "qps": 63.21, "latency_min": 12.912, "latency_mean": 15.826, "latency_max": 17.718, "latency_std": 0.571, "latency_cv": 3.61, "latency_percentiles": [[25, 15.543], [50, 15.864], [75, 16.166], [90, 16.422], [99, 16.929], [99.99, 17.727]]}, {"implementation": "SQLAlchemy", "duration": 10.0, "queries": 963.13, "qps": 96.31, "latency_min": 8.511, "latency_mean": 10.373, "latency_max": 19.056, "latency_std": 0.71, "latency_cv": 6.85, "latency_percentiles": [[25, 10.127], [50, 10.353], [75, 10.547], [90, 10.837], [99, 11.46], [99.99, 19.065]]}, {"implementation": "EdgeDB (Python)", "duration": 10.0, "queries": 5068.44, "qps": 506.84, "latency_min": 1.699, "latency_mean": 1.962, "latency_max": 5.115, "latency_std": 0.114, "latency_cv": 5.79, "latency_percentiles": [[25, 1.904], [50, 1.955], [75, 2.012], [90, 2.061], [99, 2.188], [99.99, 5.115]]}];
+      var DATA_mean = [
+        {
+          implementation: 'Django ORM',
+          duration: 10.0,
+          queries: 632.08,
+          qps: 63.21,
+          latency_min: 12.912,
+          latency_mean: 15.826,
+          latency_max: 17.718,
+          latency_std: 0.571,
+          latency_cv: 3.61,
+          latency_percentiles: [
+            [25, 15.543],
+            [50, 15.864],
+            [75, 16.166],
+            [90, 16.422],
+            [99, 16.929],
+            [99.99, 17.727],
+          ],
+        },
+        {
+          implementation: 'SQLAlchemy',
+          duration: 10.0,
+          queries: 963.13,
+          qps: 96.31,
+          latency_min: 8.511,
+          latency_mean: 10.373,
+          latency_max: 19.056,
+          latency_std: 0.71,
+          latency_cv: 6.85,
+          latency_percentiles: [
+            [25, 10.127],
+            [50, 10.353],
+            [75, 10.547],
+            [90, 10.837],
+            [99, 11.46],
+            [99.99, 19.065],
+          ],
+        },
+        {
+          implementation: 'EdgeDB (Python)',
+          duration: 10.0,
+          queries: 5068.44,
+          qps: 506.84,
+          latency_min: 1.699,
+          latency_mean: 1.962,
+          latency_max: 5.115,
+          latency_std: 0.114,
+          latency_cv: 5.79,
+          latency_percentiles: [
+            [25, 1.904],
+            [50, 1.955],
+            [75, 2.012],
+            [90, 2.061],
+            [99, 2.188],
+            [99.99, 5.115],
+          ],
+        },
+      ];
       drawBars('#bars-mean', DATA_mean);
       drawLats('#lats-mean', DATA_mean);
     </script>
 
-    
     <h2>Individual benchmarks</h2>
-       
+
     <h3>POST /movie (existing cast)</h3>
-    <p class="bench-description">Create a new movie record, linking existing directors and cast.</p>
+    <p class="bench-description">
+      Create a new movie record, linking existing directors and cast.
+    </p>
 
-    
-
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-insert_movie" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-insert_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_insert_movie = [{"duration": 10, "queries": 332, "qps": 33.2, "latency_min": 26.19, "latency_mean": 30.169, "latency_max": 34.09, "latency_std": 1.083, "latency_cv": 3.59, "latency_percentiles": [[25, 29.81], [50, 30.35], [75, 30.715], [90, 31.186], [99, 32.014], [99.99, 34.099]], "samples": ["{\"id\": 233686, \"image\": \"insert_test__image327527.jpeg\", \"title\": \"insert_test__327527\", \"year\": 327527, \"description\": \"insert_test__description327527\", \"directors\": [{\"id\": 47485, \"full_name\": \"Fern MacGyver\", \"image\": \"pc807598626647.jpeg\"}], \"cast\": [{\"id\": 77187, \"full_name\": \"Jany Gottlieb\", \"image\": \"pn316049432940.jpeg\"}, {\"id\": 99955, \"full_name\": \"Ivory Hartmann\", \"image\": \"pz123034466200.jpeg\"}, {\"id\": 66932, \"full_name\": \"Nova McCullough\", \"image\": \"pq952262367423.jpeg\"}], \"avg_rating\": null, \"reviews\": []}"], "implementation": "Django ORM"}, {"duration": 10, "queries": 383, "qps": 38.3, "latency_min": 23.17, "latency_mean": 26.128, "latency_max": 31.01, "latency_std": 0.571, "latency_cv": 2.19, "latency_percentiles": [[25, 25.868], [50, 26.035], [75, 26.305], [90, 26.714], [99, 27.803], [99.99, 31.019]], "samples": ["{\"id\": 234192, \"image\": \"insert_test__image880839.jpeg\", \"title\": \"insert_test__880839\", \"year\": 880839, \"description\": \"insert_test__description880839\", \"directors\": [{\"id\": 64441, \"full_name\": \"Kristina Rempel\", \"image\": \"py130653620204.jpeg\"}], \"cast\": [{\"id\": 79143, \"full_name\": \"Estefania Larson\", \"image\": \"pz110247138464.jpeg\"}, {\"id\": 55126, \"full_name\": \"Amina Rowe\", \"image\": \"pb526074154944.jpeg\"}, {\"id\": 22420, \"full_name\": \"Emmett Brooke Toy\", \"image\": \"py667026370641.jpeg\"}]}"], "implementation": "SQLAlchemy"}, {"duration": 10, "queries": 4654, "qps": 465.4, "latency_min": 1.87, "latency_mean": 2.137, "latency_max": 14.92, "latency_std": 0.205, "latency_cv": 9.59, "latency_percentiles": [[25, 2.093], [50, 2.13], [75, 2.178], [90, 2.213], [99, 2.364], [99.99, 14.921]], "samples": ["{\"id\": \"8be92bac-aadd-11ec-a0ae-37da740b289d\", \"image\": \"insert_test__image900157.jpeg\", \"title\": \"insert_test__900157\", \"year\": 900157, \"description\": \"insert_test__description900157\", \"directors\": [{\"id\": \"1e59b3d8-aa09-11ec-85c6-037ea2ab9110\", \"full_name\": \"Harvey Parisian\", \"image\": \"pg428927862680.jpeg\"}], \"cast\": [{\"id\": \"1b98c13e-aa09-11ec-85c6-0f3426d15969\", \"full_name\": \"Columbus Brown\", \"image\": \"po438574243084.jpeg\"}, {\"id\": \"1b65551a-aa09-11ec-85c6-a341dc6ec4c6\", \"full_name\": \"Zetta Maggio\", \"image\": \"pw692661898600.jpeg\"}, {\"id\": \"1e66d126-aa09-11ec-85c6-cf1db1db0795\", \"full_name\": \"Barbara Ward\", \"image\": \"pk779663914984.jpeg\"}]}"], "implementation": "EdgeDB (Python)"}];
+      var DATA_insert_movie = [
+        {
+          duration: 10,
+          queries: 332,
+          qps: 33.2,
+          latency_min: 26.19,
+          latency_mean: 30.169,
+          latency_max: 34.09,
+          latency_std: 1.083,
+          latency_cv: 3.59,
+          latency_percentiles: [
+            [25, 29.81],
+            [50, 30.35],
+            [75, 30.715],
+            [90, 31.186],
+            [99, 32.014],
+            [99.99, 34.099],
+          ],
+          samples: [
+            '{"id": 233686, "image": "insert_test__image327527.jpeg", "title": "insert_test__327527", "year": 327527, "description": "insert_test__description327527", "directors": [{"id": 47485, "full_name": "Fern MacGyver", "image": "pc807598626647.jpeg"}], "cast": [{"id": 77187, "full_name": "Jany Gottlieb", "image": "pn316049432940.jpeg"}, {"id": 99955, "full_name": "Ivory Hartmann", "image": "pz123034466200.jpeg"}, {"id": 66932, "full_name": "Nova McCullough", "image": "pq952262367423.jpeg"}], "avg_rating": null, "reviews": []}',
+          ],
+          implementation: 'Django ORM',
+        },
+        {
+          duration: 10,
+          queries: 383,
+          qps: 38.3,
+          latency_min: 23.17,
+          latency_mean: 26.128,
+          latency_max: 31.01,
+          latency_std: 0.571,
+          latency_cv: 2.19,
+          latency_percentiles: [
+            [25, 25.868],
+            [50, 26.035],
+            [75, 26.305],
+            [90, 26.714],
+            [99, 27.803],
+            [99.99, 31.019],
+          ],
+          samples: [
+            '{"id": 234192, "image": "insert_test__image880839.jpeg", "title": "insert_test__880839", "year": 880839, "description": "insert_test__description880839", "directors": [{"id": 64441, "full_name": "Kristina Rempel", "image": "py130653620204.jpeg"}], "cast": [{"id": 79143, "full_name": "Estefania Larson", "image": "pz110247138464.jpeg"}, {"id": 55126, "full_name": "Amina Rowe", "image": "pb526074154944.jpeg"}, {"id": 22420, "full_name": "Emmett Brooke Toy", "image": "py667026370641.jpeg"}]}',
+          ],
+          implementation: 'SQLAlchemy',
+        },
+        {
+          duration: 10,
+          queries: 4654,
+          qps: 465.4,
+          latency_min: 1.87,
+          latency_mean: 2.137,
+          latency_max: 14.92,
+          latency_std: 0.205,
+          latency_cv: 9.59,
+          latency_percentiles: [
+            [25, 2.093],
+            [50, 2.13],
+            [75, 2.178],
+            [90, 2.213],
+            [99, 2.364],
+            [99.99, 14.921],
+          ],
+          samples: [
+            '{"id": "8be92bac-aadd-11ec-a0ae-37da740b289d", "image": "insert_test__image900157.jpeg", "title": "insert_test__900157", "year": 900157, "description": "insert_test__description900157", "directors": [{"id": "1e59b3d8-aa09-11ec-85c6-037ea2ab9110", "full_name": "Harvey Parisian", "image": "pg428927862680.jpeg"}], "cast": [{"id": "1b98c13e-aa09-11ec-85c6-0f3426d15969", "full_name": "Columbus Brown", "image": "po438574243084.jpeg"}, {"id": "1b65551a-aa09-11ec-85c6-a341dc6ec4c6", "full_name": "Zetta Maggio", "image": "pw692661898600.jpeg"}, {"id": "1e66d126-aa09-11ec-85c6-cf1db1db0795", "full_name": "Barbara Ward", "image": "pk779663914984.jpeg"}]}',
+          ],
+          implementation: 'EdgeDB (Python)',
+        },
+      ];
       drawBars('#bars-insert_movie', DATA_insert_movie);
       drawLats('#lats-insert_movie', DATA_insert_movie);
     </script>
 
-    
     <h4>Sample Outputs</h4>
 
     <div id="samples-insert_movie"></div>
 
     <script>
-      renderSamples(document.getElementById('samples-insert_movie'), DATA_insert_movie);
+      renderSamples(
+        document.getElementById('samples-insert_movie'),
+        DATA_insert_movie
+      );
     </script>
-       
+
     <h3>GET /movie/:id</h3>
-    <p class="bench-description">Get information about a given movie: title, year, directors, cast, recent reviews, and average review rating.</p>
+    <p class="bench-description">
+      Get information about a given movie: title, year, directors, cast, recent
+      reviews, and average review rating.
+    </p>
 
-    
-
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-get_movie" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-get_movie" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_get_movie = [{"duration": 10, "queries": 931, "qps": 93.1, "latency_min": 8.32, "latency_mean": 10.738, "latency_max": 11.98, "latency_std": 0.372, "latency_cv": 3.46, "latency_percentiles": [[25, 10.489], [50, 10.748], [75, 10.995], [90, 11.162], [99, 11.467], [99.99, 11.988]], "samples": ["{\"id\": 219138, \"image\": \"mf939505722628.jpeg\", \"title\": \"incubate enterprise methodologies\", \"year\": 1950, \"description\": \"morph robust ROI\", \"directors\": [{\"id\": 6762, \"full_name\": \"Gussie Pagac\", \"image\": \"pl071882112948.jpeg\"}], \"cast\": [{\"id\": 25866, \"full_name\": \"Kamren O'Connell\", \"image\": \"pv603575231442.jpeg\"}, {\"id\": 25867, \"full_name\": \"Sim Kozey\", \"image\": \"pk059128838717.jpeg\"}, {\"id\": 25868, \"full_name\": \"Sienna H. Padberg\", \"image\": \"po733801026537.jpeg\"}, {\"id\": 25869, \"full_name\": \"Mariah Konopelski\", \"image\": \"pr308729933673.jpeg\"}, {\"id\": 25870, \"full_name\": \"Zachariah Koss\", \"image\": \"pa708853739553.jpeg\"}, {\"id\": 25871, \"full_name\": \"Lorine Schuppe\", \"image\": \"pq548321813991.jpeg\"}, {\"id\": 25872, \"full_name\": \"Kenya Bashirian\", \"image\": \"pg939375335290.jpeg\"}, {\"id\": 25873, \"full_name\": \"Brant Gleichner\", \"image\": \"pz909889023932.jpeg\"}, {\"id\": 25874, \"full_name\": \"Dannie Medhurst\", \"image\": \"pk518220683384.jpeg\"}, {\"id\": 25875, \"full_name\": \"Jaydon Keebler\", \"image\": \"pc302458656223.jpeg\"}, {\"id\": 25876, \"full_name\": \"Jacynthe Deborah Oberbrunner\", \"image\": \"pm704603103683.jpeg\"}, {\"id\": 25877, \"full_name\": \"Niko Nicolas\", \"image\": \"pe550872691931.jpeg\"}, {\"id\": 25878, \"full_name\": \"Doris Lindgren\", \"image\": \"ps975490053169.jpeg\"}, {\"id\": 25879, \"full_name\": \"Kassandra Will\", \"image\": \"pe048311084764.jpeg\"}, {\"id\": 25880, \"full_name\": \"Arvid Hansen\", \"image\": \"pz899710314444.jpeg\"}, {\"id\": 25881, \"full_name\": \"Melody Robel\", \"image\": \"pw478609253186.jpeg\"}, {\"id\": 25882, \"full_name\": \"Emilie Reichel\", \"image\": \"pv711394909669.jpeg\"}, {\"id\": 25883, \"full_name\": \"Madilyn Heller\", \"image\": \"pp526751831950.jpeg\"}, {\"id\": 25884, \"full_name\": \"Tara Tillman\", \"image\": \"pc967757818700.jpeg\"}, {\"id\": 25885, \"full_name\": \"Dortha Monahan\", \"image\": \"pc243738660440.jpeg\"}, {\"id\": 25886, \"full_name\": \"Aiyana Larson\", \"image\": \"pn880780465313.jpeg\"}, {\"id\": 25887, \"full_name\": \"Ahmad Ritchie\", \"image\": \"ph669882478030.jpeg\"}, {\"id\": 25888, \"full_name\": \"Angelica Turcotte\", \"image\": \"pr496107206319.jpeg\"}, {\"id\": 25889, \"full_name\": \"Ted Crona\", \"image\": \"pg839906156770.jpeg\"}, {\"id\": 25890, \"full_name\": \"Isadore McCullough\", \"image\": \"pk852589669796.jpeg\"}, {\"id\": 25891, \"full_name\": \"Brice Shanon Abshire\", \"image\": \"pg221510309048.jpeg\"}, {\"id\": 25892, \"full_name\": \"Tyrell Runolfsdottir\", \"image\": \"ps414134841836.jpeg\"}, {\"id\": 25893, \"full_name\": \"Fidel Krajcik\", \"image\": \"pf361934618920.jpeg\"}, {\"id\": 25894, \"full_name\": \"Leda Morissette\", \"image\": \"pc913936252248.jpeg\"}, {\"id\": 25895, \"full_name\": \"Emely Hassan Hirthe\", \"image\": \"ps316687900949.jpeg\"}, {\"id\": 25896, \"full_name\": \"Adele Abshire\", \"image\": \"pq788366757602.jpeg\"}, {\"id\": 25897, \"full_name\": \"Gabriel Y. White\", \"image\": \"pp775222394915.jpeg\"}, {\"id\": 25898, \"full_name\": \"Julian Murray\", \"image\": \"px256636312562.jpeg\"}, {\"id\": 25899, \"full_name\": \"Ellie Kuvalis\", \"image\": \"pw650652047927.jpeg\"}, {\"id\": 25900, \"full_name\": \"Vern Stark\", \"image\": \"pc071183331531.jpeg\"}, {\"id\": 25901, \"full_name\": \"Gregoria Mueller\", \"image\": \"pt232638974186.jpeg\"}, {\"id\": 25902, \"full_name\": \"Opal Raynor\", \"image\": \"pg643114518625.jpeg\"}, {\"id\": 25903, \"full_name\": \"Vernie Wuckert\", \"image\": \"pk363570955195.jpeg\"}, {\"id\": 25904, \"full_name\": \"Eladio Greenholt\", \"image\": \"pb300125834827.jpeg\"}], \"avg_rating\": 3.2, \"reviews\": [{\"id\": 519138, \"body\": \"optimize B2B action-items\", \"rating\": 3, \"author\": {\"id\": 194138, \"name\": \"willa_eos\", \"image\": \"ui862344004640.jpeg\"}}, {\"id\": 494138, \"body\": \"streamline magnetic architectures\", \"rating\": 3, \"author\": {\"id\": 169138, \"name\": \"jake_debitis\", \"image\": \"ux573450843692.jpeg\"}}, {\"id\": 469138, \"body\": \"transition compelling supply-chains\", \"rating\": 4, \"author\": {\"id\": 144138, \"name\": \"donato_delectus\", \"image\": \"ut679725817874.jpeg\"}}, {\"id\": 719138, \"body\": \"unleash granular e-commerce\", \"rating\": 4, \"author\": {\"id\": 194138, \"name\": \"willa_eos\", \"image\": \"ui862344004640.jpeg\"}}, {\"id\": 369138, \"body\": \"incentivize holistic users\", \"rating\": 1, \"author\": {\"id\": 144138, \"name\": \"donato_delectus\", \"image\": \"ut679725817874.jpeg\"}}, {\"id\": 244138, \"body\": \"deliver intuitive channels\", \"rating\": 4, \"author\": {\"id\": 119138, \"name\": \"lawson_sit\", \"image\": \"ux455082810367.jpeg\"}}, {\"id\": 619138, \"body\": \"recontextualize collaborative solutions\", \"rating\": 3, \"author\": {\"id\": 194138, \"name\": \"willa_eos\", \"image\": \"ui862344004640.jpeg\"}}, {\"id\": 394138, \"body\": \"facilitate dot-com channels\", \"rating\": 3, \"author\": {\"id\": 169138, \"name\": \"jake_debitis\", \"image\": \"ux573450843692.jpeg\"}}, {\"id\": 319138, \"body\": \"generate plug-and-play supply-chains\", \"rating\": 2, \"author\": {\"id\": 194138, \"name\": \"willa_eos\", \"image\": \"ui862344004640.jpeg\"}}, {\"id\": 594138, \"body\": \"visualize synergistic channels\", \"rating\": 4, \"author\": {\"id\": 169138, \"name\": \"jake_debitis\", \"image\": \"ux573450843692.jpeg\"}}, {\"id\": 669138, \"body\": \"expedite web-enabled relationships\", \"rating\": 3, \"author\": {\"id\": 144138, \"name\": \"donato_delectus\", \"image\": \"ut679725817874.jpeg\"}}, {\"id\": 294138, \"body\": \"brand seamless vortals\", \"rating\": 3, \"author\": {\"id\": 169138, \"name\": \"jake_debitis\", \"image\": \"ux573450843692.jpeg\"}}, {\"id\": 544138, \"body\": \"harness out-of-the-box initiatives\", \"rating\": 1, \"author\": {\"id\": 119138, \"name\": \"lawson_sit\", \"image\": \"ux455082810367.jpeg\"}}, {\"id\": 444138, \"body\": \"integrate bleeding-edge web-readiness\", \"rating\": 2, \"author\": {\"id\": 119138, \"name\": \"lawson_sit\", \"image\": \"ux455082810367.jpeg\"}}, {\"id\": 344138, \"body\": \"enable killer infrastructures\", \"rating\": 3, \"author\": {\"id\": 119138, \"name\": \"lawson_sit\", \"image\": \"ux455082810367.jpeg\"}}, {\"id\": 644138, \"body\": \"envisioneer 24/7 metrics\", \"rating\": 2, \"author\": {\"id\": 119138, \"name\": \"lawson_sit\", \"image\": \"ux455082810367.jpeg\"}}, {\"id\": 569138, \"body\": \"cultivate back-end partnerships\", \"rating\": 5, \"author\": {\"id\": 144138, \"name\": \"donato_delectus\", \"image\": \"ut679725817874.jpeg\"}}, {\"id\": 269138, \"body\": \"seize next-generation e-business\", \"rating\": 4, \"author\": {\"id\": 144138, \"name\": \"donato_delectus\", \"image\": \"ut679725817874.jpeg\"}}, {\"id\": 419138, \"body\": \"innovate B2C platforms\", \"rating\": 5, \"author\": {\"id\": 194138, \"name\": \"willa_eos\", \"image\": \"ui862344004640.jpeg\"}}, {\"id\": 694138, \"body\": \"harness proactive interfaces\", \"rating\": 5, \"author\": {\"id\": 169138, \"name\": \"jake_debitis\", \"image\": \"ux573450843692.jpeg\"}}]}"], "implementation": "Django ORM"}, {"duration": 10, "queries": 840, "qps": 84.0, "latency_min": 8.64, "latency_mean": 11.899, "latency_max": 47.48, "latency_std": 2.725, "latency_cv": 22.9, "latency_percentiles": [[25, 11.252], [50, 11.73], [75, 12.068], [90, 12.45], [99, 13.342], [99.99, 47.488]], "samples": ["{\"id\": 222338, \"image\": \"me738640989692.jpeg\", \"title\": \"expedite transparent e-commerce\", \"year\": 2000, \"description\": \"optimize global supply-chains\", \"avg_rating\": 3.05, \"directors\": [{\"id\": 3115, \"full_name\": \"Cyril Ziemann\", \"image\": \"py990444476451.jpeg\"}], \"cast\": [{\"id\": 27514, \"full_name\": \"Braulio Cassin\", \"image\": \"pl502904376127.jpeg\"}, {\"id\": 27515, \"full_name\": \"Noble Batz\", \"image\": \"pq106112038795.jpeg\"}, {\"id\": 27516, \"full_name\": \"Yasmeen Veum\", \"image\": \"po586316853983.jpeg\"}, {\"id\": 27517, \"full_name\": \"Dawn Harvey\", \"image\": \"pn529548745486.jpeg\"}, {\"id\": 27518, \"full_name\": \"Brook Kuhlman\", \"image\": \"pc698495205032.jpeg\"}, {\"id\": 27519, \"full_name\": \"Vergie Lueilwitz\", \"image\": \"pg000557067593.jpeg\"}, {\"id\": 27520, \"full_name\": \"Neal Balistreri\", \"image\": \"pf559322261383.jpeg\"}, {\"id\": 27521, \"full_name\": \"Augustus Lemke\", \"image\": \"pr560328875852.jpeg\"}, {\"id\": 27522, \"full_name\": \"Chyna Rempel\", \"image\": \"pg701734866730.jpeg\"}, {\"id\": 27523, \"full_name\": \"Jarrell Schuppe\", \"image\": \"pm026405064184.jpeg\"}, {\"id\": 27524, \"full_name\": \"Wilburn Zboncak\", \"image\": \"pl402514528613.jpeg\"}, {\"id\": 27525, \"full_name\": \"Camden Daniel\", \"image\": \"pi596666006239.jpeg\"}, {\"id\": 27526, \"full_name\": \"Lynn Cremin\", \"image\": \"pt050822500773.jpeg\"}, {\"id\": 27527, \"full_name\": \"Mazie Glover\", \"image\": \"pg858466191388.jpeg\"}, {\"id\": 27528, \"full_name\": \"Kadin Greg Treutel\", \"image\": \"pe737892513174.jpeg\"}, {\"id\": 27529, \"full_name\": \"Noah Hills\", \"image\": \"po525820849169.jpeg\"}, {\"id\": 27530, \"full_name\": \"Ralph Brown\", \"image\": \"pt592357402355.jpeg\"}, {\"id\": 27531, \"full_name\": \"Derrick Wilderman\", \"image\": \"py202012254402.jpeg\"}, {\"id\": 27532, \"full_name\": \"Buster Dach\", \"image\": \"pt455489050070.jpeg\"}, {\"id\": 27533, \"full_name\": \"Haven Mayert\", \"image\": \"ph223741176022.jpeg\"}, {\"id\": 27534, \"full_name\": \"Gabriella Eichmann\", \"image\": \"px694751196422.jpeg\"}, {\"id\": 27535, \"full_name\": \"Larissa Hudson\", \"image\": \"pg754816848332.jpeg\"}, {\"id\": 27536, \"full_name\": \"Cathy Dickinson\", \"image\": \"pb507981790004.jpeg\"}, {\"id\": 27537, \"full_name\": \"Wellington Armstrong\", \"image\": \"pf196869944596.jpeg\"}, {\"id\": 27538, \"full_name\": \"Leonard Kutch\", \"image\": \"pp870195334746.jpeg\"}, {\"id\": 27539, \"full_name\": \"Kyler Walsh\", \"image\": \"pw512576298814.jpeg\"}, {\"id\": 27540, \"full_name\": \"Rhea Padberg\", \"image\": \"po106094379553.jpeg\"}, {\"id\": 27541, \"full_name\": \"August Lubowitz\", \"image\": \"pt062255599494.jpeg\"}, {\"id\": 27542, \"full_name\": \"Daniela Sanford\", \"image\": \"pr273663180014.jpeg\"}, {\"id\": 27543, \"full_name\": \"Nelson L. Collins\", \"image\": \"pz541551449573.jpeg\"}, {\"id\": 27544, \"full_name\": \"Jason Walker\", \"image\": \"pw765285190231.jpeg\"}, {\"id\": 27545, \"full_name\": \"Kris Walter\", \"image\": \"pf794712621372.jpeg\"}, {\"id\": 27546, \"full_name\": \"Alysha Gerhold\", \"image\": \"pk317815751256.jpeg\"}, {\"id\": 27547, \"full_name\": \"Emelia Beatty\", \"image\": \"pp093241998354.jpeg\"}, {\"id\": 27548, \"full_name\": \"Bruce Wintheiser\", \"image\": \"pn196882956263.jpeg\"}, {\"id\": 27549, \"full_name\": \"Karina Roberts\", \"image\": \"pg997418592809.jpeg\"}, {\"id\": 27550, \"full_name\": \"Mohammed A. Johnson\", \"image\": \"pu889261359732.jpeg\"}], \"reviews\": [{\"id\": 572338, \"body\": \"scale intuitive web-readiness\", \"rating\": 4.0, \"author\": {\"id\": 147338, \"name\": \"laurie_tempora\", \"image\": \"up466762100668.jpeg\"}}, {\"id\": 497338, \"body\": \"exploit ubiquitous technologies\", \"rating\": 4.0, \"author\": {\"id\": 172338, \"name\": \"beau_quibusdam\", \"image\": \"up635371554120.jpeg\"}}, {\"id\": 397338, \"body\": \"brand turn-key architectures\", \"rating\": 3.0, \"author\": {\"id\": 172338, \"name\": \"beau_quibusdam\", \"image\": \"up635371554120.jpeg\"}}, {\"id\": 347338, \"body\": \"brand rich partnerships\", \"rating\": 4.0, \"author\": {\"id\": 122338, \"name\": \"eugene_nihil\", \"image\": \"us913293246766.jpeg\"}}, {\"id\": 697338, \"body\": \"e-enable 24/365 relationships\", \"rating\": 3.0, \"author\": {\"id\": 172338, \"name\": \"beau_quibusdam\", \"image\": \"up635371554120.jpeg\"}}, {\"id\": 322338, \"body\": \"scale robust schemas\", \"rating\": 2.0, \"author\": {\"id\": 197338, \"name\": \"kennith_qui\", \"image\": \"um371418772332.jpeg\"}}, {\"id\": 472338, \"body\": \"expedite extensible users\", \"rating\": 1.0, \"author\": {\"id\": 147338, \"name\": \"laurie_tempora\", \"image\": \"up466762100668.jpeg\"}}, {\"id\": 597338, \"body\": \"revolutionize interactive metrics\", \"rating\": 3.0, \"author\": {\"id\": 172338, \"name\": \"beau_quibusdam\", \"image\": \"up635371554120.jpeg\"}}, {\"id\": 272338, \"body\": \"engineer 24/365 partnerships\", \"rating\": 2.0, \"author\": {\"id\": 147338, \"name\": \"laurie_tempora\", \"image\": \"up466762100668.jpeg\"}}, {\"id\": 672338, \"body\": \"reintermediate back-end metrics\", \"rating\": 2.0, \"author\": {\"id\": 147338, \"name\": \"laurie_tempora\", \"image\": \"up466762100668.jpeg\"}}, {\"id\": 547338, \"body\": \"iterate proactive networks\", \"rating\": 2.0, \"author\": {\"id\": 122338, \"name\": \"eugene_nihil\", \"image\": \"us913293246766.jpeg\"}}, {\"id\": 297338, \"body\": \"transform rich mindshare\", \"rating\": 2.0, \"author\": {\"id\": 172338, \"name\": \"beau_quibusdam\", \"image\": \"up635371554120.jpeg\"}}, {\"id\": 622338, \"body\": \"facilitate B2B functionalities\", \"rating\": 3.0, \"author\": {\"id\": 197338, \"name\": \"kennith_qui\", \"image\": \"um371418772332.jpeg\"}}, {\"id\": 247338, \"body\": \"deliver compelling e-markets\", \"rating\": 3.0, \"author\": {\"id\": 122338, \"name\": \"eugene_nihil\", \"image\": \"us913293246766.jpeg\"}}, {\"id\": 447338, \"body\": \"revolutionize distributed mindshare\", \"rating\": 2.0, \"author\": {\"id\": 122338, \"name\": \"eugene_nihil\", \"image\": \"us913293246766.jpeg\"}}, {\"id\": 372338, \"body\": \"disintermediate interactive interfaces\", \"rating\": 5.0, \"author\": {\"id\": 147338, \"name\": \"laurie_tempora\", \"image\": \"up466762100668.jpeg\"}}, {\"id\": 722338, \"body\": \"innovate dot-com partnerships\", \"rating\": 5.0, \"author\": {\"id\": 197338, \"name\": \"kennith_qui\", \"image\": \"um371418772332.jpeg\"}}, {\"id\": 522338, \"body\": \"drive bleeding-edge e-services\", \"rating\": 2.0, \"author\": {\"id\": 197338, \"name\": \"kennith_qui\", \"image\": \"um371418772332.jpeg\"}}, {\"id\": 422338, \"body\": \"implement world-class solutions\", \"rating\": 4.0, \"author\": {\"id\": 197338, \"name\": \"kennith_qui\", \"image\": \"um371418772332.jpeg\"}}, {\"id\": 647338, \"body\": \"mesh e-business partnerships\", \"rating\": 5.0, \"author\": {\"id\": 122338, \"name\": \"eugene_nihil\", \"image\": \"us913293246766.jpeg\"}}]}"], "implementation": "SQLAlchemy"}, {"duration": 10, "queries": 4721, "qps": 472.1, "latency_min": 1.76, "latency_mean": 2.107, "latency_max": 3.0, "latency_std": 0.124, "latency_cv": 5.89, "latency_percentiles": [[25, 2.012], [50, 2.1], [75, 2.197], [90, 2.262], [99, 2.418], [99.99, 3.001]], "samples": ["{\"id\": \"220645be-aa09-11ec-85c6-2ffff56ab01c\", \"image\": \"mx918534967668.jpeg\", \"title\": \"innovate compelling infrastructures\", \"year\": 1992, \"description\": \"streamline cross-platform solutions\", \"avg_rating\": 3.3, \"directors\": [{\"id\": \"1b48c6f2-aa09-11ec-85c6-bf39cc8b83e9\", \"full_name\": \"Monserrat Schowalter\", \"image\": \"pa217037986622.jpeg\"}], \"cast\": [{\"id\": \"1ced3722-aa09-11ec-85c6-33b84f07f255\", \"full_name\": \"Ona Zemlak\", \"image\": \"pv041707691334.jpeg\"}, {\"id\": \"1ced393e-aa09-11ec-85c6-7f9fb3a37bb5\", \"full_name\": \"Carleton Grady\", \"image\": \"pi202378109677.jpeg\"}, {\"id\": \"1ced3b6e-aa09-11ec-85c6-cf885e5f8a52\", \"full_name\": \"Lizzie Roberts\", \"image\": \"pb558180409379.jpeg\"}, {\"id\": \"1ced3da8-aa09-11ec-85c6-a3c13f6ca98f\", \"full_name\": \"Rick Batz\", \"image\": \"pe857374671312.jpeg\"}, {\"id\": \"1ced3fc4-aa09-11ec-85c6-e7b22d5e8dec\", \"full_name\": \"Cali Quigley\", \"image\": \"pa894481425313.jpeg\"}, {\"id\": \"1ced41f4-aa09-11ec-85c6-8f3f9b142597\", \"full_name\": \"Durward Cronin\", \"image\": \"pi718189019960.jpeg\"}, {\"id\": \"1ced4410-aa09-11ec-85c6-079004956d88\", \"full_name\": \"Michelle Satterfield\", \"image\": \"pr380414180806.jpeg\"}, {\"id\": \"1ced4636-aa09-11ec-85c6-0be3adf02d4f\", \"full_name\": \"Raina Johnston\", \"image\": \"pp997487128134.jpeg\"}, {\"id\": \"1ced487a-aa09-11ec-85c6-3fd0da1a62a4\", \"full_name\": \"Constantin Lehner\", \"image\": \"pj284320348440.jpeg\"}, {\"id\": \"1ced4aaa-aa09-11ec-85c6-4f64f7f36c2f\", \"full_name\": \"Kara Daugherty\", \"image\": \"pt784919017356.jpeg\"}, {\"id\": \"1ced4cc6-aa09-11ec-85c6-0380aea0ee30\", \"full_name\": \"Marcellus Hermiston\", \"image\": \"py221567679553.jpeg\"}, {\"id\": \"1ced4ee2-aa09-11ec-85c6-ab6b23432892\", \"full_name\": \"Chyna Kunze\", \"image\": \"pg167814921247.jpeg\"}, {\"id\": \"1ced5108-aa09-11ec-85c6-e3e0dafd49b8\", \"full_name\": \"Leslie Spencer\", \"image\": \"pf883334139964.jpeg\"}, {\"id\": \"1ced5324-aa09-11ec-85c6-0bff327e200e\", \"full_name\": \"Marcella Wehner\", \"image\": \"px071840232329.jpeg\"}, {\"id\": \"1ced554a-aa09-11ec-85c6-4f042585517e\", \"full_name\": \"Jairo Auer\", \"image\": \"pd893729443486.jpeg\"}, {\"id\": \"1ced5766-aa09-11ec-85c6-4f8d959e7864\", \"full_name\": \"Deja Zemlak\", \"image\": \"pr228773094237.jpeg\"}, {\"id\": \"1ced5996-aa09-11ec-85c6-4bd4a6d6aea3\", \"full_name\": \"Kale Towne\", \"image\": \"ps733860250927.jpeg\"}, {\"id\": \"1ced5bb2-aa09-11ec-85c6-47e0e84fd3fa\", \"full_name\": \"Isabell Rice\", \"image\": \"pa802251772032.jpeg\"}, {\"id\": \"1ced5dce-aa09-11ec-85c6-ebdf10feff10\", \"full_name\": \"Bryce Becker\", \"image\": \"pr273583586420.jpeg\"}, {\"id\": \"1ced5fea-aa09-11ec-85c6-ebb91330054c\", \"full_name\": \"Trenton O'Connell\", \"image\": \"pd064608962340.jpeg\"}, {\"id\": \"1ced6210-aa09-11ec-85c6-57b3716c1271\", \"full_name\": \"Brenna Thiel\", \"image\": \"pz629133508673.jpeg\"}, {\"id\": \"1ced642c-aa09-11ec-85c6-3b16513f21dc\", \"full_name\": \"Neha Skiles\", \"image\": \"pl835318861527.jpeg\"}, {\"id\": \"1ced6648-aa09-11ec-85c6-47baca6830af\", \"full_name\": \"Beth X. Leffler\", \"image\": \"py117047368976.jpeg\"}, {\"id\": \"1ced686e-aa09-11ec-85c6-57ba393614ef\", \"full_name\": \"Kennith Waters\", \"image\": \"py954303523052.jpeg\"}, {\"id\": \"1ced6a8a-aa09-11ec-85c6-7bd33297e606\", \"full_name\": \"Raleigh Kub\", \"image\": \"pz019015644909.jpeg\"}, {\"id\": \"1ced6ce2-aa09-11ec-85c6-bb8acc39ee9d\", \"full_name\": \"Catalina Mante\", \"image\": \"pl409135484613.jpeg\"}, {\"id\": \"1ced705c-aa09-11ec-85c6-9bd3d0e52662\", \"full_name\": \"Leanne Collier\", \"image\": \"pj141828265223.jpeg\"}, {\"id\": \"1ced728c-aa09-11ec-85c6-9f198d7cdcc1\", \"full_name\": \"Ricardo Feil\", \"image\": \"pk986101637916.jpeg\"}, {\"id\": \"1ced74b2-aa09-11ec-85c6-fff9045f9562\", \"full_name\": \"Colby Kihn\", \"image\": \"pl833898240641.jpeg\"}, {\"id\": \"1ced76f6-aa09-11ec-85c6-b35d6422878c\", \"full_name\": \"Kip Hahn\", \"image\": \"ps373967197096.jpeg\"}, {\"id\": \"1ced79c6-aa09-11ec-85c6-4b6ae49d54b5\", \"full_name\": \"Rebecca Kiehn\", \"image\": \"pi070983445714.jpeg\"}, {\"id\": \"1ced7bec-aa09-11ec-85c6-035ce1a3b6a5\", \"full_name\": \"Rosina Corwin\", \"image\": \"py122276049658.jpeg\"}, {\"id\": \"1ced7e12-aa09-11ec-85c6-83b9b78049ca\", \"full_name\": \"Jesse Wuckert\", \"image\": \"ph887711274067.jpeg\"}, {\"id\": \"1ced8038-aa09-11ec-85c6-9b9c407fa25c\", \"full_name\": \"Mertie Jaskolski\", \"image\": \"pa893128700490.jpeg\"}, {\"id\": \"1ced8254-aa09-11ec-85c6-2b44d10e37f8\", \"full_name\": \"Alvena Lemke\", \"image\": \"po175244222361.jpeg\"}, {\"id\": \"1ced8470-aa09-11ec-85c6-8bbe82f7b211\", \"full_name\": \"Wyatt Fritsch\", \"image\": \"ph980466666513.jpeg\"}, {\"id\": \"1ced8696-aa09-11ec-85c6-07f3f3c380bb\", \"full_name\": \"Hector Greenfelder\", \"image\": \"pn726194264145.jpeg\"}, {\"id\": \"1ced88b2-aa09-11ec-85c6-e73435864322\", \"full_name\": \"Courtney Hand\", \"image\": \"px375863935612.jpeg\"}, {\"id\": \"1ced8ace-aa09-11ec-85c6-431f802f6d20\", \"full_name\": \"Frederick Else Ruecker\", \"image\": \"pc632600927900.jpeg\"}, {\"id\": \"1ced8cfe-aa09-11ec-85c6-d7d7ca27283f\", \"full_name\": \"Dejuan Rosenbaum\", \"image\": \"pq673888657441.jpeg\"}, {\"id\": \"1ced8f1a-aa09-11ec-85c6-472ed5323908\", \"full_name\": \"Nona Gussie DuBuque\", \"image\": \"pp141455665049.jpeg\"}, {\"id\": \"1ced9140-aa09-11ec-85c6-b3cd4f6e2454\", \"full_name\": \"Brain Kirlin\", \"image\": \"po847610049778.jpeg\"}, {\"id\": \"1ced935c-aa09-11ec-85c6-3b63432ee5ce\", \"full_name\": \"Adalberto Icie Conn\", \"image\": \"pc512496687773.jpeg\"}, {\"id\": \"1ced95aa-aa09-11ec-85c6-dbe2b61ce924\", \"full_name\": \"Lydia Larson\", \"image\": \"pe569513598301.jpeg\"}, {\"id\": \"1ced97c6-aa09-11ec-85c6-bbfd5754e287\", \"full_name\": \"Ashlee Waelchi\", \"image\": \"pt136143367471.jpeg\"}, {\"id\": \"1ced99ec-aa09-11ec-85c6-b3cae6c88b0c\", \"full_name\": \"Oswaldo Konopelski\", \"image\": \"pv655352547964.jpeg\"}, {\"id\": \"1ced9c12-aa09-11ec-85c6-974e8f9658fe\", \"full_name\": \"Zetta Lebsack\", \"image\": \"pl956224450358.jpeg\"}, {\"id\": \"1ced9e38-aa09-11ec-85c6-d30972fd25b7\", \"full_name\": \"Barton Batz\", \"image\": \"pn913632057099.jpeg\"}], \"reviews\": [{\"id\": \"2d758f68-aa09-11ec-85c6-cf1229147e3d\", \"body\": \"target next-generation synergies\", \"rating\": 1, \"author\": {\"id\": \"1f4078ae-aa09-11ec-85c6-e7884eada1b1\", \"name\": \"cierra_et\", \"image\": \"ue271759646447.jpeg\"}}, {\"id\": \"3bd92c90-aa09-11ec-85c6-834d22a1842f\", \"body\": \"productize visionary applications\", \"rating\": 4, \"author\": {\"id\": \"1f4078ae-aa09-11ec-85c6-e7884eada1b1\", \"name\": \"cierra_et\", \"image\": \"ue271759646447.jpeg\"}}, {\"id\": \"3aa46dbc-aa09-11ec-85c6-e70145ce4371\", \"body\": \"whiteboard holistic markets\", \"rating\": 3, \"author\": {\"id\": \"20f7c0da-aa09-11ec-85c6-3bd31fbc36c8\", \"name\": \"carter_sapiente\", \"image\": \"ux744675527152.jpeg\"}}, {\"id\": \"34a362e2-aa09-11ec-85c6-337dba0feab5\", \"body\": \"orchestrate B2B e-services\", \"rating\": 4, \"author\": {\"id\": \"206419f2-aa09-11ec-85c6-1f52445f6918\", \"name\": \"angel_totam\", \"image\": \"uh797819933692.jpeg\"}}, {\"id\": \"3830c4fe-aa09-11ec-85c6-07d4260811a8\", \"body\": \"reintermediate sticky eyeballs\", \"rating\": 4, \"author\": {\"id\": \"1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3\", \"name\": \"ashley_ratione\", \"image\": \"uk699530557094.jpeg\"}}, {\"id\": \"2c4b0afa-aa09-11ec-85c6-73327ca6aceb\", \"body\": \"envisioneer seamless experiences\", \"rating\": 4, \"author\": {\"id\": \"20f7c0da-aa09-11ec-85c6-3bd31fbc36c8\", \"name\": \"carter_sapiente\", \"image\": \"ux744675527152.jpeg\"}}, {\"id\": \"35d41e90-aa09-11ec-85c6-833bf187e5a4\", \"body\": \"recontextualize leading-edge action-items\", \"rating\": 4, \"author\": {\"id\": \"20f7c0da-aa09-11ec-85c6-3bd31fbc36c8\", \"name\": \"carter_sapiente\", \"image\": \"ux744675527152.jpeg\"}}, {\"id\": \"3d0673e8-aa09-11ec-85c6-5f366d0aa9c0\", \"body\": \"monetize e-business niches\", \"rating\": 5, \"author\": {\"id\": \"1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3\", \"name\": \"ashley_ratione\", \"image\": \"uk699530557094.jpeg\"}}, {\"id\": \"39601e24-aa09-11ec-85c6-1fc131e1cf11\", \"body\": \"engage customized partnerships\", \"rating\": 5, \"author\": {\"id\": \"206419f2-aa09-11ec-85c6-1f52445f6918\", \"name\": \"angel_totam\", \"image\": \"uh797819933692.jpeg\"}}, {\"id\": \"3703a4e8-aa09-11ec-85c6-33db5f4b1f7b\", \"body\": \"grow frictionless platforms\", \"rating\": 0, \"author\": {\"id\": \"1f4078ae-aa09-11ec-85c6-e7884eada1b1\", \"name\": \"cierra_et\", \"image\": \"ue271759646447.jpeg\"}}, {\"id\": \"3f758588-aa09-11ec-85c6-3b67cd9d4e7d\", \"body\": \"harness front-end web services\", \"rating\": 5, \"author\": {\"id\": \"20f7c0da-aa09-11ec-85c6-3bd31fbc36c8\", \"name\": \"carter_sapiente\", \"image\": \"ux744675527152.jpeg\"}}, {\"id\": \"2b165892-aa09-11ec-85c6-df7d21cddf7c\", \"body\": \"facilitate strategic solutions\", \"rating\": 5, \"author\": {\"id\": \"206419f2-aa09-11ec-85c6-1f52445f6918\", \"name\": \"angel_totam\", \"image\": \"uh797819933692.jpeg\"}}, {\"id\": \"28a2c51e-aa09-11ec-85c6-ff40867c6025\", \"body\": \"utilize next-generation action-items\", \"rating\": 3, \"author\": {\"id\": \"1f4078ae-aa09-11ec-85c6-e7884eada1b1\", \"name\": \"cierra_et\", \"image\": \"ue271759646447.jpeg\"}}, {\"id\": \"31034558-aa09-11ec-85c6-e70203a03de7\", \"body\": \"repurpose bricks-and-clicks technologies\", \"rating\": 2, \"author\": {\"id\": \"20f7c0da-aa09-11ec-85c6-3bd31fbc36c8\", \"name\": \"carter_sapiente\", \"image\": \"ux744675527152.jpeg\"}}, {\"id\": \"2ea6845a-aa09-11ec-85c6-231265b181f7\", \"body\": \"monetize vertical systems\", \"rating\": 4, \"author\": {\"id\": \"1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3\", \"name\": \"ashley_ratione\", \"image\": \"uk699530557094.jpeg\"}}, {\"id\": \"33714dda-aa09-11ec-85c6-fbed748fe520\", \"body\": \"iterate holistic applications\", \"rating\": 1, \"author\": {\"id\": \"1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3\", \"name\": \"ashley_ratione\", \"image\": \"uk699530557094.jpeg\"}}, {\"id\": \"29dec9a0-aa09-11ec-85c6-0f629b5b4e78\", \"body\": \"productize wireless bandwidth\", \"rating\": 5, \"author\": {\"id\": \"1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3\", \"name\": \"ashley_ratione\", \"image\": \"uk699530557094.jpeg\"}}, {\"id\": \"3238bfb6-aa09-11ec-85c6-8f791fb57c07\", \"body\": \"synergize intuitive communities\", \"rating\": 1, \"author\": {\"id\": \"1f4078ae-aa09-11ec-85c6-e7884eada1b1\", \"name\": \"cierra_et\", \"image\": \"ue271759646447.jpeg\"}}, {\"id\": \"3e3d25d6-aa09-11ec-85c6-dbbf26691af0\", \"body\": \"incentivize compelling e-tailers\", \"rating\": 3, \"author\": {\"id\": \"206419f2-aa09-11ec-85c6-1f52445f6918\", \"name\": \"angel_totam\", \"image\": \"uh797819933692.jpeg\"}}, {\"id\": \"2fd3e200-aa09-11ec-85c6-6fbf209f6ad9\", \"body\": \"incentivize cross-media metrics\", \"rating\": 3, \"author\": {\"id\": \"206419f2-aa09-11ec-85c6-1f52445f6918\", \"name\": \"angel_totam\", \"image\": \"uh797819933692.jpeg\"}}]}"], "implementation": "EdgeDB (Python)"}];
+      var DATA_get_movie = [
+        {
+          duration: 10,
+          queries: 931,
+          qps: 93.1,
+          latency_min: 8.32,
+          latency_mean: 10.738,
+          latency_max: 11.98,
+          latency_std: 0.372,
+          latency_cv: 3.46,
+          latency_percentiles: [
+            [25, 10.489],
+            [50, 10.748],
+            [75, 10.995],
+            [90, 11.162],
+            [99, 11.467],
+            [99.99, 11.988],
+          ],
+          samples: [
+            '{"id": 219138, "image": "mf939505722628.jpeg", "title": "incubate enterprise methodologies", "year": 1950, "description": "morph robust ROI", "directors": [{"id": 6762, "full_name": "Gussie Pagac", "image": "pl071882112948.jpeg"}], "cast": [{"id": 25866, "full_name": "Kamren O\'Connell", "image": "pv603575231442.jpeg"}, {"id": 25867, "full_name": "Sim Kozey", "image": "pk059128838717.jpeg"}, {"id": 25868, "full_name": "Sienna H. Padberg", "image": "po733801026537.jpeg"}, {"id": 25869, "full_name": "Mariah Konopelski", "image": "pr308729933673.jpeg"}, {"id": 25870, "full_name": "Zachariah Koss", "image": "pa708853739553.jpeg"}, {"id": 25871, "full_name": "Lorine Schuppe", "image": "pq548321813991.jpeg"}, {"id": 25872, "full_name": "Kenya Bashirian", "image": "pg939375335290.jpeg"}, {"id": 25873, "full_name": "Brant Gleichner", "image": "pz909889023932.jpeg"}, {"id": 25874, "full_name": "Dannie Medhurst", "image": "pk518220683384.jpeg"}, {"id": 25875, "full_name": "Jaydon Keebler", "image": "pc302458656223.jpeg"}, {"id": 25876, "full_name": "Jacynthe Deborah Oberbrunner", "image": "pm704603103683.jpeg"}, {"id": 25877, "full_name": "Niko Nicolas", "image": "pe550872691931.jpeg"}, {"id": 25878, "full_name": "Doris Lindgren", "image": "ps975490053169.jpeg"}, {"id": 25879, "full_name": "Kassandra Will", "image": "pe048311084764.jpeg"}, {"id": 25880, "full_name": "Arvid Hansen", "image": "pz899710314444.jpeg"}, {"id": 25881, "full_name": "Melody Robel", "image": "pw478609253186.jpeg"}, {"id": 25882, "full_name": "Emilie Reichel", "image": "pv711394909669.jpeg"}, {"id": 25883, "full_name": "Madilyn Heller", "image": "pp526751831950.jpeg"}, {"id": 25884, "full_name": "Tara Tillman", "image": "pc967757818700.jpeg"}, {"id": 25885, "full_name": "Dortha Monahan", "image": "pc243738660440.jpeg"}, {"id": 25886, "full_name": "Aiyana Larson", "image": "pn880780465313.jpeg"}, {"id": 25887, "full_name": "Ahmad Ritchie", "image": "ph669882478030.jpeg"}, {"id": 25888, "full_name": "Angelica Turcotte", "image": "pr496107206319.jpeg"}, {"id": 25889, "full_name": "Ted Crona", "image": "pg839906156770.jpeg"}, {"id": 25890, "full_name": "Isadore McCullough", "image": "pk852589669796.jpeg"}, {"id": 25891, "full_name": "Brice Shanon Abshire", "image": "pg221510309048.jpeg"}, {"id": 25892, "full_name": "Tyrell Runolfsdottir", "image": "ps414134841836.jpeg"}, {"id": 25893, "full_name": "Fidel Krajcik", "image": "pf361934618920.jpeg"}, {"id": 25894, "full_name": "Leda Morissette", "image": "pc913936252248.jpeg"}, {"id": 25895, "full_name": "Emely Hassan Hirthe", "image": "ps316687900949.jpeg"}, {"id": 25896, "full_name": "Adele Abshire", "image": "pq788366757602.jpeg"}, {"id": 25897, "full_name": "Gabriel Y. White", "image": "pp775222394915.jpeg"}, {"id": 25898, "full_name": "Julian Murray", "image": "px256636312562.jpeg"}, {"id": 25899, "full_name": "Ellie Kuvalis", "image": "pw650652047927.jpeg"}, {"id": 25900, "full_name": "Vern Stark", "image": "pc071183331531.jpeg"}, {"id": 25901, "full_name": "Gregoria Mueller", "image": "pt232638974186.jpeg"}, {"id": 25902, "full_name": "Opal Raynor", "image": "pg643114518625.jpeg"}, {"id": 25903, "full_name": "Vernie Wuckert", "image": "pk363570955195.jpeg"}, {"id": 25904, "full_name": "Eladio Greenholt", "image": "pb300125834827.jpeg"}], "avg_rating": 3.2, "reviews": [{"id": 519138, "body": "optimize B2B action-items", "rating": 3, "author": {"id": 194138, "name": "willa_eos", "image": "ui862344004640.jpeg"}}, {"id": 494138, "body": "streamline magnetic architectures", "rating": 3, "author": {"id": 169138, "name": "jake_debitis", "image": "ux573450843692.jpeg"}}, {"id": 469138, "body": "transition compelling supply-chains", "rating": 4, "author": {"id": 144138, "name": "donato_delectus", "image": "ut679725817874.jpeg"}}, {"id": 719138, "body": "unleash granular e-commerce", "rating": 4, "author": {"id": 194138, "name": "willa_eos", "image": "ui862344004640.jpeg"}}, {"id": 369138, "body": "incentivize holistic users", "rating": 1, "author": {"id": 144138, "name": "donato_delectus", "image": "ut679725817874.jpeg"}}, {"id": 244138, "body": "deliver intuitive channels", "rating": 4, "author": {"id": 119138, "name": "lawson_sit", "image": "ux455082810367.jpeg"}}, {"id": 619138, "body": "recontextualize collaborative solutions", "rating": 3, "author": {"id": 194138, "name": "willa_eos", "image": "ui862344004640.jpeg"}}, {"id": 394138, "body": "facilitate dot-com channels", "rating": 3, "author": {"id": 169138, "name": "jake_debitis", "image": "ux573450843692.jpeg"}}, {"id": 319138, "body": "generate plug-and-play supply-chains", "rating": 2, "author": {"id": 194138, "name": "willa_eos", "image": "ui862344004640.jpeg"}}, {"id": 594138, "body": "visualize synergistic channels", "rating": 4, "author": {"id": 169138, "name": "jake_debitis", "image": "ux573450843692.jpeg"}}, {"id": 669138, "body": "expedite web-enabled relationships", "rating": 3, "author": {"id": 144138, "name": "donato_delectus", "image": "ut679725817874.jpeg"}}, {"id": 294138, "body": "brand seamless vortals", "rating": 3, "author": {"id": 169138, "name": "jake_debitis", "image": "ux573450843692.jpeg"}}, {"id": 544138, "body": "harness out-of-the-box initiatives", "rating": 1, "author": {"id": 119138, "name": "lawson_sit", "image": "ux455082810367.jpeg"}}, {"id": 444138, "body": "integrate bleeding-edge web-readiness", "rating": 2, "author": {"id": 119138, "name": "lawson_sit", "image": "ux455082810367.jpeg"}}, {"id": 344138, "body": "enable killer infrastructures", "rating": 3, "author": {"id": 119138, "name": "lawson_sit", "image": "ux455082810367.jpeg"}}, {"id": 644138, "body": "envisioneer 24/7 metrics", "rating": 2, "author": {"id": 119138, "name": "lawson_sit", "image": "ux455082810367.jpeg"}}, {"id": 569138, "body": "cultivate back-end partnerships", "rating": 5, "author": {"id": 144138, "name": "donato_delectus", "image": "ut679725817874.jpeg"}}, {"id": 269138, "body": "seize next-generation e-business", "rating": 4, "author": {"id": 144138, "name": "donato_delectus", "image": "ut679725817874.jpeg"}}, {"id": 419138, "body": "innovate B2C platforms", "rating": 5, "author": {"id": 194138, "name": "willa_eos", "image": "ui862344004640.jpeg"}}, {"id": 694138, "body": "harness proactive interfaces", "rating": 5, "author": {"id": 169138, "name": "jake_debitis", "image": "ux573450843692.jpeg"}}]}',
+          ],
+          implementation: 'Django ORM',
+        },
+        {
+          duration: 10,
+          queries: 840,
+          qps: 84.0,
+          latency_min: 8.64,
+          latency_mean: 11.899,
+          latency_max: 47.48,
+          latency_std: 2.725,
+          latency_cv: 22.9,
+          latency_percentiles: [
+            [25, 11.252],
+            [50, 11.73],
+            [75, 12.068],
+            [90, 12.45],
+            [99, 13.342],
+            [99.99, 47.488],
+          ],
+          samples: [
+            '{"id": 222338, "image": "me738640989692.jpeg", "title": "expedite transparent e-commerce", "year": 2000, "description": "optimize global supply-chains", "avg_rating": 3.05, "directors": [{"id": 3115, "full_name": "Cyril Ziemann", "image": "py990444476451.jpeg"}], "cast": [{"id": 27514, "full_name": "Braulio Cassin", "image": "pl502904376127.jpeg"}, {"id": 27515, "full_name": "Noble Batz", "image": "pq106112038795.jpeg"}, {"id": 27516, "full_name": "Yasmeen Veum", "image": "po586316853983.jpeg"}, {"id": 27517, "full_name": "Dawn Harvey", "image": "pn529548745486.jpeg"}, {"id": 27518, "full_name": "Brook Kuhlman", "image": "pc698495205032.jpeg"}, {"id": 27519, "full_name": "Vergie Lueilwitz", "image": "pg000557067593.jpeg"}, {"id": 27520, "full_name": "Neal Balistreri", "image": "pf559322261383.jpeg"}, {"id": 27521, "full_name": "Augustus Lemke", "image": "pr560328875852.jpeg"}, {"id": 27522, "full_name": "Chyna Rempel", "image": "pg701734866730.jpeg"}, {"id": 27523, "full_name": "Jarrell Schuppe", "image": "pm026405064184.jpeg"}, {"id": 27524, "full_name": "Wilburn Zboncak", "image": "pl402514528613.jpeg"}, {"id": 27525, "full_name": "Camden Daniel", "image": "pi596666006239.jpeg"}, {"id": 27526, "full_name": "Lynn Cremin", "image": "pt050822500773.jpeg"}, {"id": 27527, "full_name": "Mazie Glover", "image": "pg858466191388.jpeg"}, {"id": 27528, "full_name": "Kadin Greg Treutel", "image": "pe737892513174.jpeg"}, {"id": 27529, "full_name": "Noah Hills", "image": "po525820849169.jpeg"}, {"id": 27530, "full_name": "Ralph Brown", "image": "pt592357402355.jpeg"}, {"id": 27531, "full_name": "Derrick Wilderman", "image": "py202012254402.jpeg"}, {"id": 27532, "full_name": "Buster Dach", "image": "pt455489050070.jpeg"}, {"id": 27533, "full_name": "Haven Mayert", "image": "ph223741176022.jpeg"}, {"id": 27534, "full_name": "Gabriella Eichmann", "image": "px694751196422.jpeg"}, {"id": 27535, "full_name": "Larissa Hudson", "image": "pg754816848332.jpeg"}, {"id": 27536, "full_name": "Cathy Dickinson", "image": "pb507981790004.jpeg"}, {"id": 27537, "full_name": "Wellington Armstrong", "image": "pf196869944596.jpeg"}, {"id": 27538, "full_name": "Leonard Kutch", "image": "pp870195334746.jpeg"}, {"id": 27539, "full_name": "Kyler Walsh", "image": "pw512576298814.jpeg"}, {"id": 27540, "full_name": "Rhea Padberg", "image": "po106094379553.jpeg"}, {"id": 27541, "full_name": "August Lubowitz", "image": "pt062255599494.jpeg"}, {"id": 27542, "full_name": "Daniela Sanford", "image": "pr273663180014.jpeg"}, {"id": 27543, "full_name": "Nelson L. Collins", "image": "pz541551449573.jpeg"}, {"id": 27544, "full_name": "Jason Walker", "image": "pw765285190231.jpeg"}, {"id": 27545, "full_name": "Kris Walter", "image": "pf794712621372.jpeg"}, {"id": 27546, "full_name": "Alysha Gerhold", "image": "pk317815751256.jpeg"}, {"id": 27547, "full_name": "Emelia Beatty", "image": "pp093241998354.jpeg"}, {"id": 27548, "full_name": "Bruce Wintheiser", "image": "pn196882956263.jpeg"}, {"id": 27549, "full_name": "Karina Roberts", "image": "pg997418592809.jpeg"}, {"id": 27550, "full_name": "Mohammed A. Johnson", "image": "pu889261359732.jpeg"}], "reviews": [{"id": 572338, "body": "scale intuitive web-readiness", "rating": 4.0, "author": {"id": 147338, "name": "laurie_tempora", "image": "up466762100668.jpeg"}}, {"id": 497338, "body": "exploit ubiquitous technologies", "rating": 4.0, "author": {"id": 172338, "name": "beau_quibusdam", "image": "up635371554120.jpeg"}}, {"id": 397338, "body": "brand turn-key architectures", "rating": 3.0, "author": {"id": 172338, "name": "beau_quibusdam", "image": "up635371554120.jpeg"}}, {"id": 347338, "body": "brand rich partnerships", "rating": 4.0, "author": {"id": 122338, "name": "eugene_nihil", "image": "us913293246766.jpeg"}}, {"id": 697338, "body": "e-enable 24/365 relationships", "rating": 3.0, "author": {"id": 172338, "name": "beau_quibusdam", "image": "up635371554120.jpeg"}}, {"id": 322338, "body": "scale robust schemas", "rating": 2.0, "author": {"id": 197338, "name": "kennith_qui", "image": "um371418772332.jpeg"}}, {"id": 472338, "body": "expedite extensible users", "rating": 1.0, "author": {"id": 147338, "name": "laurie_tempora", "image": "up466762100668.jpeg"}}, {"id": 597338, "body": "revolutionize interactive metrics", "rating": 3.0, "author": {"id": 172338, "name": "beau_quibusdam", "image": "up635371554120.jpeg"}}, {"id": 272338, "body": "engineer 24/365 partnerships", "rating": 2.0, "author": {"id": 147338, "name": "laurie_tempora", "image": "up466762100668.jpeg"}}, {"id": 672338, "body": "reintermediate back-end metrics", "rating": 2.0, "author": {"id": 147338, "name": "laurie_tempora", "image": "up466762100668.jpeg"}}, {"id": 547338, "body": "iterate proactive networks", "rating": 2.0, "author": {"id": 122338, "name": "eugene_nihil", "image": "us913293246766.jpeg"}}, {"id": 297338, "body": "transform rich mindshare", "rating": 2.0, "author": {"id": 172338, "name": "beau_quibusdam", "image": "up635371554120.jpeg"}}, {"id": 622338, "body": "facilitate B2B functionalities", "rating": 3.0, "author": {"id": 197338, "name": "kennith_qui", "image": "um371418772332.jpeg"}}, {"id": 247338, "body": "deliver compelling e-markets", "rating": 3.0, "author": {"id": 122338, "name": "eugene_nihil", "image": "us913293246766.jpeg"}}, {"id": 447338, "body": "revolutionize distributed mindshare", "rating": 2.0, "author": {"id": 122338, "name": "eugene_nihil", "image": "us913293246766.jpeg"}}, {"id": 372338, "body": "disintermediate interactive interfaces", "rating": 5.0, "author": {"id": 147338, "name": "laurie_tempora", "image": "up466762100668.jpeg"}}, {"id": 722338, "body": "innovate dot-com partnerships", "rating": 5.0, "author": {"id": 197338, "name": "kennith_qui", "image": "um371418772332.jpeg"}}, {"id": 522338, "body": "drive bleeding-edge e-services", "rating": 2.0, "author": {"id": 197338, "name": "kennith_qui", "image": "um371418772332.jpeg"}}, {"id": 422338, "body": "implement world-class solutions", "rating": 4.0, "author": {"id": 197338, "name": "kennith_qui", "image": "um371418772332.jpeg"}}, {"id": 647338, "body": "mesh e-business partnerships", "rating": 5.0, "author": {"id": 122338, "name": "eugene_nihil", "image": "us913293246766.jpeg"}}]}',
+          ],
+          implementation: 'SQLAlchemy',
+        },
+        {
+          duration: 10,
+          queries: 4721,
+          qps: 472.1,
+          latency_min: 1.76,
+          latency_mean: 2.107,
+          latency_max: 3.0,
+          latency_std: 0.124,
+          latency_cv: 5.89,
+          latency_percentiles: [
+            [25, 2.012],
+            [50, 2.1],
+            [75, 2.197],
+            [90, 2.262],
+            [99, 2.418],
+            [99.99, 3.001],
+          ],
+          samples: [
+            '{"id": "220645be-aa09-11ec-85c6-2ffff56ab01c", "image": "mx918534967668.jpeg", "title": "innovate compelling infrastructures", "year": 1992, "description": "streamline cross-platform solutions", "avg_rating": 3.3, "directors": [{"id": "1b48c6f2-aa09-11ec-85c6-bf39cc8b83e9", "full_name": "Monserrat Schowalter", "image": "pa217037986622.jpeg"}], "cast": [{"id": "1ced3722-aa09-11ec-85c6-33b84f07f255", "full_name": "Ona Zemlak", "image": "pv041707691334.jpeg"}, {"id": "1ced393e-aa09-11ec-85c6-7f9fb3a37bb5", "full_name": "Carleton Grady", "image": "pi202378109677.jpeg"}, {"id": "1ced3b6e-aa09-11ec-85c6-cf885e5f8a52", "full_name": "Lizzie Roberts", "image": "pb558180409379.jpeg"}, {"id": "1ced3da8-aa09-11ec-85c6-a3c13f6ca98f", "full_name": "Rick Batz", "image": "pe857374671312.jpeg"}, {"id": "1ced3fc4-aa09-11ec-85c6-e7b22d5e8dec", "full_name": "Cali Quigley", "image": "pa894481425313.jpeg"}, {"id": "1ced41f4-aa09-11ec-85c6-8f3f9b142597", "full_name": "Durward Cronin", "image": "pi718189019960.jpeg"}, {"id": "1ced4410-aa09-11ec-85c6-079004956d88", "full_name": "Michelle Satterfield", "image": "pr380414180806.jpeg"}, {"id": "1ced4636-aa09-11ec-85c6-0be3adf02d4f", "full_name": "Raina Johnston", "image": "pp997487128134.jpeg"}, {"id": "1ced487a-aa09-11ec-85c6-3fd0da1a62a4", "full_name": "Constantin Lehner", "image": "pj284320348440.jpeg"}, {"id": "1ced4aaa-aa09-11ec-85c6-4f64f7f36c2f", "full_name": "Kara Daugherty", "image": "pt784919017356.jpeg"}, {"id": "1ced4cc6-aa09-11ec-85c6-0380aea0ee30", "full_name": "Marcellus Hermiston", "image": "py221567679553.jpeg"}, {"id": "1ced4ee2-aa09-11ec-85c6-ab6b23432892", "full_name": "Chyna Kunze", "image": "pg167814921247.jpeg"}, {"id": "1ced5108-aa09-11ec-85c6-e3e0dafd49b8", "full_name": "Leslie Spencer", "image": "pf883334139964.jpeg"}, {"id": "1ced5324-aa09-11ec-85c6-0bff327e200e", "full_name": "Marcella Wehner", "image": "px071840232329.jpeg"}, {"id": "1ced554a-aa09-11ec-85c6-4f042585517e", "full_name": "Jairo Auer", "image": "pd893729443486.jpeg"}, {"id": "1ced5766-aa09-11ec-85c6-4f8d959e7864", "full_name": "Deja Zemlak", "image": "pr228773094237.jpeg"}, {"id": "1ced5996-aa09-11ec-85c6-4bd4a6d6aea3", "full_name": "Kale Towne", "image": "ps733860250927.jpeg"}, {"id": "1ced5bb2-aa09-11ec-85c6-47e0e84fd3fa", "full_name": "Isabell Rice", "image": "pa802251772032.jpeg"}, {"id": "1ced5dce-aa09-11ec-85c6-ebdf10feff10", "full_name": "Bryce Becker", "image": "pr273583586420.jpeg"}, {"id": "1ced5fea-aa09-11ec-85c6-ebb91330054c", "full_name": "Trenton O\'Connell", "image": "pd064608962340.jpeg"}, {"id": "1ced6210-aa09-11ec-85c6-57b3716c1271", "full_name": "Brenna Thiel", "image": "pz629133508673.jpeg"}, {"id": "1ced642c-aa09-11ec-85c6-3b16513f21dc", "full_name": "Neha Skiles", "image": "pl835318861527.jpeg"}, {"id": "1ced6648-aa09-11ec-85c6-47baca6830af", "full_name": "Beth X. Leffler", "image": "py117047368976.jpeg"}, {"id": "1ced686e-aa09-11ec-85c6-57ba393614ef", "full_name": "Kennith Waters", "image": "py954303523052.jpeg"}, {"id": "1ced6a8a-aa09-11ec-85c6-7bd33297e606", "full_name": "Raleigh Kub", "image": "pz019015644909.jpeg"}, {"id": "1ced6ce2-aa09-11ec-85c6-bb8acc39ee9d", "full_name": "Catalina Mante", "image": "pl409135484613.jpeg"}, {"id": "1ced705c-aa09-11ec-85c6-9bd3d0e52662", "full_name": "Leanne Collier", "image": "pj141828265223.jpeg"}, {"id": "1ced728c-aa09-11ec-85c6-9f198d7cdcc1", "full_name": "Ricardo Feil", "image": "pk986101637916.jpeg"}, {"id": "1ced74b2-aa09-11ec-85c6-fff9045f9562", "full_name": "Colby Kihn", "image": "pl833898240641.jpeg"}, {"id": "1ced76f6-aa09-11ec-85c6-b35d6422878c", "full_name": "Kip Hahn", "image": "ps373967197096.jpeg"}, {"id": "1ced79c6-aa09-11ec-85c6-4b6ae49d54b5", "full_name": "Rebecca Kiehn", "image": "pi070983445714.jpeg"}, {"id": "1ced7bec-aa09-11ec-85c6-035ce1a3b6a5", "full_name": "Rosina Corwin", "image": "py122276049658.jpeg"}, {"id": "1ced7e12-aa09-11ec-85c6-83b9b78049ca", "full_name": "Jesse Wuckert", "image": "ph887711274067.jpeg"}, {"id": "1ced8038-aa09-11ec-85c6-9b9c407fa25c", "full_name": "Mertie Jaskolski", "image": "pa893128700490.jpeg"}, {"id": "1ced8254-aa09-11ec-85c6-2b44d10e37f8", "full_name": "Alvena Lemke", "image": "po175244222361.jpeg"}, {"id": "1ced8470-aa09-11ec-85c6-8bbe82f7b211", "full_name": "Wyatt Fritsch", "image": "ph980466666513.jpeg"}, {"id": "1ced8696-aa09-11ec-85c6-07f3f3c380bb", "full_name": "Hector Greenfelder", "image": "pn726194264145.jpeg"}, {"id": "1ced88b2-aa09-11ec-85c6-e73435864322", "full_name": "Courtney Hand", "image": "px375863935612.jpeg"}, {"id": "1ced8ace-aa09-11ec-85c6-431f802f6d20", "full_name": "Frederick Else Ruecker", "image": "pc632600927900.jpeg"}, {"id": "1ced8cfe-aa09-11ec-85c6-d7d7ca27283f", "full_name": "Dejuan Rosenbaum", "image": "pq673888657441.jpeg"}, {"id": "1ced8f1a-aa09-11ec-85c6-472ed5323908", "full_name": "Nona Gussie DuBuque", "image": "pp141455665049.jpeg"}, {"id": "1ced9140-aa09-11ec-85c6-b3cd4f6e2454", "full_name": "Brain Kirlin", "image": "po847610049778.jpeg"}, {"id": "1ced935c-aa09-11ec-85c6-3b63432ee5ce", "full_name": "Adalberto Icie Conn", "image": "pc512496687773.jpeg"}, {"id": "1ced95aa-aa09-11ec-85c6-dbe2b61ce924", "full_name": "Lydia Larson", "image": "pe569513598301.jpeg"}, {"id": "1ced97c6-aa09-11ec-85c6-bbfd5754e287", "full_name": "Ashlee Waelchi", "image": "pt136143367471.jpeg"}, {"id": "1ced99ec-aa09-11ec-85c6-b3cae6c88b0c", "full_name": "Oswaldo Konopelski", "image": "pv655352547964.jpeg"}, {"id": "1ced9c12-aa09-11ec-85c6-974e8f9658fe", "full_name": "Zetta Lebsack", "image": "pl956224450358.jpeg"}, {"id": "1ced9e38-aa09-11ec-85c6-d30972fd25b7", "full_name": "Barton Batz", "image": "pn913632057099.jpeg"}], "reviews": [{"id": "2d758f68-aa09-11ec-85c6-cf1229147e3d", "body": "target next-generation synergies", "rating": 1, "author": {"id": "1f4078ae-aa09-11ec-85c6-e7884eada1b1", "name": "cierra_et", "image": "ue271759646447.jpeg"}}, {"id": "3bd92c90-aa09-11ec-85c6-834d22a1842f", "body": "productize visionary applications", "rating": 4, "author": {"id": "1f4078ae-aa09-11ec-85c6-e7884eada1b1", "name": "cierra_et", "image": "ue271759646447.jpeg"}}, {"id": "3aa46dbc-aa09-11ec-85c6-e70145ce4371", "body": "whiteboard holistic markets", "rating": 3, "author": {"id": "20f7c0da-aa09-11ec-85c6-3bd31fbc36c8", "name": "carter_sapiente", "image": "ux744675527152.jpeg"}}, {"id": "34a362e2-aa09-11ec-85c6-337dba0feab5", "body": "orchestrate B2B e-services", "rating": 4, "author": {"id": "206419f2-aa09-11ec-85c6-1f52445f6918", "name": "angel_totam", "image": "uh797819933692.jpeg"}}, {"id": "3830c4fe-aa09-11ec-85c6-07d4260811a8", "body": "reintermediate sticky eyeballs", "rating": 4, "author": {"id": "1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3", "name": "ashley_ratione", "image": "uk699530557094.jpeg"}}, {"id": "2c4b0afa-aa09-11ec-85c6-73327ca6aceb", "body": "envisioneer seamless experiences", "rating": 4, "author": {"id": "20f7c0da-aa09-11ec-85c6-3bd31fbc36c8", "name": "carter_sapiente", "image": "ux744675527152.jpeg"}}, {"id": "35d41e90-aa09-11ec-85c6-833bf187e5a4", "body": "recontextualize leading-edge action-items", "rating": 4, "author": {"id": "20f7c0da-aa09-11ec-85c6-3bd31fbc36c8", "name": "carter_sapiente", "image": "ux744675527152.jpeg"}}, {"id": "3d0673e8-aa09-11ec-85c6-5f366d0aa9c0", "body": "monetize e-business niches", "rating": 5, "author": {"id": "1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3", "name": "ashley_ratione", "image": "uk699530557094.jpeg"}}, {"id": "39601e24-aa09-11ec-85c6-1fc131e1cf11", "body": "engage customized partnerships", "rating": 5, "author": {"id": "206419f2-aa09-11ec-85c6-1f52445f6918", "name": "angel_totam", "image": "uh797819933692.jpeg"}}, {"id": "3703a4e8-aa09-11ec-85c6-33db5f4b1f7b", "body": "grow frictionless platforms", "rating": 0, "author": {"id": "1f4078ae-aa09-11ec-85c6-e7884eada1b1", "name": "cierra_et", "image": "ue271759646447.jpeg"}}, {"id": "3f758588-aa09-11ec-85c6-3b67cd9d4e7d", "body": "harness front-end web services", "rating": 5, "author": {"id": "20f7c0da-aa09-11ec-85c6-3bd31fbc36c8", "name": "carter_sapiente", "image": "ux744675527152.jpeg"}}, {"id": "2b165892-aa09-11ec-85c6-df7d21cddf7c", "body": "facilitate strategic solutions", "rating": 5, "author": {"id": "206419f2-aa09-11ec-85c6-1f52445f6918", "name": "angel_totam", "image": "uh797819933692.jpeg"}}, {"id": "28a2c51e-aa09-11ec-85c6-ff40867c6025", "body": "utilize next-generation action-items", "rating": 3, "author": {"id": "1f4078ae-aa09-11ec-85c6-e7884eada1b1", "name": "cierra_et", "image": "ue271759646447.jpeg"}}, {"id": "31034558-aa09-11ec-85c6-e70203a03de7", "body": "repurpose bricks-and-clicks technologies", "rating": 2, "author": {"id": "20f7c0da-aa09-11ec-85c6-3bd31fbc36c8", "name": "carter_sapiente", "image": "ux744675527152.jpeg"}}, {"id": "2ea6845a-aa09-11ec-85c6-231265b181f7", "body": "monetize vertical systems", "rating": 4, "author": {"id": "1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3", "name": "ashley_ratione", "image": "uk699530557094.jpeg"}}, {"id": "33714dda-aa09-11ec-85c6-fbed748fe520", "body": "iterate holistic applications", "rating": 1, "author": {"id": "1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3", "name": "ashley_ratione", "image": "uk699530557094.jpeg"}}, {"id": "29dec9a0-aa09-11ec-85c6-0f629b5b4e78", "body": "productize wireless bandwidth", "rating": 5, "author": {"id": "1fd125fc-aa09-11ec-85c6-c3ad1ca86bc3", "name": "ashley_ratione", "image": "uk699530557094.jpeg"}}, {"id": "3238bfb6-aa09-11ec-85c6-8f791fb57c07", "body": "synergize intuitive communities", "rating": 1, "author": {"id": "1f4078ae-aa09-11ec-85c6-e7884eada1b1", "name": "cierra_et", "image": "ue271759646447.jpeg"}}, {"id": "3e3d25d6-aa09-11ec-85c6-dbbf26691af0", "body": "incentivize compelling e-tailers", "rating": 3, "author": {"id": "206419f2-aa09-11ec-85c6-1f52445f6918", "name": "angel_totam", "image": "uh797819933692.jpeg"}}, {"id": "2fd3e200-aa09-11ec-85c6-6fbf209f6ad9", "body": "incentivize cross-media metrics", "rating": 3, "author": {"id": "206419f2-aa09-11ec-85c6-1f52445f6918", "name": "angel_totam", "image": "uh797819933692.jpeg"}}]}',
+          ],
+          implementation: 'EdgeDB (Python)',
+        },
+      ];
       drawBars('#bars-get_movie', DATA_get_movie);
       drawLats('#lats-get_movie', DATA_get_movie);
     </script>
 
-    
     <h4>Sample Outputs</h4>
 
     <div id="samples-get_movie"></div>
 
     <script>
-      renderSamples(document.getElementById('samples-get_movie'), DATA_get_movie);
+      renderSamples(
+        document.getElementById('samples-get_movie'),
+        DATA_get_movie
+      );
     </script>
-       
+
     <h3>GET /user/:id</h3>
-    <p class="bench-description">Get information about a given user: name and a sample of the latest movie reviews this user authored.</p>
+    <p class="bench-description">
+      Get information about a given user: name and a sample of the latest movie
+      reviews this user authored.
+    </p>
 
-    
-
+    <p class="chart-title">Throughput (more is better)</p>
     <svg id="bars-get_user" class="chart" style="width: 80vw"></svg>
+    <p class="chart-title">Latency (less is better)</p>
     <svg id="lats-get_user" class="chart" style="width: 80vw"></svg>
 
     <script>
-      var DATA_get_user = [{"duration": 10, "queries": 817, "qps": 81.7, "latency_min": 9.88, "latency_mean": 12.236, "latency_max": 13.62, "latency_std": 0.462, "latency_cv": 3.78, "latency_percentiles": [[25, 12.01], [50, 12.239], [75, 12.511], [90, 12.722], [99, 13.217], [99.99, 13.628]], "samples": ["{\"id\": 153381, \"name\": \"lessie_reiciendis\", \"image\": \"ug111867479833.jpeg\", \"latest_reviews\": [{\"id\": 378381, \"body\": \"evolve best-of-breed architectures\", \"rating\": 2, \"movie\": {\"id\": 228381, \"image\": \"my779160161069.jpeg\", \"title\": \"generate front-end initiatives\", \"avg_rating\": 3.1}}, {\"id\": 478381, \"body\": \"unleash customized methodologies\", \"rating\": 2, \"movie\": {\"id\": 228381, \"image\": \"my779160161069.jpeg\", \"title\": \"generate front-end initiatives\", \"avg_rating\": 3.1}}, {\"id\": 678381, \"body\": \"architect rich users\", \"rating\": 4, \"movie\": {\"id\": 228381, \"image\": \"my779160161069.jpeg\", \"title\": \"generate front-end initiatives\", \"avg_rating\": 3.1}}, {\"id\": 578381, \"body\": \"leverage leading-edge portals\", \"rating\": 2, \"movie\": {\"id\": 228381, \"image\": \"my779160161069.jpeg\", \"title\": \"generate front-end initiatives\", \"avg_rating\": 3.1}}, {\"id\": 278381, \"body\": \"whiteboard best-of-breed ROI\", \"rating\": 3, \"movie\": {\"id\": 228381, \"image\": \"my779160161069.jpeg\", \"title\": \"generate front-end initiatives\", \"avg_rating\": 3.1}}]}"], "implementation": "Django ORM"}, {"duration": 10, "queries": 2777, "qps": 277.7, "latency_min": 3.08, "latency_mean": 3.59, "latency_max": 4.7, "latency_std": 0.23, "latency_cv": 6.41, "latency_percentiles": [[25, 3.568], [50, 3.634], [75, 3.696], [90, 3.827], [99, 4.057], [99.99, 4.704]], "samples": ["{\"id\": 135621, \"name\": \"shannon_ducimus\", \"image\": \"uw628624866932.jpeg\", \"latest_reviews\": [{\"id\": 660621, \"body\": \"enable plug-and-play architectures\", \"rating\": 5, \"movie\": {\"id\": 210621, \"image\": \"md484936788995.jpeg\", \"title\": \"monetize web-enabled communities\", \"avg_rating\": 3.1}}, {\"id\": 560621, \"body\": \"enhance out-of-the-box portals\", \"rating\": 4, \"movie\": {\"id\": 210621, \"image\": \"md484936788995.jpeg\", \"title\": \"monetize web-enabled communities\", \"avg_rating\": 3.1}}, {\"id\": 260621, \"body\": \"innovate dynamic web-readiness\", \"rating\": 3, \"movie\": {\"id\": 210621, \"image\": \"md484936788995.jpeg\", \"title\": \"monetize web-enabled communities\", \"avg_rating\": 3.1}}, {\"id\": 460621, \"body\": \"brand robust supply-chains\", \"rating\": 2, \"movie\": {\"id\": 210621, \"image\": \"md484936788995.jpeg\", \"title\": \"monetize web-enabled communities\", \"avg_rating\": 3.1}}, {\"id\": 360621, \"body\": \"target cross-platform web services\", \"rating\": 5, \"movie\": {\"id\": 210621, \"image\": \"md484936788995.jpeg\", \"title\": \"monetize web-enabled communities\", \"avg_rating\": 3.1}}]}"], "implementation": "SQLAlchemy"}, {"duration": 10, "queries": 5926, "qps": 592.6, "latency_min": 1.49, "latency_mean": 1.677, "latency_max": 2.99, "latency_std": 0.058, "latency_cv": 3.44, "latency_percentiles": [[25, 1.638], [50, 1.67], [75, 1.703], [90, 1.748], [99, 1.833], [99.99, 2.988]], "samples": ["{\"id\": \"1fa9613e-aa09-11ec-85c6-1b555bc2c6f8\", \"name\": \"quincy_sapiente\", \"image\": \"uk036539214519.jpeg\", \"latest_reviews\": [{\"id\": \"2e53aaf0-aa09-11ec-85c6-f75c7e0d6d84\", \"body\": \"engineer dynamic models\", \"rating\": 3, \"movie\": {\"id\": \"25b3198a-aa09-11ec-85c6-33dd289709b5\", \"image\": \"mc045672679867.jpeg\", \"title\": \"syndicate vertical markets\", \"avg_rating\": 3.3}}, {\"id\": \"3cb476f6-aa09-11ec-85c6-efb9e4754b3b\", \"body\": \"scale next-generation synergies\", \"rating\": 3, \"movie\": {\"id\": \"25b3198a-aa09-11ec-85c6-33dd289709b5\", \"image\": \"mc045672679867.jpeg\", \"title\": \"syndicate vertical markets\", \"avg_rating\": 3.3}}, {\"id\": \"37de6f74-aa09-11ec-85c6-f77b453058ce\", \"body\": \"whiteboard e-business e-business\", \"rating\": 1, \"movie\": {\"id\": \"25b3198a-aa09-11ec-85c6-33dd289709b5\", \"image\": \"mc045672679867.jpeg\", \"title\": \"syndicate vertical markets\", \"avg_rating\": 3.3}}, {\"id\": \"331b8648-aa09-11ec-85c6-3797f0b2bd3f\", \"body\": \"benchmark dynamic e-markets\", \"rating\": 2, \"movie\": {\"id\": \"25b3198a-aa09-11ec-85c6-33dd289709b5\", \"image\": \"mc045672679867.jpeg\", \"title\": \"syndicate vertical markets\", \"avg_rating\": 3.3}}, {\"id\": \"29873ec4-aa09-11ec-85c6-bf3d25e202cf\", \"body\": \"facilitate efficient schemas\", \"rating\": 4, \"movie\": {\"id\": \"25b3198a-aa09-11ec-85c6-33dd289709b5\", \"image\": \"mc045672679867.jpeg\", \"title\": \"syndicate vertical markets\", \"avg_rating\": 3.3}}]}"], "implementation": "EdgeDB (Python)"}];
+      var DATA_get_user = [
+        {
+          duration: 10,
+          queries: 817,
+          qps: 81.7,
+          latency_min: 9.88,
+          latency_mean: 12.236,
+          latency_max: 13.62,
+          latency_std: 0.462,
+          latency_cv: 3.78,
+          latency_percentiles: [
+            [25, 12.01],
+            [50, 12.239],
+            [75, 12.511],
+            [90, 12.722],
+            [99, 13.217],
+            [99.99, 13.628],
+          ],
+          samples: [
+            '{"id": 153381, "name": "lessie_reiciendis", "image": "ug111867479833.jpeg", "latest_reviews": [{"id": 378381, "body": "evolve best-of-breed architectures", "rating": 2, "movie": {"id": 228381, "image": "my779160161069.jpeg", "title": "generate front-end initiatives", "avg_rating": 3.1}}, {"id": 478381, "body": "unleash customized methodologies", "rating": 2, "movie": {"id": 228381, "image": "my779160161069.jpeg", "title": "generate front-end initiatives", "avg_rating": 3.1}}, {"id": 678381, "body": "architect rich users", "rating": 4, "movie": {"id": 228381, "image": "my779160161069.jpeg", "title": "generate front-end initiatives", "avg_rating": 3.1}}, {"id": 578381, "body": "leverage leading-edge portals", "rating": 2, "movie": {"id": 228381, "image": "my779160161069.jpeg", "title": "generate front-end initiatives", "avg_rating": 3.1}}, {"id": 278381, "body": "whiteboard best-of-breed ROI", "rating": 3, "movie": {"id": 228381, "image": "my779160161069.jpeg", "title": "generate front-end initiatives", "avg_rating": 3.1}}]}',
+          ],
+          implementation: 'Django ORM',
+        },
+        {
+          duration: 10,
+          queries: 2777,
+          qps: 277.7,
+          latency_min: 3.08,
+          latency_mean: 3.59,
+          latency_max: 4.7,
+          latency_std: 0.23,
+          latency_cv: 6.41,
+          latency_percentiles: [
+            [25, 3.568],
+            [50, 3.634],
+            [75, 3.696],
+            [90, 3.827],
+            [99, 4.057],
+            [99.99, 4.704],
+          ],
+          samples: [
+            '{"id": 135621, "name": "shannon_ducimus", "image": "uw628624866932.jpeg", "latest_reviews": [{"id": 660621, "body": "enable plug-and-play architectures", "rating": 5, "movie": {"id": 210621, "image": "md484936788995.jpeg", "title": "monetize web-enabled communities", "avg_rating": 3.1}}, {"id": 560621, "body": "enhance out-of-the-box portals", "rating": 4, "movie": {"id": 210621, "image": "md484936788995.jpeg", "title": "monetize web-enabled communities", "avg_rating": 3.1}}, {"id": 260621, "body": "innovate dynamic web-readiness", "rating": 3, "movie": {"id": 210621, "image": "md484936788995.jpeg", "title": "monetize web-enabled communities", "avg_rating": 3.1}}, {"id": 460621, "body": "brand robust supply-chains", "rating": 2, "movie": {"id": 210621, "image": "md484936788995.jpeg", "title": "monetize web-enabled communities", "avg_rating": 3.1}}, {"id": 360621, "body": "target cross-platform web services", "rating": 5, "movie": {"id": 210621, "image": "md484936788995.jpeg", "title": "monetize web-enabled communities", "avg_rating": 3.1}}]}',
+          ],
+          implementation: 'SQLAlchemy',
+        },
+        {
+          duration: 10,
+          queries: 5926,
+          qps: 592.6,
+          latency_min: 1.49,
+          latency_mean: 1.677,
+          latency_max: 2.99,
+          latency_std: 0.058,
+          latency_cv: 3.44,
+          latency_percentiles: [
+            [25, 1.638],
+            [50, 1.67],
+            [75, 1.703],
+            [90, 1.748],
+            [99, 1.833],
+            [99.99, 2.988],
+          ],
+          samples: [
+            '{"id": "1fa9613e-aa09-11ec-85c6-1b555bc2c6f8", "name": "quincy_sapiente", "image": "uk036539214519.jpeg", "latest_reviews": [{"id": "2e53aaf0-aa09-11ec-85c6-f75c7e0d6d84", "body": "engineer dynamic models", "rating": 3, "movie": {"id": "25b3198a-aa09-11ec-85c6-33dd289709b5", "image": "mc045672679867.jpeg", "title": "syndicate vertical markets", "avg_rating": 3.3}}, {"id": "3cb476f6-aa09-11ec-85c6-efb9e4754b3b", "body": "scale next-generation synergies", "rating": 3, "movie": {"id": "25b3198a-aa09-11ec-85c6-33dd289709b5", "image": "mc045672679867.jpeg", "title": "syndicate vertical markets", "avg_rating": 3.3}}, {"id": "37de6f74-aa09-11ec-85c6-f77b453058ce", "body": "whiteboard e-business e-business", "rating": 1, "movie": {"id": "25b3198a-aa09-11ec-85c6-33dd289709b5", "image": "mc045672679867.jpeg", "title": "syndicate vertical markets", "avg_rating": 3.3}}, {"id": "331b8648-aa09-11ec-85c6-3797f0b2bd3f", "body": "benchmark dynamic e-markets", "rating": 2, "movie": {"id": "25b3198a-aa09-11ec-85c6-33dd289709b5", "image": "mc045672679867.jpeg", "title": "syndicate vertical markets", "avg_rating": 3.3}}, {"id": "29873ec4-aa09-11ec-85c6-bf3d25e202cf", "body": "facilitate efficient schemas", "rating": 4, "movie": {"id": "25b3198a-aa09-11ec-85c6-33dd289709b5", "image": "mc045672679867.jpeg", "title": "syndicate vertical markets", "avg_rating": 3.3}}]}',
+          ],
+          implementation: 'EdgeDB (Python)',
+        },
+      ];
       drawBars('#bars-get_user', DATA_get_user);
       drawLats('#lats-get_user', DATA_get_user);
     </script>
 
-    
     <h4>Sample Outputs</h4>
 
     <div id="samples-get_user"></div>
@@ -1573,6 +1843,5 @@
     <script>
       renderSamples(document.getElementById('samples-get_user'), DATA_get_user);
     </script>
-     
   </body>
 </html>

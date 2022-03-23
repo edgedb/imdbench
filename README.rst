@@ -6,12 +6,17 @@
 ``Rev. 1.0``
 
 A benchmark intended to compare various Python and JavaScript 
-ORMs with realistic queries required for a hypothetical IMDB-style movie database application.
+ORMs with realistic queries required for a hypothetical IMDB-style movie 
+database application.
 
 Why is this needed? 🧐
 ---------------------
 
-Object-relational mapping (ORM) libraries solve some important usability issues with relational databases and continue to grow in popularity. However, they come with important performance tradeoffs that are often poorly understood or quantified. The question of ORM performance is more complex than simply "they generate slow queries".
+Object-relational mapping (ORM) libraries solve some important usability 
+issues with relational databases and continue to grow in popularity. However, 
+they come with important performance tradeoffs that are often poorly 
+understood or quantified. The question of ORM performance is more complex than 
+simply "they generate slow queries".
 
 - **Query splitting ⛓**
 
@@ -238,41 +243,70 @@ view the full report!
 JavaScript ORMs
 ^^^^^^^^^^^^^^^
 
+The libraries tested are:
+
+- `Prisma <https://prisma.io>`
+- `TypeORM <https://typeorm.io/#/>`
+- `Sequelize <https://sequelize.org/>`
+- `EdgeDB (TypeScript query builder) <https://www.edgedb.com/docs/clients/01_js/index>`
+
 `View Full Report <https://edgedb.github.io/imdbench/js.html>`_
 
 .. image:: ./docs/js_thru.png
+  :target: https://edgedb.github.io/imdbench/js.html
+  :alt: JavaScript ORM throughput results
 
 .. image:: ./docs/js_lat.png
+  :target: https://edgedb.github.io/imdbench/js.html
+  :alt: JavaScript ORM latency results
 
 
 
 Python ORMs
 ^^^^^^^^^^^
 
+The libraries tested are:
+
+- `Django <https://docs.djangoproject.com/en/4.0/topics/db/queries/>`
+- `SQLAlchemy <https://www.sqlalchemy.org/>`
+- `EdgeDB (Python client) <https://www.edgedb.com/docs/clients/00_python/index>`
+
 `View Full Report <https://edgedb.github.io/imdbench/py.html>`_
 
 .. image:: ./docs/py_thru.png
+  :target: https://edgedb.github.io/imdbench/py.html
+  :alt: Python ORM throughput results
 
 .. image:: ./docs/py_lat.png
+  :target: https://edgedb.github.io/imdbench/py.html
+  :alt: Python ORM latency results
 
 
 Raw SQL
 ^^^^^^^
 
+
 For comparison, below are the benchmark results for a tuned 
 PostgreSQL implementation of the benchmark queries, executed using popular 
-Postgres drivers (`asyncpg <https://github.com/MagicStack/asyncpg>`_,
-`psycopg2 <https://pypi.org/project/psycopg2/>`_,
-`go-pgx <https://github.com/jackc/pgx>`_,
-`node-postgres <https://node-postgres.com/`_). For reference the 
-EdgeDB results (using the `Python client 
+Postgres drivers:
+
+- `asyncpg <https://github.com/MagicStack/asyncpg>`_
+- `psycopg2 <https://pypi.org/project/psycopg2/>`_
+- `go-pgx <https://github.com/jackc/pgx>`_
+- `node-postgres <https://node-postgres.com/`_
+
+For reference the EdgeDB results (using the `Python client 
 <https://github.com/edgedb/edgedb-python>`_) are also included.
 
 `View Full Report <https://edgedb.github.io/imdbench/sql.html>`_
 
 .. image:: ./docs/sql_thru.png
+  :target: https://edgedb.github.io/imdbench/sql.html
+  :alt: SQL throughput results
 
 .. image:: ./docs/sql_lat.png
+  :target: https://edgedb.github.io/imdbench/sql.html
+  :alt: SQL latency results
 
   The ``psycopg2`` driver cannot properly decode the results of queries 
   containing array-aggregated subqueries. This is necessary to retrieve usable 
