@@ -73,38 +73,37 @@ Run locally
    - To execute the JavaScript ORM benchmarks, you must first run the folowing 
      loaders:
    
-      .. code-block::
-
-         $ make load-typeorm 
-         $ make load-sequelize 
-         $ make load-postgres
-         $ make load-prisma 
-         $ make load-edgedb       
+     .. code-block::
+        $ make load-typeorm 
+        $ make load-sequelize 
+        $ make load-postgres
+        $ make load-prisma 
+        $ make load-edgedb       
    
-      Then run the benchmarks:
+     Then run the benchmarks:
    
-      .. code-block::
+     .. code-block::
          
-         $ make run-js
+        $ make run-js
       
       The results will be generated into ``results/js.html``.
 
    - To execute the Python ORM benchmarks, you must first run 
      the following loaders:
    
-      .. code-block::
+     .. code-block::
 
          $ make load-django 
          $ make load-sqlalchemy 
          $ make load-edgedb       
    
-      Then run the benchmarks:
+     Then run the benchmarks:
    
-      .. code-block::
+     .. code-block::
          
          $ make run-py
       
-      The results will be generated into ``results/py.html``.
+     The results will be generated into ``results/py.html``.
 
 #. [Optional] Customize the benchmark
 
