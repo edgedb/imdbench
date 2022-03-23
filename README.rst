@@ -3,7 +3,7 @@
   <h1 align="center">IMDBench</h1>
   <p align="center">Benchmarking ORMs with realistic queries</p>
 
-``Rev. 1.0.0``
+``Rev. 1.0``
 
 A benchmark intended to compare various Python and JavaScript 
 ORMs with realistic queries required for a hypothetical IMDB-style movie database application.
@@ -272,6 +272,13 @@ EdgeDB results (using the `Python client
 
 .. image:: ./docs/sql_lat.png
 
+  The ``psycopg2`` driver cannot properly decode the results of queries 
+  containing array-aggregated subqueries. This is necessary to retrieve usable 
+  results from deep queries in a performant way; as such certain benchmark 
+  operations require multiple serially-executed queries. By contrast, 
+  ``asyncpg`` (which was originally designed as the Postgres IO layer for 
+  EdgeDB) can express all operations as a single highly-optimized SQL query 
+  and represents the high-water mark for this benchmark.
 
 Analysis
 --------

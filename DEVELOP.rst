@@ -43,6 +43,13 @@ Run locally
 
 #. Install `Synth <https://www.getsynth.com>`_
 
+#. Configure simulated latency. The instructions for this vary by operating 
+   system. On Linux, this can be achieved with ``tc``:
+
+   .. code-block::
+
+     sudo tc qdisc add dev br-webapp-bench root netem delay 1ms
+     
 #. Generate the dataset.
   
    .. code-block::
