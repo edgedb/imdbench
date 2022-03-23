@@ -187,8 +187,8 @@ def process_results(lat_data, results):
 
 
 def format_report_html(data, target_file):
-    tpl_dir = pathlib.Path(__file__).parent / 'report'
-    tpl_path = tpl_dir / 'report.html'
+    tpl_dir = pathlib.Path(__file__).parent / 'results'
+    tpl_path = tpl_dir / 'TEMPLATE.html'
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(tpl_dir),
@@ -301,7 +301,7 @@ def main():
             capture_output=True,
         )
         if (instance_status_proc.returncode != 0 and
-            instance_status_proc.returncode != 3):
+                instance_status_proc.returncode != 3):
             print(
                 f"`edgedb instance status` returned"
                 f" {instance_status_proc.returncode}. Please run"

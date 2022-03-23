@@ -37,84 +37,85 @@ class impl(typing.NamedTuple):
 
 
 IMPLEMENTATIONS = {
-    'edgedb_json_sync':
-        impl('python', 'EdgeDB Python JSON', edgedb_queries_json),
 
-    'edgedb_json_async':
-        impl('python', 'EdgeDB Python JSON (asyncio)', edgedb_queries_async),
+    'edgedb_py_json':
+        impl('python', 'EdgeDB (Python, JSON)', edgedb_queries_json),
 
-    'edgedb_repack_sync':
-        impl('python', 'EdgeDB Python Objects', edgedb_queries_repack),
+    'edgedb_py_json_async':
+        impl('python', 'EdgeDB (Python, JSON, asyncio)', edgedb_queries_async),
 
-    'edgedb_graphql_go':
-        impl('go', 'EdgeDB Go GraphQL+HTTP', edgedb_graphql_golang),
+    'edgedb_py_sync':
+        impl('python', 'EdgeDB (Python)', edgedb_queries_repack),
 
-    'edgedb_http_go':
-        impl('go', 'EdgeDB Go EdgeQL+HTTP', edgedb_edgeql_golang),
+    'edgedb_go':
+        impl('go', 'EdgeDB (Go)', edgedb_json_golang),
 
-    'edgedb_json_go':
-        impl('go', 'EdgeDB GO JSON', edgedb_json_golang),
+    'edgedb_go_json':
+        impl('go', 'EdgeDB (Go, JSON)', edgedb_json_golang),
 
-    'edgedb_repack_go':
-        impl('go', 'EdgeDB GO Structs', edgedb_json_golang),
+    'edgedb_go_graphql':
+        impl('go', 'EdgeDB (GraphQL)', edgedb_graphql_golang),
+
+    'edgedb_go_http':
+        impl('go', 'EdgeDB (HTTP)', edgedb_edgeql_golang),
 
     'django':
         impl('python', 'Django ORM', django_queries),
 
     'django_restfw':
-        impl('python', 'Django Rest Framework', django_queries_restfw),
+        impl('python', 'Django (Rest Framework)', django_queries_restfw),
 
     'mongodb':
-        impl('python', 'MongoDB Python', mongodb_queries),
+        impl('python', 'MongoDB (Python)', mongodb_queries),
 
     'sqlalchemy':
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
 
     'postgres_asyncpg':
-        impl('python', 'PostgreSQL asyncpg (asyncio)', postgres_queries),
+        impl('python', 'PostgreSQL (asyncpg)', postgres_queries),
 
     'postgres_psycopg':
-        impl('python', 'PostgreSQL psycopg2', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL (psycopg2)', postgres_psycopg_queries),
 
     'postgres_pq':
-        impl('go', 'PostgreSQL pq', postgres_pq_golang),
+        impl('go', 'PostgreSQL (pq)', postgres_pq_golang),
 
     'postgres_pgx':
-        impl('go', 'PostgreSQL pgx', postgres_pgx_golang),
+        impl('go', 'PostgreSQL (pgx)', postgres_pgx_golang),
 
     'postgres_hasura_go':
-        impl('go', 'Postgres+Hasura Go HTTP', postgres_hasura_golang),
+        impl('go', 'Hasura + Postgres (Go)', postgres_hasura_golang),
 
     'postgres_postgraphile_go':
-        impl('go', 'Postgres+Postgraphile Go HTTP',
-              postgres_postgraphile_golang),
+        impl('go', 'Postgraphile (Go)',
+             postgres_postgraphile_golang),
 
-    'edgedb_json_js':
-        impl('js', 'EdgeDB NodeJS JSON', None),
+    'edgedb_js':
+        impl('js', 'EdgeDB (Node.js)', None),
 
-    'edgedb_repack_js':
-        impl('js', 'EdgeDB NodeJS Objects', None),
+    'edgedb_js_json':
+        impl('js', 'EdgeDB (Node.js, JSON mode)', None),
 
-    'edgedb_querybuilder_js':
-        impl('js', 'EdgeDB NodeJS Querybuilder', None),
+    'edgedb_js_qb':
+        impl('js', 'EdgeDB (Node.js, query builder)', None),
 
-    'edgedb_querybuilder_uncached_js':
-        impl('js', 'EdgeDB NodeJS Querybuilder (uncached)', None),
+    'edgedb_js_qb_uncached':
+        impl('js', 'EdgeDB (Node.js, query builder, uncached)', None),
 
     'typeorm':
-        impl('js', 'Typeorm', None),
+        impl('js', 'TypeORM', None),
 
     'sequelize':
         impl('js', 'Sequelize', None),
 
-    'postgres_js':
-        impl('js', 'PostgreSQL NodeJS', None),
+    'postgres_pg':
+        impl('js', 'Postgres', None),
 
-    'postgres_prisma_js':
-        impl('js', 'Postgres+Prisma NodeJS', None),
+    'prisma_untuned':
+        impl('js', 'Prisma (Untuned)', None),
 
-    'postgres_prisma_tuned_js':
-        impl('js', 'Postgres+Prisma Tuned NodeJS', None),
+    'prisma':
+        impl('js', 'Prisma', None),
 }
 
 

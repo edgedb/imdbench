@@ -1,7 +1,6 @@
-"use strict";
+'use strict';
 
-const { PrismaClient } = require('@prisma/client')
-
+const {PrismaClient} = require('@prisma/client');
 
 function get_full_name(person) {
   let fn;
@@ -14,7 +13,6 @@ function get_full_name(person) {
   return fn;
 }
 
-
 function get_avg_rating(movie) {
   return (
     movie.reviews.reduce((total, r) => total + r.rating, 0) /
@@ -22,13 +20,12 @@ function get_avg_rating(movie) {
   );
 }
 
-
 class App extends PrismaClient {
   async userDetails(id) {
     const result = await this.$transaction(async (prisma) => {
       let result = await prisma.users.findUnique({
         where: {
-          id: id
+          id: id,
         },
         select: {
           id: true,
@@ -64,8 +61,8 @@ class App extends PrismaClient {
         },
         _avg: {
           rating: true,
-        }
-      })
+        },
+      });
 
       let avgRatingsMap = {};
 
@@ -78,7 +75,7 @@ class App extends PrismaClient {
       }
       result.latest_reviews = result.reviews;
       delete result.reviews;
-      return result
+      return result;
     });
 
     return JSON.stringify(result);
@@ -88,7 +85,7 @@ class App extends PrismaClient {
     const result = await this.$transaction(async (prisma) => {
       let result = await prisma.persons.findUnique({
         where: {
-          id: id
+          id: id,
         },
         select: {
           id: true,
@@ -105,7 +102,7 @@ class App extends PrismaClient {
                   image: true,
                   title: true,
                   year: true,
-                }
+                },
               },
             },
             orderBy: [
@@ -129,7 +126,7 @@ class App extends PrismaClient {
                   image: true,
                   title: true,
                   year: true,
-                }
+                },
               },
             },
             orderBy: [
@@ -165,8 +162,8 @@ class App extends PrismaClient {
         },
         _avg: {
           rating: true,
-        }
-      })
+        },
+      });
 
       let avgRatingsMap = {};
 
@@ -196,7 +193,7 @@ class App extends PrismaClient {
     const result = await this.$transaction([
       this.movies.findUnique({
         where: {
-          id: id
+          id: id,
         },
         select: {
           id: true,
@@ -214,8 +211,8 @@ class App extends PrismaClient {
                   middle_name: true,
                   last_name: true,
                   image: true,
-                }
-              }
+                },
+              },
             },
             orderBy: [
               {
@@ -237,8 +234,8 @@ class App extends PrismaClient {
                   middle_name: true,
                   last_name: true,
                   image: true,
-                }
-              }
+                },
+              },
             },
             orderBy: [
               {
@@ -281,18 +278,18 @@ class App extends PrismaClient {
             id: id,
           },
         },
-      })
+      }),
     ]);
 
-    result[0].avg_rating = result[1]._avg.rating
+    result[0].avg_rating = result[1]._avg.rating;
     // move the "person" object one level closer to "directors" and
     // "cast"
-    for (let fname of ["directors", "cast"]) {
-      result[0][fname] = result[0][fname].map(rel => {
+    for (let fname of ['directors', 'cast']) {
+      result[0][fname] = result[0][fname].map((rel) => {
         return {
           id: rel.person.id,
           full_name: get_full_name(rel.person),
-          image: rel.person.image
+          image: rel.person.image,
         };
       });
     }
@@ -339,18 +336,18 @@ class App extends PrismaClient {
     let movie = await this.movies.create({
       data: {
         title: val.prefix + num,
-        image: val.prefix + "image" + num + ".jpeg",
-        description: val.prefix + "description" + num,
+        image: val.prefix + 'image' + num + '.jpeg',
+        description: val.prefix + 'description' + num,
         year: num,
 
         directors: {
-          create: {person_id: val.people[0]}
+          create: {person_id: val.people[0]},
         },
         cast: {
           createMany: {
-            data: val.people.slice(1).map(x => ({
-              person_id: x
-            }))
+            data: val.people.slice(1).map((x) => ({
+              person_id: x,
+            })),
           },
         },
       },
@@ -370,8 +367,8 @@ class App extends PrismaClient {
                 middle_name: true,
                 last_name: true,
                 image: true,
-              }
-            }
+              },
+            },
           },
         },
         cast: {
@@ -383,8 +380,8 @@ class App extends PrismaClient {
                 middle_name: true,
                 last_name: true,
                 image: true,
-              }
-            }
+              },
+            },
           },
         },
       },
@@ -392,12 +389,12 @@ class App extends PrismaClient {
 
     // move the "person" object one level closer to "directors" and
     // "cast"
-    for (let fname of ["directors", "cast"]) {
-      movie[fname] = movie[fname].map(rel => {
+    for (let fname of ['directors', 'cast']) {
+      movie[fname] = movie[fname].map((rel) => {
         return {
           id: rel.person.id,
           full_name: get_full_name(rel.person),
-          image: rel.person.image
+          image: rel.person.image,
         };
       });
     }
@@ -407,25 +404,29 @@ class App extends PrismaClient {
 
   async insertMoviePlus(val) {
     let num = Math.floor(Math.random() * 1000000);
-    let data = [{
-      first_name: val + "Alice",
-      middle_name: "",
-      last_name: val + "Director",
-      image: val + "image" + num + ".jpeg",
-      bio: "",
-    }, {
-      first_name: val + "Billie",
-      middle_name: "",
-      last_name: val + "Actor",
-      image: val + "image" + (num + 1) + ".jpeg",
-      bio: "",
-    }, {
-      first_name: val + "Cameron",
-      middle_name: "",
-      last_name: val + "Actor",
-      image: val + "image" + (num + 2) + ".jpeg",
-      bio: "",
-    }];
+    let data = [
+      {
+        first_name: val + 'Alice',
+        middle_name: '',
+        last_name: val + 'Director',
+        image: val + 'image' + num + '.jpeg',
+        bio: '',
+      },
+      {
+        first_name: val + 'Billie',
+        middle_name: '',
+        last_name: val + 'Actor',
+        image: val + 'image' + (num + 1) + '.jpeg',
+        bio: '',
+      },
+      {
+        first_name: val + 'Cameron',
+        middle_name: '',
+        last_name: val + 'Actor',
+        image: val + 'image' + (num + 2) + '.jpeg',
+        bio: '',
+      },
+    ];
 
     const movie = await this.$transaction(async (prisma) => {
       let people = [];
@@ -448,18 +449,18 @@ class App extends PrismaClient {
       let movie = await prisma.movies.create({
         data: {
           title: val + num,
-          image: val + "image" + num + ".jpeg",
-          description: val + "description" + num,
+          image: val + 'image' + num + '.jpeg',
+          description: val + 'description' + num,
           year: num,
 
           directors: {
-            create: {person_id: people[0].id}
+            create: {person_id: people[0].id},
           },
           cast: {
             createMany: {
-              data: people.slice(1).map(x => ({
-                person_id: x.id
-              }))
+              data: people.slice(1).map((x) => ({
+                person_id: x.id,
+              })),
             },
           },
         },
@@ -479,8 +480,8 @@ class App extends PrismaClient {
                   middle_name: true,
                   last_name: true,
                   image: true,
-                }
-              }
+                },
+              },
             },
           },
           cast: {
@@ -492,8 +493,8 @@ class App extends PrismaClient {
                   middle_name: true,
                   last_name: true,
                   image: true,
-                }
-              }
+                },
+              },
             },
           },
         },
@@ -501,12 +502,12 @@ class App extends PrismaClient {
 
       // move the "person" object one level closer to "directors" and
       // "cast"
-      for (let fname of ["directors", "cast"]) {
-        movie[fname] = movie[fname].map(rel => {
+      for (let fname of ['directors', 'cast']) {
+        movie[fname] = movie[fname].map((rel) => {
           return {
             id: rel.person.id,
             full_name: get_full_name(rel.person),
-            image: rel.person.image
+            image: rel.person.image,
           };
         });
       }
@@ -518,19 +519,19 @@ class App extends PrismaClient {
   }
 
   async benchQuery(query, id) {
-    if (query == "get_user") {
+    if (query == 'get_user') {
       return await this.userDetails(id);
-    } else if (query == "get_person") {
+    } else if (query == 'get_person') {
       return await this.personDetails(id);
-    } else if (query == "get_movie") {
+    } else if (query == 'get_movie') {
       return await this.movieDetails(id);
-    } else if (query == "update_movie") {
+    } else if (query == 'update_movie') {
       return await this.updateMovie(id);
-    } else if (query == "insert_user") {
+    } else if (query == 'insert_user') {
       return await this.insertUser(id);
-    } else if (query == "insert_movie") {
+    } else if (query == 'insert_movie') {
       return await this.insertMovie(id);
-    } else if (query == "insert_movie_plus") {
+    } else if (query == 'insert_movie_plus') {
       return await this.insertMoviePlus(id);
     }
   }
@@ -541,15 +542,17 @@ class App extends PrismaClient {
       this.persons.findMany({select: {id: true}}),
       this.movies.findMany({select: {id: true, title: true}}),
     ]);
-    var people = ids[1].map(x => x.id);
+    var people = ids[1].map((x) => x.id);
 
     return {
-      get_user: ids[0].map(x => x.id),
+      get_user: ids[0].map((x) => x.id),
       get_person: people,
-      get_movie: ids[2].map(x => x.id),
+      get_movie: ids[2].map((x) => x.id),
       // re-use user IDs for update tests
-      update_movie: ids[2].map(
-        x => ({id: x.id, title: x.title + '---' + x.id})),
+      update_movie: ids[2].map((x) => ({
+        id: x.id,
+        title: x.title + '---' + x.id,
+      })),
       // generate a bunch of insert stubs to accommodate concurrent
       // inserts
       insert_user: Array(1000).fill('insert_test__'),
@@ -562,7 +565,7 @@ class App extends PrismaClient {
   }
 
   async setup(query) {
-    if (query == "update_movie") {
+    if (query == 'update_movie') {
       // don't care about using proper Sequelize machinery for this
       return await this.$executeRaw`
         UPDATE
@@ -572,7 +575,7 @@ class App extends PrismaClient {
         WHERE
             movies.title LIKE '%---%';
       `;
-    } else if (query == "insert_user") {
+    } else if (query == 'insert_user') {
       return await this.$executeRaw`
         DELETE FROM
             users
@@ -612,9 +615,14 @@ class App extends PrismaClient {
   }
 
   async cleanup(query) {
-    if ([
-      "update_movie", "insert_user", "insert_movie", "insert_movie_plus"
-    ].indexOf(query) >= 0) {
+    if (
+      [
+        'update_movie',
+        'insert_user',
+        'insert_movie',
+        'insert_movie_plus',
+      ].indexOf(query) >= 0
+    ) {
       // The clean up is the same as setup for mutation benchmarks
       return await this.setup(query);
     }
@@ -625,12 +633,11 @@ class App extends PrismaClient {
   }
 }
 
-
 class TunedApp extends App {
   async userDetails(id) {
     let result = await this.users.findUnique({
       where: {
-        id: id
+        id: id,
       },
       select: {
         id: true,
@@ -675,7 +682,7 @@ class TunedApp extends App {
   async personDetails(id) {
     let result = await this.persons.findUnique({
       where: {
-        id: id
+        id: id,
       },
       select: {
         id: true,
@@ -697,7 +704,7 @@ class TunedApp extends App {
                     rating: true,
                   },
                 },
-              }
+              },
             },
           },
           orderBy: [
@@ -726,7 +733,7 @@ class TunedApp extends App {
                     rating: true,
                   },
                 },
-              }
+              },
             },
           },
           orderBy: [
@@ -750,13 +757,13 @@ class TunedApp extends App {
     delete result.middle_name;
     delete result.last_name;
 
-    for (let fname of ["acted_in", "directed"]) {
+    for (let fname of ['acted_in', 'directed']) {
       for (let r of result[fname]) {
         r.movie.avg_rating = get_avg_rating(r.movie);
         delete r.movie.reviews;
       }
       // clean up
-      result[fname] = result[fname].map(rel => {
+      result[fname] = result[fname].map((rel) => {
         return rel.movie;
       });
     }
@@ -766,8 +773,6 @@ class TunedApp extends App {
 
   // movieDetails don't benefit from computations in the client code
 }
-
-
 
 module.exports.App = App;
 module.exports.TunedApp = TunedApp;

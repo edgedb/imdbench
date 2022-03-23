@@ -16,124 +16,134 @@
         },
         "rating": {
             "type": "one_of",
-            "variants": [ {
-                "weight": 20,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 0
-            }, {
-                "weight": 80,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 1
-            }, {
-                "weight": 200,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 2
-            }, {
-                "weight": 250,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 3
-            }, {
-                "weight": 275,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 4
-            }, {
-                "weight": 170,
-                "type": "number",
-                "subtype": "u64",
-                "constant": 5
-            } ]
+            "variants": [
+                {
+                    "weight": 20,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 0
+                },
+                {
+                    "weight": 80,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 1
+                },
+                {
+                    "weight": 200,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 2
+                },
+                {
+                    "weight": 250,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 3
+                },
+                {
+                    "weight": 275,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 4
+                },
+                {
+                    "weight": 170,
+                    "type": "number",
+                    "subtype": "u64",
+                    "constant": 5
+                }
+            ]
         },
         "body": {
             "type": "one_of",
-            "variants": [ {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 1
+            "variants": [
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 1
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 2
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 3
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 4
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 5
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 6
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 7
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 8
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 9
+                    }
+                },
+                {
+                    "type": "string",
+                    "faker": {
+                        "generator": "bs",
+                        "nb_sentences": 25
+                    }
                 }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 2
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 3
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 4
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 5
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 6
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 7
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 8
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 9
-                }
-            }, {
-                "type": "string",
-                "faker": {
-                    "generator": "paragraph",
-                    "nb_sentences": 25
-                }
-            } ]
-
+            ]
         },
         "creation_time": {
-            "type": "string",
-            "date_time": {
-                "format": "%Y-%m-%dT%H:%M:%S+00:00",
-                "subtype": "naive_date_time",
-                "begin": "2015-01-01T00:00:00+00:00",
-                "end": "2021-01-01T00:00:00+00:00"
-            }
+            "type": "date_time",
+            "format": "%Y-%m-%dT%H:%M:%S+00:00",
+            "subtype": "naive_date_time",
+            "begin": "2015-01-01T00:00:00+00:00",
+            "end": "2021-01-01T00:00:00+00:00"
         },
         "author": {
             "type": "same_as",
             "ref": "user.content.id"
         },
         "movie": {
-            "type": "number",
-            "subtype": "u64",
-            "range": {
-                "high": %MOVIES%,
-                "low": 1,
-                "step": 1
-            }
+            "type": "same_as",
+            "ref": "movie.content.id"
         }
     }
 }

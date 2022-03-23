@@ -13,8 +13,8 @@ import (
 	// import used by database/sql
 	_ "gopkg.in/go-on/pq.v2"
 
-	"github.com/edgedb/webapp-bench/_go/bench"
-	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/edgedb/imdbench/_go/bench"
+	"github.com/edgedb/imdbench/_go/cli"
 )
 
 func PQWorker(args cli.Args) (bench.Exec, bench.Close) {

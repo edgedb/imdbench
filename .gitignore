@@ -17,3 +17,4 @@ node_modules
 /dataset/movies
 /_prisma/.env
 venv*
+.python-version

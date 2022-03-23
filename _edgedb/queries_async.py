@@ -101,7 +101,7 @@ async def insert_movie(conn, val):
         description=f'{val["prefix"]}description{num}',
         year=num,
         d_id=val["people"][0],
-        cast=val["people"][1:3],
+        cast=val["people"][1:4],
     )
 
 

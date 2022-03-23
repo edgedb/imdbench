@@ -6,29 +6,29 @@
 // See LICENSE for details.
 //
 
-"use strict";
+'use strict';
 
-const argparse = require("argparse");
-const _ = require("lodash");
-const process = require("process");
-const typeormapp = require("./_typeorm/build/index");
-const sequelizeapp = require("./_sequelize/index");
-const pgapp = require("./_postgres/index");
-const edgedbapp = require("./_edgedb_js/index");
-const prismaapp = require("./_prisma/index");
+const argparse = require('argparse');
+const _ = require('lodash');
+const process = require('process');
+const typeormapp = require('./_typeorm/build/index');
+const sequelizeapp = require('./_sequelize/index');
+const pgapp = require('./_postgres/index');
+const edgedbapp = require('./_edgedb_js/index');
+const prismaapp = require('./_prisma/index');
 
 async function getApp(args) {
   var app;
   var ncon = args.concurrency;
 
-  if (args.orm == "typeorm") {
+  if (args.orm == 'typeorm') {
     app = new typeormapp.App({
       host: args.host,
       port: args.port,
-      extra: { max: ncon },
+      extra: {max: ncon},
     });
     await app.connect();
-  } else if (args.orm == "sequelize") {
+  } else if (args.orm == 'sequelize') {
     app = new sequelizeapp.App({
       host: args.host,
       port: args.port,
@@ -37,50 +37,50 @@ async function getApp(args) {
         max: ncon,
       },
     });
-  } else if (args.orm == "postgres_prisma_js") {
+  } else if (args.orm == 'prisma_untuned') {
     app = new prismaapp.App();
-  } else if (args.orm == "postgres_prisma_tuned_js") {
+  } else if (args.orm == 'prisma') {
     app = new prismaapp.TunedApp();
-  } else if (args.orm == "postgres_js") {
+  } else if (args.orm == 'postgres_pg') {
     app = new pgapp.App({
       host: args.host,
       port: args.port,
       max: ncon,
     });
-  } else if (args.orm == "edgedb_json_js") {
+  } else if (args.orm == 'edgedb_js_json') {
     app = new edgedbapp.App({
-      style: "json",
+      style: 'json',
       host: args.host,
       port: args.port,
       pool: ncon,
     });
     await app.initPool();
-  } else if (args.orm == "edgedb_repack_js") {
+  } else if (args.orm == 'edgedb_js') {
     app = new edgedbapp.App({
-      style: "repack",
+      style: 'repack',
       host: args.host,
       port: args.port,
       pool: ncon,
     });
     await app.initPool();
-  } else if (args.orm == "edgedb_querybuilder_js") {
+  } else if (args.orm == 'edgedb_js_qb') {
     app = new edgedbapp.App({
-      style: "querybuilder",
+      style: 'querybuilder',
       host: args.host,
       port: args.port,
       pool: ncon,
     });
     await app.initPool();
-  } else if (args.orm == "edgedb_querybuilder_uncached_js") {
+  } else if (args.orm == 'edgedb_js_qb_uncached') {
     app = new edgedbapp.App({
-      style: "querybuilder_uncached",
+      style: 'querybuilder_uncached',
       host: args.host,
       port: args.port,
       pool: ncon,
     });
     await app.initPool();
   } else {
-    throw new Error("unexected orm: " + orm);
+    throw new Error('Unexpected ORM: ' + orm);
   }
 
   return app;
@@ -167,7 +167,6 @@ async function runner(args, app) {
       // execute queries one after the other in a loop
       do {
         reqStart = _now();
-
         var id = ids[idIndex];
         idIndex += 1;
         idIndex %= ids.length;
@@ -243,85 +242,85 @@ async function runner(args, app) {
 async function main() {
   let parser = argparse.ArgumentParser({
     add_help: true,
-    description: "async pg driver benchmark [concurrent]",
+    description: 'async pg driver benchmark [concurrent]',
   });
 
-  parser.add_argument("--concurrency", {
+  parser.add_argument('--concurrency', {
     type: Number,
     default: 10,
-    help: "number of concurrent connections",
+    help: 'number of concurrent connections',
   });
-  parser.add_argument("--duration", {
+  parser.add_argument('--duration', {
     type: Number,
     default: 30,
-    help: "duration of test in seconds",
+    help: 'duration of test in seconds',
   });
-  parser.add_argument("--timeout", {
+  parser.add_argument('--timeout', {
     type: Number,
     default: 2,
-    help: "server timeout in seconds",
+    help: 'server timeout in seconds',
   });
-  parser.add_argument("--warmup-time", {
+  parser.add_argument('--warmup-time', {
     type: Number,
     default: 5,
-    help: "duration of warmup period for each benchmark in seconds",
+    help: 'duration of warmup period for each benchmark in seconds',
   });
-  parser.add_argument("--output-format", {
+  parser.add_argument('--output-format', {
     type: String,
-    default: "text",
-    help: "output format",
-    choices: ["text", "json"],
+    default: 'text',
+    help: 'output format',
+    choices: ['text', 'json'],
   });
-  parser.add_argument("--host", {
+  parser.add_argument('--host', {
     type: String,
-    default: "127.0.0.1",
-    help: "PostgreSQL server host",
+    default: '127.0.0.1',
+    help: 'PostgreSQL server host',
   });
-  parser.add_argument("--port", {
+  parser.add_argument('--port', {
     type: Number,
     default: 15432,
-    help: "PostgreSQL server port",
+    help: 'PostgreSQL server port',
   });
-  parser.add_argument("--user", {
+  parser.add_argument('--user', {
     type: String,
-    help: "PostgreSQL server user",
+    help: 'PostgreSQL server user',
   });
-  parser.add_argument("--nsamples", {
+  parser.add_argument('--nsamples', {
     type: Number,
     default: 0,
-    help: "number of result samples to return",
+    help: 'number of result samples to return',
   });
-  parser.add_argument("--number-of-ids", {
+  parser.add_argument('--number-of-ids', {
     type: Number,
     default: 250,
-    help: "number of random IDs to fetch data with in benchmarks",
+    help: 'number of random IDs to fetch data with in benchmarks',
   });
-  parser.add_argument("--query", {
+  parser.add_argument('--query', {
     type: String,
-    help: "specific query to run",
+    help: 'specific query to run',
     choices: [
-      "get_movie",
-      "get_person",
-      "get_user",
-      "update_movie",
-      "insert_user",
-      "insert_movie",
-      "insert_movie_plus",
+      'get_movie',
+      'get_person',
+      'get_user',
+      'update_movie',
+      'insert_user',
+      'insert_movie',
+      'insert_movie_plus',
     ],
   });
-  parser.add_argument("orm", {
+  parser.add_argument('orm', {
     type: String,
-    help: "ORM implementation to use",
+    help: 'ORM implementation to use',
     choices: [
-      "typeorm",
-      "sequelize",
-      "postgres_js",
-      "postgres_prisma_js",
-      "postgres_prisma_tuned_js",
-      "edgedb_json_js",
-      "edgedb_repack_js",
-      "edgedb_querybuilder_js",
-      "edgedb_querybuilder_uncached_js",
+      'typeorm',
+      'sequelize',
+      'postgres_pg',
+      'prisma',
+      'prisma_untuned',
+      'edgedb_js',
+      'edgedb_js_json',
+      'edgedb_js_qb',
+      'edgedb_js_qb_uncached',
     ],
   });
 
@@ -331,10 +330,7 @@ async function main() {
   try {
     await runner(args, app);
   } finally {
-    if (
-      args.orm == "postgres_prisma_js" ||
-      args.orm == "postgres_prisma_tuned_js"
-    ) {
+    if (args.orm == 'prisma_untuned' || args.orm == 'prisma') {
       await app.$disconnect();
     }
   }

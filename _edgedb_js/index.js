@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
-const edgedb = require("edgedb");
-const queries = require("./queries");
-const qbQueries = require("./qb_queries");
+const edgedb = require('edgedb');
+const queries = require('./queries');
+const qbQueries = require('./qb_queries');
 
 const qbQueryUser = qbQueries.user();
 const qbQueryPerson = qbQueries.person();
@@ -15,8 +15,8 @@ const qbInsertMoviePlus = qbQueries.insertMoviePlus();
 class _BaseConnection {
   constructor(opts) {
     this.client = edgedb
-      .createClient({ concurrency: opts.pool })
-      .withRetryOptions({ attempts: 10 });
+      .createClient({concurrency: opts.pool})
+      .withRetryOptions({attempts: 10});
   }
 
   async connect() {
@@ -24,19 +24,19 @@ class _BaseConnection {
   }
 
   async benchQuery(query, id) {
-    if (query == "get_user") {
+    if (query == 'get_user') {
       return this.userDetails(id);
-    } else if (query == "get_person") {
+    } else if (query == 'get_person') {
       return this.personDetails(id);
-    } else if (query == "get_movie") {
+    } else if (query == 'get_movie') {
       return this.movieDetails(id);
-    } else if (query == "update_movie") {
+    } else if (query == 'update_movie') {
       return this.updateMovie(id);
-    } else if (query == "insert_user") {
+    } else if (query == 'insert_user') {
       return this.insertUser(id);
-    } else if (query == "insert_movie") {
+    } else if (query == 'insert_movie') {
       return this.insertMovie(id);
-    } else if (query == "insert_movie_plus") {
+    } else if (query == 'insert_movie_plus') {
       return this.insertMoviePlus(id);
     }
   }
@@ -44,15 +44,15 @@ class _BaseConnection {
 
 class ConnectionJSON extends _BaseConnection {
   async userDetails(id) {
-    return await this.client.querySingleJSON(queries.user, { id: id });
+    return await this.client.querySingleJSON(queries.user, {id: id});
   }
 
   async personDetails(id) {
-    return await this.client.querySingleJSON(queries.person, { id: id });
+    return await this.client.querySingleJSON(queries.person, {id: id});
   }
 
   async movieDetails(id) {
-    return await this.client.querySingleJSON(queries.movie, { id: id });
+    return await this.client.querySingleJSON(queries.movie, {id: id});
   }
 
   async updateMovie(id) {
@@ -66,7 +66,7 @@ class ConnectionJSON extends _BaseConnection {
     let num = Math.floor(Math.random() * 1000000);
     return await this.client.querySingleJSON(queries.insertUser, {
       name: id + num,
-      image: "image_" + id + num,
+      image: 'image_' + id + num,
     });
   }
 
@@ -74,11 +74,11 @@ class ConnectionJSON extends _BaseConnection {
     let num = Math.floor(Math.random() * 1000000);
     return await this.client.querySingleJSON(queries.insertMovie, {
       title: val.prefix + num,
-      image: val.prefix + "image" + num + ".jpeg",
-      description: val.prefix + "description" + num,
+      image: val.prefix + 'image' + num + '.jpeg',
+      description: val.prefix + 'description' + num,
       year: num,
       d_id: val.people[0],
-      cast: val.people.slice(1, 3),
+      cast: val.people.slice(1, 4),
     });
   }
 
@@ -86,18 +86,18 @@ class ConnectionJSON extends _BaseConnection {
     let num = Math.floor(Math.random() * 1000000);
     return await this.client.querySingleJSON(queries.insertMoviePlus, {
       title: val + num,
-      image: val + "image" + num + ".jpeg",
-      description: val + "description" + num,
+      image: val + 'image' + num + '.jpeg',
+      description: val + 'description' + num,
       year: num,
-      dfn: val + "Alice",
-      dln: val + "Director",
-      dimg: val + "image" + num + ".jpeg",
-      cfn0: val + "Billie",
-      cln0: val + "Actor",
-      cimg0: val + "image" + (num + 1) + ".jpeg",
-      cfn1: val + "Cameron",
-      cln1: val + "Actor",
-      cimg1: val + "image" + (num + 2) + ".jpeg",
+      dfn: val + 'Alice',
+      dln: val + 'Director',
+      dimg: val + 'image' + num + '.jpeg',
+      cfn0: val + 'Billie',
+      cln0: val + 'Actor',
+      cimg0: val + 'image' + (num + 1) + '.jpeg',
+      cfn1: val + 'Cameron',
+      cln1: val + 'Actor',
+      cimg1: val + 'image' + (num + 2) + '.jpeg',
     });
   }
 }
@@ -106,19 +106,19 @@ module.exports.ConnectionJSON = ConnectionJSON;
 class ConnectionRepack extends _BaseConnection {
   async userDetails(id) {
     return JSON.stringify(
-      await this.client.querySingle(queries.user, { id: id })
+      await this.client.querySingle(queries.user, {id: id})
     );
   }
 
   async personDetails(id) {
     return JSON.stringify(
-      await this.client.querySingle(queries.person, { id: id })
+      await this.client.querySingle(queries.person, {id: id})
     );
   }
 
   async movieDetails(id) {
     return JSON.stringify(
-      await this.client.querySingle(queries.movie, { id: id })
+      await this.client.querySingle(queries.movie, {id: id})
     );
   }
 
@@ -136,7 +136,7 @@ class ConnectionRepack extends _BaseConnection {
     return JSON.stringify(
       await this.client.querySingle(queries.insertUser, {
         name: id + num,
-        image: id + "image" + num,
+        image: id + 'image' + num,
       })
     );
   }
@@ -146,11 +146,11 @@ class ConnectionRepack extends _BaseConnection {
     return JSON.stringify(
       await this.client.querySingle(queries.insertMovie, {
         title: val.prefix + num,
-        image: val.prefix + "image" + num + ".jpeg",
-        description: val.prefix + "description" + num,
+        image: val.prefix + 'image' + num + '.jpeg',
+        description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }
@@ -160,18 +160,18 @@ class ConnectionRepack extends _BaseConnection {
     return JSON.stringify(
       await this.client.querySingle(queries.insertMoviePlus, {
         title: val + num,
-        image: val + "image" + num + ".jpeg",
-        description: val + "description" + num,
+        image: val + 'image' + num + '.jpeg',
+        description: val + 'description' + num,
         year: num,
-        dfn: val + "Alice",
-        dln: val + "Director",
-        dimg: val + "image" + num + ".jpeg",
-        cfn0: val + "Billie",
-        cln0: val + "Actor",
-        cimg0: val + "image" + (num + 1) + ".jpeg",
-        cfn1: val + "Cameron",
-        cln1: val + "Actor",
-        cimg1: val + "image" + (num + 2) + ".jpeg",
+        dfn: val + 'Alice',
+        dln: val + 'Director',
+        dimg: val + 'image' + num + '.jpeg',
+        cfn0: val + 'Billie',
+        cln0: val + 'Actor',
+        cimg0: val + 'image' + (num + 1) + '.jpeg',
+        cfn1: val + 'Cameron',
+        cln1: val + 'Actor',
+        cimg1: val + 'image' + (num + 2) + '.jpeg',
       })
     );
   }
@@ -180,15 +180,15 @@ module.exports.ConnectionRepack = ConnectionRepack;
 
 class ConnectionQB extends _BaseConnection {
   async userDetails(id) {
-    return JSON.stringify(await qbQueryUser.run(this.client, { id }));
+    return JSON.stringify(await qbQueryUser.run(this.client, {id}));
   }
 
   async personDetails(id) {
-    return JSON.stringify(await qbQueryPerson.run(this.client, { id }));
+    return JSON.stringify(await qbQueryPerson.run(this.client, {id}));
   }
 
   async movieDetails(id) {
-    return JSON.stringify(await qbQueryMovie.run(this.client, { id }));
+    return JSON.stringify(await qbQueryMovie.run(this.client, {id}));
   }
 
   async updateMovie(id) {
@@ -205,7 +205,7 @@ class ConnectionQB extends _BaseConnection {
     return JSON.stringify(
       await qbInsertUser.run(this.client, {
         name: id + num,
-        image: "image_" + id + num,
+        image: 'image_' + id + num,
       })
     );
   }
@@ -215,11 +215,11 @@ class ConnectionQB extends _BaseConnection {
     return JSON.stringify(
       await qbInsertMovie.run(this.client, {
         title: val.prefix + num,
-        image: val.prefix + "image" + num + ".jpeg",
-        description: val.prefix + "description" + num,
+        image: val.prefix + 'image' + num + '.jpeg',
+        description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }
@@ -229,18 +229,18 @@ class ConnectionQB extends _BaseConnection {
     return JSON.stringify(
       await qbInsertMoviePlus.run(this.client, {
         title: val + num,
-        image: val + "image" + num + ".jpeg",
-        description: val + "description" + num,
+        image: val + 'image' + num + '.jpeg',
+        description: val + 'description' + num,
         year: num,
-        dfn: val + "Alice",
-        dln: val + "Director",
-        dimg: val + "image" + num + ".jpeg",
-        cfn0: val + "Billie",
-        cln0: val + "Actor",
-        cimg0: val + "image" + (num + 1) + ".jpeg",
-        cfn1: val + "Cameron",
-        cln1: val + "Actor",
-        cimg1: val + "image" + (num + 2) + ".jpeg",
+        dfn: val + 'Alice',
+        dln: val + 'Director',
+        dimg: val + 'image' + num + '.jpeg',
+        cfn0: val + 'Billie',
+        cln0: val + 'Actor',
+        cimg0: val + 'image' + (num + 1) + '.jpeg',
+        cfn1: val + 'Cameron',
+        cln1: val + 'Actor',
+        cimg1: val + 'image' + (num + 2) + '.jpeg',
       })
     );
   }
@@ -249,15 +249,15 @@ module.exports.ConnectionQB = ConnectionQB;
 
 class ConnectionQBUncached extends _BaseConnection {
   async userDetails(id) {
-    return JSON.stringify(await qbQueries.user().run(this.client, { id }));
+    return JSON.stringify(await qbQueries.user().run(this.client, {id}));
   }
 
   async personDetails(id) {
-    return JSON.stringify(await qbQueries.person().run(this.client, { id }));
+    return JSON.stringify(await qbQueries.person().run(this.client, {id}));
   }
 
   async movieDetails(id) {
-    return JSON.stringify(await qbQueries.movie().run(this.client, { id }));
+    return JSON.stringify(await qbQueries.movie().run(this.client, {id}));
   }
 
   async updateMovie(id) {
@@ -274,7 +274,7 @@ class ConnectionQBUncached extends _BaseConnection {
     return JSON.stringify(
       await qbQueries.insertUser().run(this.client, {
         name: id + num,
-        image: "image_" + id + num,
+        image: 'image_' + id + num,
       })
     );
   }
@@ -284,11 +284,11 @@ class ConnectionQBUncached extends _BaseConnection {
     return JSON.stringify(
       await qbQueries.insertMovie().run(this.client, {
         title: val.prefix + num,
-        image: val.prefix + "image" + num + ".jpeg",
-        description: val.prefix + "description" + num,
+        image: val.prefix + 'image' + num + '.jpeg',
+        description: val.prefix + 'description' + num,
         year: num,
         d_id: val.people[0],
-        cast: val.people.slice(1, 3),
+        cast: val.people.slice(1, 4),
       })
     );
   }
@@ -298,18 +298,18 @@ class ConnectionQBUncached extends _BaseConnection {
     return JSON.stringify(
       await qbQueries.insertMoviePlus().run(this.client, {
         title: val + num,
-        image: val + "image" + num + ".jpeg",
-        description: val + "description" + num,
+        image: val + 'image' + num + '.jpeg',
+        description: val + 'description' + num,
         year: num,
-        dfn: val + "Alice",
-        dln: val + "Director",
-        dimg: val + "image" + num + ".jpeg",
-        cfn0: val + "Billie",
-        cln0: val + "Actor",
-        cimg0: val + "image" + (num + 1) + ".jpeg",
-        cfn1: val + "Cameron",
-        cln1: val + "Actor",
-        cimg1: val + "image" + (num + 2) + ".jpeg",
+        dfn: val + 'Alice',
+        dln: val + 'Director',
+        dimg: val + 'image' + num + '.jpeg',
+        cfn0: val + 'Billie',
+        cln0: val + 'Actor',
+        cimg0: val + 'image' + (num + 1) + '.jpeg',
+        cfn1: val + 'Cameron',
+        cln1: val + 'Actor',
+        cimg1: val + 'image' + (num + 2) + '.jpeg',
       })
     );
   }
@@ -317,19 +317,19 @@ class ConnectionQBUncached extends _BaseConnection {
 module.exports.ConnectionQBUncached = ConnectionQBUncached;
 
 class App {
-  constructor({ pool = 1, style = "json" }) {
+  constructor({pool = 1, style = 'json'}) {
     this.conn = null;
     this.concurrency = pool;
-    this.INSERT_PREFIX = "insert_test__";
+    this.INSERT_PREFIX = 'insert_test__';
 
     let Connection;
-    if (style === "json") {
+    if (style === 'json') {
       Connection = ConnectionJSON;
-    } else if (style === "repack") {
+    } else if (style === 'repack') {
       Connection = ConnectionRepack;
-    } else if (style === "querybuilder") {
+    } else if (style === 'querybuilder') {
       Connection = ConnectionQB;
-    } else if (style === "querybuilder_uncached") {
+    } else if (style === 'querybuilder_uncached') {
       Connection = ConnectionQBUncached;
     } else {
       throw new Error(
@@ -338,7 +338,7 @@ class App {
       );
     }
 
-    this.conn = new Connection({ pool: pool });
+    this.conn = new Connection({pool: pool});
   }
 
   async initPool() {
@@ -376,7 +376,7 @@ class App {
   }
 
   async setup(query) {
-    if (query == "update_movie") {
+    if (query == 'update_movie') {
       return await this.conn.client.execute(`
         update Movie
         filter contains(.title, '---')
@@ -384,36 +384,36 @@ class App {
             title := str_split(.title, '---')[0]
         };
       `);
-    } else if (query == "insert_user") {
+    } else if (query == 'insert_user') {
       return await this.conn.client.query(
         `
         delete User
         filter .name LIKE <str>$0;
       `,
-        [this.INSERT_PREFIX + "image%"]
+        [this.INSERT_PREFIX + 'image%']
       );
-    } else if (query == "insert_movie") {
+    } else if (query == 'insert_movie') {
       return await this.conn.client.query(
         `
         delete Movie
         filter .image LIKE <str>$0;
       `,
-        [this.INSERT_PREFIX + "image%"]
+        [this.INSERT_PREFIX + 'image%']
       );
-    } else if (query == "insert_movie_plus") {
+    } else if (query == 'insert_movie_plus') {
       await this.conn.client.query(
         `
         delete Movie
         filter .image LIKE <str>$0;
       `,
-        [this.INSERT_PREFIX + "image%"]
+        [this.INSERT_PREFIX + 'image%']
       );
       return await this.conn.client.query(
         `
         delete Person
         filter .image LIKE <str>$0;
       `,
-        [this.INSERT_PREFIX + "image%"]
+        [this.INSERT_PREFIX + 'image%']
       );
     }
   }
@@ -421,10 +421,10 @@ class App {
   async cleanup(query) {
     if (
       [
-        "update_movie",
-        "insert_user",
-        "insert_movie",
-        "insert_movie_plus",
+        'update_movie',
+        'insert_user',
+        'insert_movie',
+        'insert_movie_plus',
       ].includes(query)
     ) {
       // The clean up is the same as setup for mutation benchmarks

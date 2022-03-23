@@ -30,14 +30,14 @@
         "title": {
             "type": "string",
             "faker": {
-                "generator": "sentence",
+                "generator": "bs",
                 "nb_words": 3
             }
         },
         "description": {
             "type": "string",
             "faker": {
-                "generator": "paragraph",
+                "generator": "bs",
                 "nb_sentences": 20
             }
         },
@@ -45,87 +45,108 @@
             "type": "array",
             "length": {
                 "type": "one_of",
-                "variants": [ {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 1
-                }, {
-                    "type": "number",
-                    "subtype": "u64",
-                    "constant": 2
-                } ]
+                "variants": [
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 1
+                    },
+                    {
+                        "type": "number",
+                        "subtype": "u64",
+                        "constant": 2
+                    }
+                ]
             },
             "content": {
                 "type": "same_as",

@@ -2,12 +2,12 @@
 SHELL = /bin/bash
 .SHELLFLAGS += -Ee -o pipefail
 
-.PHONY: all load new-dataset go load-postgres-helpers
+.PHONY: all load new-dataset compile load-postgres-helpers
 .PHONY:	stop-docker reset-postgres
 .PHONY: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
-.PHONY: js-querybuilder
+.PHONY: run-js run-py run-orms run-graphql run-edgedb
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -29,8 +29,6 @@ directors=$(shell expr ${people} \* 7 / 100)
 # there's some overlap between directors and actors
 directorsonly=$(shell expr ${people} \* 6 / 100)
 movies=$(shell expr ${people} / 4)
-moviesplus=$(shell expr ${movies} + 1)
-
 
 all:
 	@echo "pick a target"
@@ -42,26 +40,28 @@ $(BUILD)/dataset.json:
 	cd dataset && $(PP) cleandata.py
 
 new-dataset:
-	cd dataset
-	mkdir -p movies
-	cat templates/user.json \
-		| sed "s/%USERS%/$(users)/" > movies/user.json
-	cat templates/person.json \
+	mkdir -p dataset/movies
+	cat dataset/templates/user.json \
+		| sed "s/%USERS%/$(users)/" > dataset/movies/user.json
+	cat dataset/templates/person.json \
 		| sed "s/%PEOPLE%/$(people)/" \
-		| sed "s/%STARTAT%/$(directorsonly)/" > movies/person.json
-	cat templates/director.json \
-		| sed "s/%DIRECTORS%/$(directors)/" > movies/director.json
-	cat templates/movie.json \
-		| sed "s/%MOVIES%/$(movies)/" > movies/movie.json
-	cat templates/review.json \
+		| sed "s/%STARTAT%/$(directorsonly)/" > dataset/movies/person.json
+	cat dataset/templates/director.json \
+		| sed "s/%DIRECTORS%/$(directors)/" > dataset/movies/director.json
+	cat dataset/templates/movie.json \
+		| sed "s/%MOVIES%/$(movies)/" > dataset/movies/movie.json
+	cat dataset/templates/review.json \
 		| sed "s/%REVIEWS%/$(reviews)/" \
-		| sed "s/%MOVIES%/$(moviesplus)/" > movies/review.json
-	synth generate movies > $(BUILD)/protodataset.json
-	$(PP) cleandata.py
+		| sed "s/%MOVIES%/$(movies)/" > dataset/movies/review.json
+	synth generate dataset/movies > $(BUILD)/protodataset.json
+	$(PP) dataset/cleandata.py
 
 docker-network:
 	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
-		|| $(DOCKER) network create --driver=bridge webapp-bench
+		|| $(DOCKER) network create \
+			--driver=bridge \
+			--opt com.docker.network.bridge.name=br-webapp-bench \
+			webapp-bench
 
 docker-network-destroy:
 	$(DOCKER) network inspect webapp-bench>/dev/null 2>&1 \
@@ -87,7 +87,7 @@ docker-postgres: docker-network docker-postgres-volume
 	$(DOCKER) exec webapp-bench-postgres pg_isready -t10
 
 docker-postgres-stop:
-	$(DOCKER) stop webapp-bench-postgres
+	-$(DOCKER) stop webapp-bench-postgres
 
 docker-edgedb-volume:
 	$(DOCKER) volume inspect webapp-bench-edgedb >/dev/null 2>&1 \
@@ -104,8 +104,8 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:1
-	sleep 3
+		edgedb/edgedb:latest
+	sleep 60
 
 docker-edgedb-stop:
 	$(DOCKER) stop webapp-bench-edgedb
@@ -122,9 +122,9 @@ docker-clean: stop-docker docker-network-destroy \
 load-mongodb: $(BUILD)/edbdataset.json
 	$(PP) -m _mongodb.loaddata $(BUILD)/edbdataset.json
 
-load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
-	edgedb project info && \
-		(edgedb project unlink; edgedb instance unlink edgedb_bench)
+load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
+	-edgedb project unlink
+	-edgedb instance destroy edgedb_bench --force
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
 	&& edgedb -H localhost -P 15656 project init --link \
@@ -134,7 +134,26 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb -d temp query 'CREATE DATABASE edgedb'
 	edgedb query 'DROP DATABASE temp'
 	edgedb migrate
+	$(PP) -m _edgedb.loaddata_nobulk $(BUILD)/edbdataset.json
+
+load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
+	-edgedb project unlink --non-interactive
+	-edgedb instance destroy edgedb_bench --force
+	edgedb -H localhost -P 15656 instance link \
+		--non-interactive --trust-tls-cert --overwrite edgedb_bench
+	edgedb -H localhost -P 15656 project init --link \
+		--non-interactive --server-instance edgedb_bench
+	edgedb query 'CREATE DATABASE temp'
+	edgedb -d temp query 'DROP DATABASE edgedb'
+	edgedb -d temp query 'CREATE DATABASE edgedb'
+	edgedb query 'DROP DATABASE temp'
+	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+	cd _edgedb_js && npm i && npx edgeql-js --output-dir querybuilder --target cjs
+
+load-edgedb-nosetup:
+	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+
 
 load-django: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
@@ -162,14 +181,16 @@ load-sqlalchemy: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
 		"CREATE DATABASE sqlalch_bench WITH OWNER = sqlalch_bench;"
 
-	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head
-	cd .. && $(PP) loaddata.py $(BUILD)/dataset.json
+	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
+	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
-load-postgres: stop-docker reset-postgres $(BUILD)/dataset.json
+
+load-postgres: docker-postgres-stop reset-postgres $(BUILD)/dataset.json
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
+	cd _postgres && npm i
 
 reset-postgres: docker-postgres
 	$(PSQL_CMD) -tc \
@@ -217,15 +238,16 @@ load-hasura: load-postgres-helpers
 	(cd _hasura && ./send-metadata.sh)
 
 load-prisma: docker-postgres
-	cd _prisma
-	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env
+	cd _prisma && \
+	npm i && \
+	echo 'DATABASE_URL="postgresql://postgres_bench:edgedbbenchmark@localhost:15432/postgres_bench?schema=public"' > .env && \
 	npx prisma generate && npm i
 
 load-postgraphile: docker-postgres
-	cd _postgraphile
+	cd _postgraphile && \
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
-			--file=$(CURRENT_DIR)_postgraphile/helpers.sql
-	docker build -t postgraphile_bench:latest .
+			--file=$(CURRENT_DIR)_postgraphile/helpers.sql && \
+	docker build -t postgraphile_bench:latest . && \
 	./run_postgraphile.sh
 
 load-typeorm: $(BUILD)/dataset.json docker-postgres
@@ -239,7 +261,10 @@ load-typeorm: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
 		"CREATE DATABASE typeorm_bench WITH OWNER = typeorm_bench;"
 
-	cd _typeorm && npm i && npm run loaddata $(BUILD)/dataset.json
+	cd _typeorm && \
+	npm i && \
+	npm run loaddata $(BUILD)/dataset.json && \
+	npm run build
 
 load-sequelize: $(BUILD)/dataset.json docker-postgres
 	$(PSQL_CMD) -tc \
@@ -259,11 +284,28 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 
 load-graphql: load-hasura load-postgraphile
 
-go:
+compile:
 	make -C _go
 
-ts:
-	cd _typeorm && npm i && npm run build
+RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 10
 
-js-querybuilder:
-	cd _edgedb_js && npx edgeql-js --output-dir querybuilder
+run-js:
+	$(RUNNER) --html results/js.html --json results/js.json typeorm sequelize prisma edgedb_js_qb
+
+run-py:
+	$(RUNNER) --html results/py.html --json results/py.json django sqlalchemy edgedb_py_sync
+
+run-pysql:
+	$(RUNNER) --html results/pysql.html --json results/pysql.json edgedb_py_sync postgres_psycopg postgres_asyncpg
+
+run-graphql:
+	$(RUNNER) --html results/py.html --json results/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
+
+run-orms:
+	$(RUNNER) --html results/orms.html --json results/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
+
+run-edgedb:
+	$(RUNNER) --html results/edgedb.html --json results/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
+
+run-scratch: 
+	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html results/scratch.html edgedb_go

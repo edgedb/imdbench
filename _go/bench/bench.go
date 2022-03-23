@@ -3,7 +3,7 @@ package bench
 import (
 	"time"
 
-	"github.com/edgedb/webapp-bench/_go/cli"
+	"github.com/edgedb/imdbench/_go/cli"
 )
 
 type Exec func([]string) (time.Duration, string)
