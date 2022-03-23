@@ -83,6 +83,7 @@ We are simulating an `IMDB <https://imdb.com>`_-style movie database
 website. The sample dataset consists of 25k movies, 100k people, 100k users, and 500k reviews.
 
 .. image:: docs/schema.png
+  :target: https://github.com/edgedb/imdbench/blob/master/dbschema/default.esdl
 
 The schema consists of four tables/models/types:
 
