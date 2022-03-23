@@ -20,26 +20,26 @@ simply "they generate slow queries".
 
 - **Query splitting ⛓**
 
-   It's common for ORMs to perform non-trivial operations (deep fetching, 
-   nested mutation, inline aggregation, etc) by opaquely executing several 
-   queries under the hood. This may not be obvious to the end user. 
+  It's common for ORMs to perform non-trivial operations (deep fetching, 
+  nested mutation, inline aggregation, etc) by opaquely executing several 
+  queries under the hood. This may not be obvious to the end user. 
 
 - **Aggregation (or lack thereof) 🪣**
 
-   Less mature ORMs often don't support functionality like aggregations 
-   (counts, statistics, averages, etc), forcing users to overfetch and perform 
-   these calculations server-side. Some ORMs provide no aggregation 
-   functionality at all; even advanced ORMs rarely support relational 
-   aggregations, such as ``Find the movie where id=X, returning its title and 
-   the number of reviews about it.``
+  Less mature ORMs often don't support functionality like aggregations 
+  (counts, statistics, averages, etc), forcing users to overfetch and perform 
+  these calculations server-side. Some ORMs provide no aggregation 
+  functionality at all; even advanced ORMs rarely support relational 
+  aggregations, such as ``Find the movie where id=X, returning its title and 
+  the number of reviews about it.``
    
 - **Transactional queries 🏦**
 
-   Since ORM users must often run several correlated queries in series to 
-   obtain the full set of data they need, the possibility for 
-   hard-to-reproduce data integrity bugs is introduced. Transactions can 
-   alleviate these bugs, but this rapidly places unacceptable limits on read 
-   capacity. 
+  Since ORM users must often run several correlated queries in series to 
+  obtain the full set of data they need, the possibility for 
+  hard-to-reproduce data integrity bugs is introduced. Transactions can 
+  alleviate these bugs, but this rapidly places unacceptable limits on read 
+  capacity. 
 
 Most existing benchmarks use queries that are 
 `too <https://github.com/tortoise/orm-benchmarks>`_ 
@@ -302,6 +302,8 @@ For reference the EdgeDB results (using the `Python client
 .. image:: ./docs/sql_lat.png
   :target: https://edgedb.github.io/imdbench/sql.html
   :alt: SQL latency results
+
+..
 
   The ``psycopg2`` driver cannot properly decode the results of queries 
   containing array-aggregated subqueries. This is necessary to retrieve usable 
