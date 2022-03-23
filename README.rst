@@ -246,12 +246,13 @@ JavaScript ORMs
 
 The libraries tested are:
 
-- `Prisma <https://prisma.io>`
-- `TypeORM <https://typeorm.io/#/>`
-- `Sequelize <https://sequelize.org/>`
-- `EdgeDB (TypeScript query builder) <https://www.edgedb.com/docs/clients/01_js/index>`
+- `Prisma <https://prisma.io>`_
+- `TypeORM <https://typeorm.io/#/>`_
+- `Sequelize <https://sequelize.org/>`_
+- `EdgeDB (TypeScript query builder) <https://www.edgedb.com/docs/clients/01_js/index>`_
 
 `View Full Report <https://edgedb.github.io/imdbench/js.html>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ./docs/js_thru.png
   :target: https://edgedb.github.io/imdbench/js.html
@@ -260,7 +261,6 @@ The libraries tested are:
 .. image:: ./docs/js_lat.png
   :target: https://edgedb.github.io/imdbench/js.html
   :alt: JavaScript ORM latency results
-
 
 
 Python ORMs
