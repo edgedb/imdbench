@@ -128,7 +128,7 @@ load-edgedb-nobulk: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench \
 	&& edgedb -H localhost -P 15656 project init --link \
-		--non-interactive --server-instance edgedb_bench
+		--non-interactive --no-migrations --server-instance edgedb_bench
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
 	edgedb -d temp query 'CREATE DATABASE edgedb'
@@ -142,7 +142,7 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb -H localhost -P 15656 instance link \
 		--non-interactive --trust-tls-cert --overwrite edgedb_bench
 	edgedb -H localhost -P 15656 project init --link \
-		--non-interactive --server-instance edgedb_bench
+		--non-interactive --no-migrations --server-instance edgedb_bench
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
 	edgedb -d temp query 'CREATE DATABASE edgedb'
