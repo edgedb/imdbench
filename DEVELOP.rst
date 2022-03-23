@@ -68,45 +68,63 @@ Run locally
 
 #. Compile runner files (Go, TypeScript): ``$ make compile`
 
-#. Run the benchmarks
+#. Run the JavaScript benchmarks
 
-   - To execute the JavaScript ORM benchmarks, you must first run the 
-     following loaders:
+   First, run the following loaders:
    
-     .. code-block::
-        
-        $ make load-typeorm 
-        $ make load-sequelize 
-        $ make load-postgres
-        $ make load-prisma 
-        $ make load-edgedb       
-   
-     Then run the benchmarks:
-   
-     .. code-block::
-         
-        $ make run-js
+   .. code-block::
       
-      The results will be generated into ``results/js.html``.
+      $ make load-typeorm 
+      $ make load-sequelize 
+      $ make load-postgres
+      $ make load-prisma 
+      $ make load-edgedb       
 
-   - To execute the Python ORM benchmarks, you must first run 
-     the following loaders:
-   
-     .. code-block::
+   Then run the benchmarks:
 
-         $ make load-django 
-         $ make load-sqlalchemy 
-         $ make load-edgedb       
-   
-     Then run the benchmarks:
-   
-     .. code-block::
-         
-         $ make run-py
+   .. code-block::
       
-     The results will be generated into ``results/py.html``.
+      $ make run-js
+   
+   The results will be generated into ``results/js.html``.
 
-#. [Optional] Customize the benchmark
+#. Run the Python benchmarks
+
+   First, run the following loaders:
+   
+   .. code-block::
+
+      $ make load-postgres
+      $ make load-django 
+      $ make load-sqlalchemy 
+      $ make load-edgedb     
+
+   Then run the benchmarks:
+
+   .. code-block::
+      
+      $ make run-py
+   
+   The results will be generated into ``results/py.html``.
+   
+#. Run the SQL benchmarks
+
+   First, run the following loaders:
+   
+   .. code-block::
+
+      $ make load-postgres
+      $ make load-edgedb
+
+   Then run the benchmarks:
+
+   .. code-block::
+      
+      $ make run-pysql
+   
+   The results will be generated into ``results/pysql.html``.
+
+#. [Optional] Run a custom benchmark
 
    The benchmarking system can be customized by directly running ``python 
    bench.py``.
@@ -119,7 +137,6 @@ Run locally
         --concurrency <seconds>
         --query <query_name>
         [targets]
-  
       
    The ``query_name`` must be one of the folowing options. To pick multiple 
    queries, you can use the ``--query`` flag multiple times.
