@@ -104,7 +104,7 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb:opt
+		edgedb/edgedb
 	edgedb -H localhost -P 15656 \
 		--tls-security=insecure --wait-until-available=120s \
 		query "SELECT 'EdgeDB ready'"
