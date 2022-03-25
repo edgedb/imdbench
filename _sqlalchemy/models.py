@@ -18,55 +18,60 @@ Base = declarative_base()
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = "user"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(), nullable=False)
     image = sa.Column(sa.String(), nullable=False)
 
     reviews = orm.relationship(
-        'Review', back_populates='author',
-        cascade='all, delete, delete-orphan')
+        "Review", back_populates="author",
+        cascade="all, delete, delete-orphan")
     latest_reviews = orm.relationship(
-        'Review', order_by=lambda: Review.creation_time.desc(),
-        lazy='dynamic', bake_queries=True, viewonly=True)
+        "Review", order_by=lambda: Review.creation_time.desc(), viewonly=True)
 
 
 class Directors(Base):
-    __tablename__ = 'directors'
+    __tablename__ = "directors"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     list_order = sa.Column(sa.Integer(), nullable=True)
 
-    person_id = sa.Column(sa.Integer, sa.ForeignKey('person.id'),
+    person_id = sa.Column(sa.Integer, sa.ForeignKey("person.id"),
                           nullable=False, index=True)
-    person_rel = orm.relationship('Person', back_populates='directed_rel')
-    movie_id = sa.Column(sa.Integer, sa.ForeignKey('movie.id'),
+    person_rel = orm.relationship(
+        "Person", back_populates="directed_rel", innerjoin=True
+    )
+    movie_id = sa.Column(sa.Integer, sa.ForeignKey("movie.id"),
                          nullable=False, index=True)
-    movie_rel = orm.relationship('Movie', back_populates='directors_rel')
+    movie_rel = orm.relationship(
+        "Movie", back_populates="directors_rel", innerjoin=True
+    )
 
 
 class Cast(Base):
-    __tablename__ = 'cast'
+    __tablename__ = "cast"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     list_order = sa.Column(sa.Integer(), nullable=True)
 
-    person_id = sa.Column(sa.Integer, sa.ForeignKey('person.id'),
+    person_id = sa.Column(sa.Integer, sa.ForeignKey("person.id"),
                           nullable=False, index=True)
-    person_rel = orm.relationship('Person', back_populates='acted_in_rel')
+    person_rel = orm.relationship(
+        "Person", back_populates="acted_in_rel", innerjoin=True
+    )
 
-    movie_id = sa.Column(sa.Integer, sa.ForeignKey('movie.id'),
+    movie_id = sa.Column(sa.Integer, sa.ForeignKey("movie.id"),
                          nullable=False, index=True)
-    movie_rel = orm.relationship('Movie', back_populates='cast_rel')
+    movie_rel = orm.relationship("Movie", back_populates="cast_rel", innerjoin=True)
 
 
 class Person(Base):
-    __tablename__ = 'person'
+    __tablename__ = "person"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     first_name = sa.Column(sa.String(), nullable=False)
-    middle_name = sa.Column(sa.String(), nullable=False, server_default='')
+    middle_name = sa.Column(sa.String(), nullable=False, server_default="")
     last_name = sa.Column(sa.String(), nullable=False)
     image = sa.Column(sa.String(), nullable=False)
     bio = sa.Column(sa.String(), nullable=False)
@@ -74,52 +79,56 @@ class Person(Base):
     # These are direct relationships between people and movies.
     # They are useful when the 'list_order' is irrelevant
     directed = orm.relationship(
-        'Movie',
+        "Movie",
         secondary=Directors.__table__,
-        backref='directors',
+        backref="directors",
         viewonly=True,
     )
     acted_in = orm.relationship(
-        'Movie',
+        "Movie",
         secondary=Cast.__table__,
-        backref='cast',
+        backref="cast",
         viewonly=True,
     )
 
     directed_rel = orm.relationship(
-        Directors, back_populates='person_rel',
-        cascade='all, delete, delete-orphan')
+        Directors, back_populates="person_rel",
+        cascade="all, delete, delete-orphan"
+    )
     acted_in_rel = orm.relationship(
-        Cast, back_populates='person_rel',
-        cascade='all, delete, delete-orphan')
+        Cast, back_populates="person_rel",
+        cascade="all, delete, delete-orphan"
+    )
 
     @property
     def full_name(self):
         if self.middle_name:
-            return f'{self.first_name} {self.middle_name} {self.last_name}'
+            return f"{self.first_name} {self.middle_name} {self.last_name}"
         else:
-            return f'{self.first_name} {self.last_name}'
+            return f"{self.first_name} {self.last_name}"
 
 
 class Review(Base):
-    __tablename__ = 'review'
+    __tablename__ = "review"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     body = sa.Column(sa.String(), nullable=False)
     rating = sa.Column(sa.Integer(), nullable=False)
     creation_time = sa.Column(sa.DateTime(timezone=True), nullable=False)
 
-    author_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'),
-                          nullable=False, index=True)
-    author = orm.relationship(User, back_populates='reviews')
+    author_id = sa.Column(
+        sa.Integer, sa.ForeignKey("user.id"), nullable=False, index=True
+    )
+    author = orm.relationship(User, back_populates="reviews", innerjoin=True)
 
-    movie_id = sa.Column(sa.Integer, sa.ForeignKey('movie.id'),
-                         nullable=False, index=True)
-    movie = orm.relationship('Movie', back_populates='reviews')
+    movie_id = sa.Column(
+        sa.Integer, sa.ForeignKey("movie.id"), nullable=False, index=True
+    )
+    movie = orm.relationship("Movie", back_populates="reviews", innerjoin=True)
 
 
 class Movie(Base):
-    __tablename__ = 'movie'
+    __tablename__ = "movie"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     image = sa.Column(sa.String(), nullable=False)
@@ -128,20 +137,19 @@ class Movie(Base):
     description = sa.Column(sa.String(), nullable=False)
 
     reviews = orm.relationship(
-        Review, back_populates='movie',
-        cascade='all, delete, delete-orphan')
+        Review, back_populates="movie", cascade="all, delete, delete-orphan"
+    )
 
     directors_rel = orm.relationship(
-        Directors, back_populates='movie_rel',
-        cascade='all, delete, delete-orphan')
+        Directors, back_populates="movie_rel", cascade="all, delete, delete-orphan"
+    )
     cast_rel = orm.relationship(
-        Cast, back_populates='movie_rel',
-        cascade='all, delete, delete-orphan')
+        Cast, back_populates="movie_rel", cascade="all, delete, delete-orphan"
+    )
 
     avg_rating = orm.column_property(
-        select(
-            [func.avg(Review.rating)]
-        ).where(
-            Review.movie_id == id
-        ).correlate_except(Review).scalar_subquery()
+        select(func.avg(Review.rating))
+        .where(Review.movie_id == id)
+        .correlate_except(Review)
+        .scalar_subquery()
     )
