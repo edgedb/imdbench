@@ -124,7 +124,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     engine = sa.create_engine(
-        "postgresql://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench"
+        "postgresql+asyncpg://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench?async_fallback=True"
     )
 
     load_data(args.filename, engine)

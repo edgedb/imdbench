@@ -107,7 +107,7 @@ class Review(Base):
     id = sa.Column(sa.Integer(), primary_key=True)
     body = sa.Column(sa.String(), nullable=False)
     rating = sa.Column(sa.Integer(), nullable=False)
-    creation_time = sa.Column(sa.DateTime(), nullable=False)
+    creation_time = sa.Column(sa.DateTime(timezone=True), nullable=False)
 
     author_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'),
                           nullable=False, index=True)
