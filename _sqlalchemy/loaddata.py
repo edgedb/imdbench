@@ -29,86 +29,102 @@ def bulk_insert(db, label, data, into):
     while data:
         chunk = data[:1000]
         data = data[1000:]
-        db.bulk_insert_mappings(into, chunk)
+        db.execute(sa.insert(into), chunk)
         db.commit()
         pbar.next(len(chunk))
     pbar.finish()
 
 
-if __name__ == '__main__':
+def reset_sequence(db, tablename):
+    tab = sa.table(tablename, sa.column("id"))
+
+    db.execute(
+        sa.select(
+            sa.func.setval(
+                f"{tablename}_id_seq",
+                sa.select(tab.c.id)
+                .order_by(tab.c.id.desc())
+                .limit(1)
+                .scalar_subquery(),
+            )
+        )
+    )
+
+
+def load_data(filename, engine):
+    session_factory = orm.sessionmaker(bind=engine)
+    Session = orm.scoped_session(session_factory)
+
+    with Session() as db:
+
+        # first clear all the existing data
+        print(f"purging existing data...")
+
+        db.execute(sa.delete(m.Directors))
+        db.execute(sa.delete(m.Cast))
+        db.execute(sa.delete(m.Review))
+        db.execute(sa.delete(m.Movie))
+        db.execute(sa.delete(m.Person))
+        db.execute(sa.delete(m.User))
+        db.commit()
+
+    # read the JSON data
+    print("loading JSON... ", end="", flush=True)
+    with open(filename, "rt") as f:
+        records = json.load(f)
+    data = collections.defaultdict(list)
+    for rec in records:
+        rtype = rec["model"].split(".")[-1]
+        datum = rec["fields"]
+        if "pk" in rec:
+            datum["id"] = rec["pk"]
+        # convert datetime
+        if rtype == "review":
+            datum["creation_time"] = datetime.datetime.fromisoformat(
+                datum["creation_time"]
+            )
+
+        data[rtype].append(datum)
+    print("done")
+
+    with Session() as db:
+
+        # bulk create all the users
+        bulk_insert(db, "users", data["user"], m.User)
+
+        # bulk create all the people
+        bulk_insert(db, "people", data["person"], m.Person)
+
+        # bulk create all the movies
+        bulk_insert(db, "movies", data["movie"], m.Movie)
+
+        # bulk create all the reviews
+        bulk_insert(db, "reviews", data["review"], m.Review)
+
+        # bulk create all the directors
+        bulk_insert(db, "directors", data["directors"], m.Directors)
+
+        # bulk create all the cast
+        bulk_insert(db, "cast", data["cast"], m.Cast)
+
+        # reconcile the autoincrementing indexes with the actual indexes
+        reset_sequence(db, "cast")
+        reset_sequence(db, "directors")
+        reset_sequence(db, "movie")
+        reset_sequence(db, "person")
+        reset_sequence(db, "user")
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Load a specific fixture, old data will be purged.')
-    parser.add_argument('filename', type=str,
-                        help='The JSON dataset file')
+        description="Load a specific fixture, old data will be purged."
+    )
+    parser.add_argument("filename", type=str, help="The JSON dataset file")
 
     args = parser.parse_args()
 
     engine = sa.create_engine(
-        'postgresql://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench')
+        "postgresql://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench"
+    )
 
-    session_factory = orm.sessionmaker(bind=engine)
-    Session = orm.scoped_session(session_factory)
-    db = Session()
-
-    # first clear all the existing data
-    print(f'purging existing data...')
-
-    db.query(m.Directors).delete()
-    db.query(m.Cast).delete()
-    db.query(m.Review).delete()
-    db.query(m.Movie).delete()
-    db.query(m.Person).delete()
-    db.query(m.User).delete()
-    db.commit()
-
-    # read the JSON data
-    print('loading JSON... ', end='', flush=True)
-    with open(args.filename, 'rt') as f:
-        records = json.load(f)
-    data = collections.defaultdict(list)
-    for rec in records:
-        rtype = rec['model'].split('.')[-1]
-        datum = rec['fields']
-        if 'pk' in rec:
-            datum['id'] = rec['pk']
-        # convert datetime
-        if rtype == 'review':
-            datum['creation_time'] = datetime.datetime.fromisoformat(
-                datum['creation_time'])
-
-        data[rtype].append(datum)
-    print('done')
-
-    # bulk create all the users
-    bulk_insert(db, 'users', data['user'], m.User)
-
-    # bulk create all the people
-    bulk_insert(db, 'people', data['person'], m.Person)
-
-    # bulk create all the movies
-    bulk_insert(db, 'movies', data['movie'], m.Movie)
-
-    # bulk create all the reviews
-    bulk_insert(db, 'reviews', data['review'], m.Review)
-
-    # bulk create all the directors
-    bulk_insert(db, 'directors', data['directors'], m.Directors)
-
-    # bulk create all the cast
-    bulk_insert(db, 'cast', data['cast'], m.Cast)
-
-    # reconcile the autoincrementing indexes with the actual indexes
-    db.execute('''
-        SELECT setval('cast_id_seq',
-            (SELECT id FROM "cast" ORDER BY id DESC LIMIT 1));
-        SELECT setval('directors_id_seq',
-            (SELECT id FROM "directors" ORDER BY id DESC LIMIT 1));
-        SELECT setval('movie_id_seq',
-            (SELECT id FROM "movie" ORDER BY id DESC LIMIT 1));
-        SELECT setval('person_id_seq',
-            (SELECT id FROM "person" ORDER BY id DESC LIMIT 1));
-        SELECT setval('review_id_seq',
-            (SELECT id FROM "review" ORDER BY id DESC LIMIT 1));
-        SELECT setval('user_id_seq',
-            (SELECT id FROM "user" ORDER BY id DESC LIMIT 1));
-    ''')
+    load_data(args.filename, engine)
