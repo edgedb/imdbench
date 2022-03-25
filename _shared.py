@@ -26,6 +26,7 @@ from _django import queries as django_queries
 from _django import queries_restfw as django_queries_restfw
 from _mongodb import queries as mongodb_queries
 from _sqlalchemy import queries as sqlalchemy_queries
+from _sqlalchemy import queries_asyncio as sqlalchemy_queries_asyncio
 from _postgres import queries as postgres_queries
 from _postgres import queries_psycopg as postgres_psycopg_queries
 
@@ -70,6 +71,9 @@ IMPLEMENTATIONS = {
 
     'sqlalchemy':
         impl('python', 'SQLAlchemy', sqlalchemy_queries),
+
+    'sqlalchemy_asyncio':
+        impl('python', 'SQLAlchemy (asyncio)', sqlalchemy_queries_asyncio),
 
     'postgres_asyncpg':
         impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),
