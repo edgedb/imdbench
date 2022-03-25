@@ -34,6 +34,7 @@ def connect(ctx):
 
 def close(ctx, sess):
     sess.close()
+    sess.bind.dispose()
 
 
 def load_ids(ctx, sess):
@@ -265,16 +266,21 @@ def insert_movie(sess, val):
     sess.add(movie)
     sess.commit()
 
-    directors = m.Directors(person_id=val["people"][0], movie_id=movie.id)
+    people = sess.scalars(
+        sa.select(m.Person)
+        .where(m.Person.id.in_(val["people"][0:4]))
+        .order_by(m.Person.id)
+    ).all()
+
+    directors = m.Directors(person_rel=people[0], movie_id=movie.id)
     sess.add(directors)
-    c0 = m.Cast(person_id=val["people"][1], movie_id=movie.id)
-    c1 = m.Cast(person_id=val["people"][2], movie_id=movie.id)
-    c2 = m.Cast(person_id=val["people"][3], movie_id=movie.id)
+    c0 = m.Cast(person_rel=people[1], movie_id=movie.id)
+    c1 = m.Cast(person_rel=people[2], movie_id=movie.id)
+    c2 = m.Cast(person_rel=people[3], movie_id=movie.id)
 
     sess.add_all([c0, c1, c2])
 
     sess.commit()
-
     result = {
         "id": movie.id,
         "image": movie.image,
@@ -304,18 +310,21 @@ def insert_movie_plus(sess, val):
     num = random.randrange(1_000_000)
     director = m.Person(
         first_name=f"{val}Alice",
+        middle_name="",
         last_name=f"{val}Director",
         image=f"{val}image{num}.jpeg",
         bio="",
     )
     c0 = m.Person(
         first_name=f"{val}Billie",
+        middle_name="",
         last_name=f"{val}Actor",
         image=f"{val}image{num+1}.jpeg",
         bio="",
     )
     c1 = m.Person(
         first_name=f"{val}Cameron",
+        middle_name="",
         last_name=f"{val}Actor",
         image=f"{val}image{num+2}.jpeg",
         bio="",
@@ -327,19 +336,16 @@ def insert_movie_plus(sess, val):
         year=num,
     )
 
-    sess.add_all([
-        director,
-        c0,
-        c1,
-        movie
-    ])
+    sess.add_all([director, c0, c1, movie])
     sess.commit()
 
-    sess.add_all([
-        m.Directors(person_id=director.id, movie_id=movie.id),
-        m.Cast(person_id=c0.id, movie_id=movie.id),
-        m.Cast(person_id=c1.id, movie_id=movie.id)
-    ])
+    sess.add_all(
+        [
+            m.Directors(person_rel=director, movie_rel=movie),
+            m.Cast(person_rel=c0, movie_rel=movie),
+            m.Cast(person_rel=c1, movie_rel=movie),
+        ]
+    )
 
     sess.commit()
 
