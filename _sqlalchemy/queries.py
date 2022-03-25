@@ -28,7 +28,7 @@ def connect(ctx):
         engine = sa.create_engine(
             f'postgresql://sqlalch_bench:edgedbbenchmark@'
             f'{ctx.db_host}:{ctx.pg_port}/sqlalch_bench')
-        session_factory = orm.sessionmaker(bind=engine)
+        session_factory = orm.sessionmaker(bind=engine, expire_on_commit=False)
 
     return session_factory()
 
