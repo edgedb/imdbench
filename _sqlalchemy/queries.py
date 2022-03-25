@@ -24,8 +24,8 @@ def connect(ctx):
 
     if session_factory is None:
         engine = sa.create_engine(
-            f"postgresql+asyncpg://sqlalch_bench:edgedbbenchmark@"
-            f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench?async_fallback=true"
+            f"postgresql://sqlalch_bench:edgedbbenchmark@"
+            f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench"
         )
         session_factory = orm.sessionmaker(bind=engine, expire_on_commit=False)
 
