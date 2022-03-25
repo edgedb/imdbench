@@ -229,8 +229,8 @@ async def get_person(sess, id):
 async def update_movie(sess, id):
     stmt = (
         sa.update(m.Movie)
-        .filter_by(id=sa.bindparam("m_id"))
-        .values(title=m.Movie.title + sa.bindparam("suffix"))
+        .filter_by(id=id)
+        .values(title=m.Movie.title + f"---{str(id)[:8]}")
         .returning(
             m.Movie.id,
             m.Movie.title,
@@ -238,8 +238,9 @@ async def update_movie(sess, id):
     )
 
     result = (
-        await sess.execute(stmt, dict(m_id=id, suffix=f"---{str(id)[:8]}"))
+        await sess.execute(stmt)
     ).first()
+
     # Without this commit, the changes end up being committed outside
     # of where they are timed.
     await sess.commit()
