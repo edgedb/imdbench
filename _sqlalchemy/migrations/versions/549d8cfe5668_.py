@@ -67,7 +67,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('body', sa.String(), nullable=False),
     sa.Column('rating', sa.Integer(), nullable=False),
-    sa.Column('creation_time', sa.DateTime(), nullable=False),
+    sa.Column('creation_time', sa.DateTime(timezone=True), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=False),
     sa.Column('movie_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['author_id'], ['user.id'], ),
