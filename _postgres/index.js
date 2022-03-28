@@ -17,9 +17,8 @@ class App {
     this.INSERT_PREFIX = 'insert_test__'
   }
 
-  async fetchUser(conn, id) {
-    // single query, no need for a transaction
-    const res = await conn.query(
+  async userDetails(id) {
+    const res = await this.pool.query(
       `
       SELECT
           users.id,
@@ -53,133 +52,118 @@ class App {
                   review.creation_time DESC
               LIMIT 10
           ) AS q
-          WHERE
+      WHERE
           users.id = $1
       `,
       [id]
     );
 
-    return [res];
-  }
+    const rows = res.rows;
 
-  async userDetails(id) {
-    const [res] = await this.fetchUser(this.pool, id);
-
-    var user = {
-      id: res.rows[0].id,
-      name: res.rows[0].name,
-      image: res.rows[0].image,
-      latest_reviews: res.rows.map(r => {
-        return {
-          id: r.review_id,
-          body: r.review_body,
-          rating: r.review_rating,
-          movie: {
-            id: r.movie_id,
-            image: r.movie_image,
-            title: r.movie_title,
-            avg_rating: parseFloat(r.movie_avg_rating)
-          }
-        };
-      })
+    const user = {
+      id: rows[0].id,
+      name: rows[0].name,
+      image: rows[0].image,
+      latest_reviews: rows.map((r) => ({
+        id: r.review_id,
+        body: r.review_body,
+        rating: r.review_rating,
+        movie: {
+          id: r.movie_id,
+          image: r.movie_image,
+          title: r.movie_title,
+          avg_rating: parseFloat(r.movie_avg_rating)
+        }
+      }))
     };
 
     return JSON.stringify(user);
   }
 
-  async fetchPerson(conn, id) {
-    var person = (await conn.query(
+  async personDetails(id) {
+    const res = (await this.pool.query(
       `
       SELECT
           p.id,
           p.full_name,
           p.image,
-          p.bio
+          p.bio,
+          (
+            SELECT COALESCE(json_agg(t.v), '[]'::json)
+            FROM (
+              SELECT ROW(
+                  movie.id,
+                  movie.image,
+                  movie.title,
+                  movie.year,
+                  movie.avg_rating
+              ) as v
+              FROM
+                  actors
+                  INNER JOIN movies AS movie
+                      ON (actors.movie_id = movie.id)
+              WHERE
+                  actors.person_id = p.id
+              ORDER BY
+                  movie.year ASC, movie.title ASC
+            ) t
+          ) as acted_in,
+          (
+            SELECT COALESCE(json_agg(t.v), '[]'::json)
+            FROM (
+              SELECT ROW(
+                  movie.id,
+                  movie.image,
+                  movie.title,
+                  movie.year,
+                  movie.avg_rating
+                ) as v
+              FROM
+                  directors
+                  INNER JOIN movies AS movie
+                      ON (directors.movie_id = movie.id)
+              WHERE
+                  directors.person_id = p.id
+              ORDER BY
+                  movie.year ASC, movie.title ASC
+            ) t
+          ) as directed
       FROM
           persons p
       WHERE
           p.id = $1
       `,
       [id]
-    )).rows[0];
+    ))
 
-    const actedInRows = (await conn.query(
-      `
-      SELECT
-          movie.id,
-          movie.image,
-          movie.title,
-          movie.year,
-          movie.avg_rating
-      FROM
-          actors
-          INNER JOIN movies AS movie
-              ON (actors.movie_id = movie.id)
-      WHERE
-          actors.person_id = $1
-      ORDER BY
-          movie.year ASC, movie.title ASC
-      `,
-      [id]
-    )).rows;
+    const row = res.rows[0];
 
-    const directedRows = (await conn.query(
-      `
-      SELECT
-          movie.id,
-          movie.image,
-          movie.title,
-          movie.year,
-          movie.avg_rating
-      FROM
-          directors
-          INNER JOIN movies AS movie
-              ON (directors.movie_id = movie.id)
-      WHERE
-          directors.person_id = $1
-      ORDER BY
-          movie.year ASC, movie.title ASC
-      `,
-      [id]
-    )).rows;
-
-    return [person, actedInRows, directedRows];
-  }
-
-  async personDetails(id) {
-    // multiple queries need to be wrapped in a transaction so that the data is
-    // guaranteed to be consistent
-    const client = await this.pool.connect();
-
-    try {
-      await client.query("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ");
-
-      var [person, actedInRows, directedRows] = await this.fetchPerson(
-        client,
-        id
-      );
-      await client.query("COMMIT");
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    } finally {
-      client.release();
-    }
-
-    person.acted_in = actedInRows.map(mov => {
-      mov.avg_rating = parseFloat(mov.avg_rating);
-      return mov;
-    });
-    person.directed = directedRows.map(mov => {
-      mov.avg_rating = parseFloat(mov.avg_rating);
-      return mov;
-    });
+    const person = {
+      id: row.id,
+      full_name: row.full_name,
+      image: row.image,
+      bio: row.bio,
+      acted_in: row.acted_in.map((m) => ({
+        id: m.f1,
+        image: m.f2,
+        title: m.f3,
+        year: m.f4,
+        avg_rating: parseInt(m.f5)
+      })),
+      directed: row.directed.map((m) => ({
+        id: m.f1,
+        image: m.f2,
+        title: m.f3,
+        year: m.f4,
+        avg_rating: parseInt(m.f5)
+      }))
+    };
 
     return JSON.stringify(person);
   }
 
-  async fetchMovie(conn, id) {
-    var movie = (await conn.query(
+  async movieDetails(id) {
+    const res = await this.pool.query(
       `
         SELECT
             movie.id,
@@ -187,112 +171,104 @@ class App {
             movie.title,
             movie.year,
             movie.description,
-            movie.avg_rating
+            movie.avg_rating,
+            (
+              SELECT json_agg(t.v)
+              FROM (
+                SELECT ROW(
+                    person.id,
+                    person.full_name,
+                    person.image
+                ) as v
+                FROM
+                    directors
+                    INNER JOIN persons AS person
+                        ON (directors.person_id = person.id)
+                WHERE
+                    directors.movie_id = movie.id
+                ORDER BY
+                    directors.list_order NULLS LAST,
+                    person.last_name
+              ) t
+            ) as directors,
+            (
+              SELECT json_agg(t.v)
+              FROM (
+                SELECT ROW(
+                    person.id,
+                    person.full_name,
+                    person.image
+                ) as v
+                FROM
+                    actors
+                    INNER JOIN persons AS person
+                        ON (actors.person_id = person.id)
+                WHERE
+                    actors.movie_id = movie.id
+                ORDER BY
+                    actors.list_order NULLS LAST,
+                    person.last_name
+              ) t
+            ) as cast,
+            (
+              SELECT json_agg(t.v)
+              FROM (
+                SELECT ROW(
+                    review.id,
+                    review.body,
+                    review.rating,
+                    author.id,
+                    author.name,
+                    author.image
+                ) as v
+                FROM
+                    reviews AS review
+                    INNER JOIN users AS author
+                        ON (review.author_id = author.id)
+                WHERE
+                    review.movie_id = movie.id
+                ORDER BY
+                    review.creation_time DESC
+              ) t
+            ) as reviews
         FROM
             movies AS movie
         WHERE
             movie.id = $1
         `,
       [id]
-    )).rows[0];
+    );
 
-    const directorsRows = (await conn.query(
-      `
-        SELECT
-            person.id,
-            person.full_name,
-            person.image
-        FROM
-            directors
-            INNER JOIN persons AS person
-                ON (directors.person_id = person.id)
-        WHERE
-            directors.movie_id = $1
-        ORDER BY
-            directors.list_order NULLS LAST,
-            person.last_name
-        `,
-      [id]
-    )).rows;
+    const row = res.rows[0];
 
-    const castRows = (await conn.query(
-      `
-        SELECT
-            person.id,
-            person.full_name,
-            person.image
-        FROM
-            actors
-            INNER JOIN persons AS person
-                ON (actors.person_id = person.id)
-        WHERE
-            actors.movie_id = $1
-        ORDER BY
-            actors.list_order NULLS LAST,
-            person.last_name
-        `,
-      [id]
-    )).rows;
-
-    const reviewsRows = (await conn.query(
-      `
-        SELECT
-            review.id,
-            review.body,
-            review.rating,
-            author.id AS author_id,
-            author.name AS author_name,
-            author.image AS author_image
-        FROM
-            reviews AS review
-            INNER JOIN users AS author
-                ON (review.author_id = author.id)
-        WHERE
-            review.movie_id = $1
-        ORDER BY
-            review.creation_time DESC
-        `,
-      [id]
-    )).rows;
-
-    return [movie, directorsRows, castRows, reviewsRows];
-  }
-
-  async movieDetails(id) {
-    // multiple queries need to be wrapped in a transaction so that the data is
-    // guaranteed to be consistent
-    const client = await this.pool.connect();
-
-    try {
-      await client.query("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ");
-
-      var [movie, directorsRows, castRows, reviewsRows] = await this.fetchMovie(
-        client,
-        id
-      );
-
-      await client.query("COMMIT");
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    } finally {
-      client.release();
-    }
-
-    movie.directors = directorsRows;
-    movie.cast = castRows;
-    movie.reviews = reviewsRows.map(r => {
-      return {
-        id: r.id,
-        body: r.body,
-        rating: r.rating,
+    const movie = {
+      id: row.id,
+      image: row.image,
+      title: row.title,
+      year: row.year,
+      description: row.description,
+      avg_rating: parseFloat(row.avg_rating),
+      directors: row.directors.map((d) => ({
+        id: d.f1,
+        full_name: d.f2,
+        image:d.f3
+      })),
+      cast: row.cast.map((c) => ({
+        id: c.f1,
+        full_name: c.f2,
+        image:c.f3
+      })),
+      reviews: row.reviews.map((r) => ({
+        id: r.f1,
+        body: r.f2,
+        rating: r.f3,
         author: {
-          id: r.author_id,
-          name: r.author_name,
-          image: r.author_image
+          id: r.f4,
+          name: r.f5,
+          image: r.f6
         }
-      };
-    });
+      }))
+    };
 
     return JSON.stringify(movie);
   }
@@ -312,16 +288,18 @@ class App {
       [id, "---" + id]
     );
 
-    var movie = {
-      id: res.rows[0].id,
-      title: res.rows[0].title,
+    const row = res.rows[0];
+
+    const movie = {
+      id: row.id,
+      title: row.title
     };
 
     return JSON.stringify(movie);
   }
 
   async insertUser(id) {
-    let num = Math.floor(Math.random() * 1000000);
+    const num = Math.floor(Math.random() * 1000000);
     const res = await this.pool.query(
       `
       INSERT INTO users (name, image) VALUES
@@ -332,106 +310,171 @@ class App {
       [id + num, 'image_' + id + num]
     );
 
-    var user = {
-      id: res.rows[0].id,
-      name: res.rows[0].name,
-      image: res.rows[0].image,
+    const row = res.rows[0];
+
+    const user = {
+      id: row.id,
+      name: row.name,
+      image: row.image
     };
 
     return JSON.stringify(user);
   }
 
   async insertMovie(val) {
-    let num = Math.floor(Math.random() * 1000000);
-    const movie = (await this.pool.query(
+    const num = Math.floor(Math.random() * 1000000);
+    const res = await this.pool.query(
       `
-      INSERT INTO movies AS M (title, image, description, year) VALUES
-          ($1, $2, $3, $4)
-      RETURNING
-          M.id, M.title, M.image, M.description, M.year
+      WITH movie_insert AS (
+          INSERT INTO movies (title, image, description, year)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, title, image, description, year
+      ),
+      director_persons AS (
+        SELECT p.id, p.full_name, p.image
+        FROM persons p
+        WHERE p.id = $5
+      ),
+      actor_persons AS (
+        SELECT p.id, p.full_name, p.image
+        FROM persons p
+        WHERE p.id = ANY($6)
+      ),
+      director_insert AS (
+        INSERT INTO directors(person_id, movie_id)
+        SELECT dp.id, mi.id FROM movie_insert mi, director_persons dp
+      ),
+      cast_inserts AS (
+        INSERT INTO actors(person_id, movie_id)
+        SELECT ap.id, mi.id
+        FROM actor_persons ap, movie_insert mi
+      )
+      SELECT
+        mi.id,
+        mi.title,
+        mi.image,
+        mi.description,
+        mi.year,
+        (
+          SELECT json_agg(t.v)
+          FROM (
+            SELECT ROW(
+              dp.id,
+              dp.full_name,
+              dp.image
+            ) as v
+            FROM director_persons dp
+          ) t
+        ) as directors,
+        (
+          SELECT json_agg(t.v)
+          FROM (
+            SELECT ROW(
+              ap.id,
+              ap.full_name,
+              ap.image
+            ) as v
+            FROM actor_persons ap
+          ) t
+        ) as cast
+      FROM movie_insert mi
       `,
       [
         val.prefix + num,
         val.prefix + "image" + num + ".jpeg",
         val.prefix + "description" + num,
         num,
+        val.people[0],
+        val.people.slice(1)
       ],
-    )).rows[0];
-
-    const people = await this.pool.query(
-      `
-      SELECT
-          P.id,
-          P.full_name,
-          P.image
-      FROM
-          persons AS P
-      WHERE
-          P.id IN ($1, $2, $3, $4);
-      `,
-      val.people,
     );
 
-    var directors = [],
-        cast = [];
+    const row = res.rows[0];
 
-    for (let p of people.rows) {
-      if (p.id == val.people[0]) {
-        directors.push(p)
-      } else {
-        cast.push(p)
-      }
-    }
+    const movie = {
+      id: row.id,
+      title: row.title,
+      image: row.image,
+      description: row.description,
+      year: row.year,
+      directors: row.directors.map((d) => ({
+        id: d.f1,
+        full_name: d.f2,
+        image: d.f3
+      })),
+      cast: row.cast.map((c) => ({
+        id: c.f1,
+        full_name: c.f2,
+        image: c.f3
+      }))
+    };
 
-    await this.pool.query(
-      `
-      INSERT INTO directors AS M (person_id, movie_id) VALUES
-          ($1, $2);
-      `,
-      [directors[0].id, movie.id],
-    );
-    await this.pool.query(
-      `
-      INSERT INTO actors AS M (person_id, movie_id) VALUES
-          ($1, $4),
-          ($2, $4),
-          ($3, $4);
-      `,
-      [cast[0].id, cast[1].id, cast[2].id, movie.id],
-    );
-
-    movie.directors = directors;
-    movie.cast = cast;
     return JSON.stringify(movie);
   }
 
   async insertMoviePlus(val) {
-    let num = Math.floor(Math.random() * 1000000);
-    const movie = (await this.pool.query(
+    const num = Math.floor(Math.random() * 1000000);
+    const res = await this.pool.query(
       `
-      INSERT INTO movies AS M (title, image, description, year) VALUES
-          ($1, $2, $3, $4)
-      RETURNING
-          M.id, M.title, M.image, M.description, M.year
+      WITH movie_insert AS (
+          INSERT INTO movies (title, image, description, year)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, title, image, description, year
+      ),
+      director_persons AS (
+        INSERT INTO persons AS p (first_name, last_name, image, bio)
+        VALUES ($5, $6, $7, '')
+        RETURNING p.id, p.full_name, p.image
+      ),
+      actor_persons AS (
+        INSERT INTO persons AS p (first_name, last_name, image, bio)
+        VALUES ($8, $9, $10, ''), ($11, $12, $13, '')
+        RETURNING p.id, p.full_name, p.image
+      ),
+      director_insert AS (
+        INSERT INTO directors(person_id, movie_id)
+        SELECT dp.id, mi.id FROM movie_insert mi, director_persons dp
+      ),
+      cast_inserts AS (
+        INSERT INTO actors(person_id, movie_id)
+        SELECT ap.id, mi.id
+        FROM actor_persons ap, movie_insert mi
+      )
+      SELECT
+        mi.id,
+        mi.title,
+        mi.image,
+        mi.description,
+        mi.year,
+        (
+          SELECT json_agg(t.v)
+          FROM (
+            SELECT ROW(
+              dp.id,
+              dp.full_name,
+              dp.image
+            ) as v
+            FROM director_persons dp
+          ) t
+        ) as directors,
+        (
+          SELECT json_agg(t.v)
+          FROM (
+            SELECT ROW(
+              ap.id,
+              ap.full_name,
+              ap.image
+            ) as v
+            FROM actor_persons ap
+          ) t
+        ) as cast
+      FROM movie_insert mi
       `,
       [
         val + num,
         val + "image" + num + ".jpeg",
         val + "description" + num,
         num,
-      ]
-    )).rows[0];
-
-    const people = await this.pool.query(
-      `
-      INSERT INTO persons AS P (first_name, last_name, image, bio) VALUES
-          ($1, $2, $3, ''),
-          ($4, $5, $6, ''),
-          ($7, $8, $9, '')
-      RETURNING
-          P.id, P.full_name, P.image
-      `,
-      [
         val + "Alice",
         val + "Director",
         val + "image" + num + ".jpeg",
@@ -444,35 +487,26 @@ class App {
       ],
     );
 
-    var directors = [],
-        cast = [];
+    const row = res.rows[0];
 
-    for (let p of people.rows) {
-      if (p.full_name.indexOf("Director") >= 0) {
-        directors.push(p)
-      } else {
-        cast.push(p)
-      }
-    }
+    const movie = {
+      id: row.id,
+      title: row.title,
+      image: row.image,
+      description: row.description,
+      year: row.year,
+      directors: row.directors.map((d) => ({
+        id: d.f1,
+        full_name: d.f2,
+        image: d.f3
+      })),
+      cast: row.cast.map((c) => ({
+        id: c.f1,
+        full_name: c.f2,
+        image: c.f3
+      }))
+    };
 
-    await this.pool.query(
-      `
-      INSERT INTO directors AS M (person_id, movie_id) VALUES
-          ($1, $2);
-      `,
-      [directors[0].id, movie.id],
-    );
-    await this.pool.query(
-      `
-      INSERT INTO actors AS M (person_id, movie_id) VALUES
-          ($1, $3),
-          ($2, $3);
-      `,
-      [cast[0].id, cast[1].id, movie.id],
-    );
-
-    movie.directors = directors;
-    movie.cast = cast;
     return JSON.stringify(movie);
   }
 
