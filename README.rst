@@ -1,3 +1,5 @@
+.. image:: banner.jpg
+
 .. raw:: html
 
   <h1 align="center">IMDBench</h1>
