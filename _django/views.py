@@ -69,7 +69,7 @@ class CustomMovieView(CustomView):
                     'full_name': person.get_full_name(),
                     'image': person.image,
                 } for person in cast],
-                'avg_rating': movie.get_avg_rating(),
+                'avg_rating': movie.ratings_avg,
                 'reviews': [{
                     'id': review.id,
                     'body': review.body,

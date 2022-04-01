@@ -7,6 +7,7 @@
 
 
 from django.db import connection
+from django.db.models import Avg
 import json
 import random
 
@@ -71,7 +72,15 @@ def get_user(conn, id):
 
 
 def get_movie(conn, id):
-    record = models.Movie.objects.get(pk=id)
+    # There's no real benefit to using `prefetch_related` because we
+    # do the same queries explicitly in the CustomMovieView.render().
+    #
+    # There's some advantage to including the average rating calculation
+    # here, though.
+    record = models.Movie.objects.annotate(
+        ratings_avg=Avg("reviews__rating")
+    ).get(pk=id)
+
     return json.dumps(views.CustomMovieView.render(None, record))
 
 
