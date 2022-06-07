@@ -80,7 +80,7 @@ async function getApp(args) {
     });
     await app.initPool();
   } else {
-    throw new Error('Unexpected ORM: ' + orm);
+    throw new Error('Unexpected ORM: ' + args.orm);
   }
 
   return app;
