@@ -16,7 +16,8 @@
     "argparse": "^2.0.1",
     "edgedb": "^0.15.2",
     "lodash": "^4.17.21",
-    "pg": "^8.7.1"
+    "pg": "^8.7.1",
+    "postgres": "3.2.4"
   },
   "devDependencies": {
     "prisma": "^3.2.1"

@@ -14,6 +14,7 @@ const process = require('process');
 const typeormapp = require('./_typeorm/build/index');
 const sequelizeapp = require('./_sequelize/index');
 const pgapp = require('./_postgres/index');
+const postgresjs = require('./_postgresjs/index');
 const edgedbapp = require('./_edgedb_js/index');
 const prismaapp = require('./_prisma/index');
 
@@ -21,7 +22,14 @@ async function getApp(args) {
   var app;
   var ncon = args.concurrency;
 
-  if (args.orm == 'typeorm') {
+  if (args.orm == 'postgresjs') {
+    app = postgresjs({
+      host: args.host,
+      port: args.port,
+      max: ncon
+    })
+    await app.connect();
+  } else if (args.orm == 'typeorm') {
     app = new typeormapp.App({
       host: args.host,
       port: args.port,
@@ -315,6 +323,7 @@ async function main() {
       'typeorm',
       'sequelize',
       'postgres_pg',
+      'postgresjs',
       'prisma',
       'prisma_untuned',
       'edgedb_js',

@@ -115,6 +115,9 @@ IMPLEMENTATIONS = {
     'postgres_pg':
         impl('js', 'PostgreSQL (Node.js, pg)', None),
 
+    'postgresjs':
+        impl('js', 'PostgreSQL (Node.js, postgres)', None),
+
     'prisma_untuned':
         impl('js', 'Prisma (Untuned)', None),
 
