@@ -11,33 +11,27 @@
 const argparse = require('argparse');
 const _ = require('lodash');
 const process = require('process');
-const typeormapp = require('./_typeorm/build/index');
-const sequelizeapp = require('./_sequelize/index');
-const pgapp = require('./_postgres/index');
-const postgresjs = require('./_postgresjs/index');
-const edgedbapp = require('./_edgedb_js/index');
-const prismaapp = require('./_prisma/index');
 
 async function getApp(args) {
   var app;
   var ncon = args.concurrency;
 
   if (args.orm == 'postgresjs') {
-    app = postgresjs({
+    app = require('./_postgresjs/index')({
       host: args.host,
       port: args.port,
       max: ncon
     })
     await app.connect();
   } else if (args.orm == 'typeorm') {
-    app = new typeormapp.App({
+    app = new (require('./_typeorm/build/index').App)({
       host: args.host,
       port: args.port,
       extra: {max: ncon},
     });
     await app.connect();
   } else if (args.orm == 'sequelize') {
-    app = new sequelizeapp.App({
+    app = new (require('./_sequelize/index').App)({
       host: args.host,
       port: args.port,
       pool: {
@@ -46,17 +40,17 @@ async function getApp(args) {
       },
     });
   } else if (args.orm == 'prisma_untuned') {
-    app = new prismaapp.App();
+    app = new (require('./_prisma/index').App)();
   } else if (args.orm == 'prisma') {
-    app = new prismaapp.TunedApp();
+    app = new (require('./_prisma/index').TunedApp)();
   } else if (args.orm == 'postgres_pg') {
-    app = new pgapp.App({
+    app = new (require('./_postgres/index').App)({
       host: args.host,
       port: args.port,
       max: ncon,
     });
   } else if (args.orm == 'edgedb_js_json') {
-    app = new edgedbapp.App({
+    app = new (require('./_edgedb_js/index').App)({
       style: 'json',
       host: args.host,
       port: args.port,
@@ -64,7 +58,7 @@ async function getApp(args) {
     });
     await app.initPool();
   } else if (args.orm == 'edgedb_js') {
-    app = new edgedbapp.App({
+    app = new (require('./_edgedb_js/index').App)({
       style: 'repack',
       host: args.host,
       port: args.port,
@@ -72,7 +66,7 @@ async function getApp(args) {
     });
     await app.initPool();
   } else if (args.orm == 'edgedb_js_qb') {
-    app = new edgedbapp.App({
+    app = new (require('./_edgedb_js/index').App)({
       style: 'querybuilder',
       host: args.host,
       port: args.port,
@@ -80,7 +74,7 @@ async function getApp(args) {
     });
     await app.initPool();
   } else if (args.orm == 'edgedb_js_qb_uncached') {
-    app = new edgedbapp.App({
+    app = new (require('./_edgedb_js/index').App)({
       style: 'querybuilder_uncached',
       host: args.host,
       port: args.port,
