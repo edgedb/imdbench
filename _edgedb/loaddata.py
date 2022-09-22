@@ -76,6 +76,7 @@ async def import_data(data: dict):
         start += batch_size
         people_slice = people_data[start:start+batch_size]
     people_bar.goto(people_bar.max)
+    people_bar.finish()
 
     ################
     ## LOAD USERS ##
@@ -105,6 +106,7 @@ async def import_data(data: dict):
         start += batch_size
         users_slice = users_data[start:start+batch_size]
     users_bar.goto(users_bar.max)
+    users_bar.finish()
 
     #################
     ## LOAD MOVIES ##
@@ -210,6 +212,7 @@ async def import_data(data: dict):
         unordered_slice = unordered[start:start+batch_size]
 
     movie_bar.goto(movie_bar.max)
+    movie_bar.finish()
 
     ##################
     ## LOAD REVIEWS ##
@@ -247,6 +250,7 @@ async def import_data(data: dict):
         reviews_slice = reviews_data[start:start+batch_size]
 
     review_bar.goto(review_bar.max)
+    review_bar.finish()
 
 
 def id2image(idmap, ids):
