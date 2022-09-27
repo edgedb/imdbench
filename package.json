@@ -14,7 +14,7 @@
   "dependencies": {
     "@prisma/client": "^3.2.1",
     "argparse": "^2.0.1",
-    "edgedb": "^0.15.2",
+    "edgedb": "^0.22.8",
     "lodash": "^4.17.21",
     "pg": "^8.7.1"
   },
