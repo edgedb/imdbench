@@ -18,3 +18,5 @@ node_modules
 /_prisma/.env
 venv*
 .python-version
+.dart_tool
+.packages
