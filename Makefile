@@ -298,7 +298,7 @@ run-py:
 	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
 
 run-sql:
-	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgres_pg postgres_pgx
+	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgres_pg postgres_pgx postgres_dart
 
 run-graphql:
 	$(RUNNER) --html docs/py.html --json docs/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
@@ -307,7 +307,7 @@ run-orms:
 	$(RUNNER) --html docs/orms.html --json docs/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
 
 run-edgedb:
-	$(RUNNER) --html docs/edgedb.html --json docs/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb
+	$(RUNNER) --html docs/edgedb.html --json docs/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb edgedb_dart edgedb_dart_json
 
 run-scratch:
 	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go

@@ -120,6 +120,15 @@ IMPLEMENTATIONS = {
 
     'prisma':
         impl('js', 'Prisma', None),
+
+    'edgedb_dart':
+        impl('dart', 'EdgeDB (Dart)', None),
+
+    'edgedb_dart_json':
+        impl('dart', 'EdgeDB (Dart, JSON mode)', None),
+
+    'postgres_dart':
+        impl('dart', 'Postgres (Dart)', None),
 }
 
 
