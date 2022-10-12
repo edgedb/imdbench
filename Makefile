@@ -298,7 +298,7 @@ run-py:
 	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
 
 run-sql:
-	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgres_pg postgres_pgx
+	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgresjs postgres_pg postgres_pgx
 
 run-graphql:
 	$(RUNNER) --html docs/py.html --json docs/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
