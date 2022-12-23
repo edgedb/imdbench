@@ -243,6 +243,10 @@ def run_benchmarks(args, argv):
             lang_args['dart'] = [
                 'python', 'bench_dart.py', '--json', '__tmp.json'
             ] + argv
+        elif bench.language == 'dotnet':
+            lang_args['dotnet'] = [
+                'python', 'bench_dotnet.py', '--json', '__tmp.json'
+            ]
         else:
             raise ValueError('unsupported host language: {}'.format(
                 bench.language))
