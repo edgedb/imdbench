@@ -9,8 +9,6 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore;
 
 public partial class PostgresBenchContext : DbContext
 {
-    private static MemoryCache _zeroSizeMemoryCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 0 });
-
     private readonly int _port;
     private readonly string _host;
 
@@ -41,8 +39,6 @@ public partial class PostgresBenchContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder
-            .UseMemoryCache(_zeroSizeMemoryCache) // disable cache
-            .ConfigureWarnings(x => x.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)) // disable warning related to multiple singletons of the memory cache being added
             .UseNpgsql($"Host={_host};Port={_port};Database=postgres_bench;User ID=postgres_bench;");
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
