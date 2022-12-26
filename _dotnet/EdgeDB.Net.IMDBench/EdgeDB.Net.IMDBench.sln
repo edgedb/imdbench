@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdgeDB.Net.IMDBench", "EdgeDB.Net.IMDBench.csproj", "{9BA64B3E-142F-4898-8CD3-D77CAACA1D9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdgeDB.Net.IMDBench", "EdgeDB.Net.IMDBench.csproj", "{9BA64B3E-142F-4898-8CD3-D77CAACA1D9F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

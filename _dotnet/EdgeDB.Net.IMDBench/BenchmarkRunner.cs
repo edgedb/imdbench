@@ -103,6 +103,12 @@ namespace EdgeDB.Net.IMDBench
             }
 
 #if DEBUG
+            Console.WriteLine("Cleaning up...");
+
+            GC.Collect();
+#endif
+
+#if DEBUG
             Console.WriteLine("Warmup complete");
 #endif
         }
