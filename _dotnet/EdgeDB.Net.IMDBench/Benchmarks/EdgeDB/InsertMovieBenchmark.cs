@@ -27,7 +27,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
             return base.IterationSetupAsync();
         }
 
-        public override Task<Movie> BenchmarkAsync()
+        public override Task<Movie> BenchmarkAsync(CancellationToken token)
             => Client.QueryRequiredSingleAsync<Movie>(Queries.INSERT_MOVIE, new Dictionary<string, object?>()
             {
                 { "title", "Movie " + _num },
@@ -36,6 +36,6 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
                 { "year", (long)_num },
                 { "d_id", PeopleIds[_num % PeopleIds.Length] },
                 { "cast", PeopleIds[..4] }
-            });
+            }, token: token);
     }
 }

@@ -49,7 +49,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
 
             Client = new EdgeDBClient(connection, new EdgeDBClientPoolConfig
             {
-                SchemaNamingStrategy = INamingStrategy.SnakeCaseNamingStrategy
+                SchemaNamingStrategy = INamingStrategy.SnakeCaseNamingStrategy,
             });
 
             // get the ids

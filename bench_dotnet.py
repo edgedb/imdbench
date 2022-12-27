@@ -4,6 +4,8 @@ import _shared
 import subprocess
 import pathlib
 
+import numpy as np
+
 
 class Result(typing.NamedTuple):
 
@@ -62,13 +64,17 @@ def run_query(ctx, benchmark, queryname):
 
     data = json.loads(output)
 
+    avg_latency = np.average(
+        np.arange(len(data['latency_stats'])),
+        weights=data['latency_stats'])
+
     return Result(
         benchmark=benchmark,
         queryname=queryname,
         nqueries=data['nqueries'],
         duration=data['duration'],
         min_latency=data['min_latency'],
-        avg_latency=data['avg_latency'],
+        avg_latency=avg_latency,
         max_latency=data['max_latency'],
         latency_stats=data['latency_stats'],
         samples=data['samples'],
@@ -79,9 +85,9 @@ def print_result(ctx, result: Result):
     print(f'== {result.benchmark} : {result.queryname} ==')
     print(f'queries:\t{result.nqueries}')
     print(f'qps:\t\t{result.nqueries // ctx.duration} q/s')
-    print(f'min latency:\t{result.min_latency:.2f}μs')
-    print(f'avg latency:\t{result.avg_latency:.2f}μs')
-    print(f'max latency:\t{result.max_latency:.2f}μs')
+    print(f'min latency:\t{result.min_latency / 100:.2f}ms')
+    print(f'avg latency:\t{result.avg_latency / 100:.2f}ms')
+    print(f'max latency:\t{result.max_latency / 100:.2f}ms')
     print()
 
 

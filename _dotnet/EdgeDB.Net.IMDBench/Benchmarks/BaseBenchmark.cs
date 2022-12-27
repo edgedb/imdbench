@@ -16,7 +16,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks
 
         public virtual ValueTask SetupAsync(BenchmarkConfig config) { return ValueTask.CompletedTask; }
 
-        public abstract Task BenchmarkAsync();
+        public abstract Task BenchmarkAsync(CancellationToken token);
 
         public override string ToString()
         {

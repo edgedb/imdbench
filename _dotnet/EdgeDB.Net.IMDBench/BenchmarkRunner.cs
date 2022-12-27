@@ -2,6 +2,7 @@
 using EdgeDB.Net.IMDBench.Benchmarks.EdgeDB.Models;
 using Humanizer;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +18,7 @@ namespace EdgeDB.Net.IMDBench
         public static Dictionary<string, Dictionary<string, BaseBenchmark>> AllBenchmarks { get; }
 
         private readonly BenchmarkConfig _config;
+        private readonly DefaultContractResolver _contractResolver;
 
         static BenchmarkRunner()
         {
@@ -45,6 +47,10 @@ namespace EdgeDB.Net.IMDBench
         public BenchmarkRunner(BenchmarkConfig config)
         {
             _config = config;
+            _contractResolver = new()
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy()
+            };
         }
 
         public async Task SetupAsync()
@@ -85,7 +91,7 @@ namespace EdgeDB.Net.IMDBench
                     Console.WriteLine("Warming up benchmark {0}/{1}: {2}", i + 1, benchmarks.Length, benchmark);
 
                     var results = await RunManyAsync(_config.Concurrency, () => BenchAsync(benchmark, _config.Warmup, _config.NumSamples));
-                    var stats = new BenchStats(results);
+                    var stats = new BenchStats(_config.Timeout, results);
 
                     Console.WriteLine("{0}: Avg: {1}μs Min: {2}μs Max: {3}μs", benchmark, stats.Average, stats.Min, stats.Max);
 #else
@@ -144,12 +150,13 @@ namespace EdgeDB.Net.IMDBench
                     continue;
                 }
 
-                var stats = new BenchStats(result);
+                var stats = new BenchStats(_config.Timeout, result);
 #if RELEASE
                 // report results of this run
                 Console.WriteLine(JsonConvert.SerializeObject(stats, new JsonSerializerSettings 
                 {
-                    ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                    ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+                    ContractResolver = _contractResolver
                 }));
 #else
 
@@ -180,12 +187,15 @@ namespace EdgeDB.Net.IMDBench
 
             do
             {
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.Timeout));
                 await benchmark.IterationSetupAsync();
 
                 sw.Start();
-                var task = benchmark.BenchmarkAsync();
+                var task = benchmark.BenchmarkAsync(cts.Token);
                 await task;
                 sw.Stop();
+
+                cts.Dispose();
 
                 // record the sample
                 if (samples.Count < sampleCount && TryGetTaskResult(task, out var result))
@@ -243,7 +253,7 @@ namespace EdgeDB.Net.IMDBench
             public object? Samples { get; }
 
             [JsonProperty("latency_stats")]
-            public double[] Times { get; }
+            public double[] LatencyStats { get; }
 
             [JsonProperty("duration")]
             public double Duration { get; }
@@ -251,27 +261,41 @@ namespace EdgeDB.Net.IMDBench
             [JsonProperty("avg_latency")]
             public double Average { get; }
 
-            public BenchStats(BenchResult result)
+            public BenchStats(int timeout, BenchResult result)
             {
-                Min = result.Times.Min(x => x.TotalMicroseconds);
-                Max = result.Times.Max(x => x.TotalMicroseconds);
+                Min = result.Times.Min(x => x.TotalMicroseconds) / 10;
+                Max = result.Times.Max(x => x.TotalMicroseconds) / 10;
                 NumQueries = result.Times.Count;
                 Samples = result.Samples;
-                Times = result.Times.Select(x => x.TotalMicroseconds).ToArray();
-                Duration = result.Times.Sum(x => x.TotalMilliseconds);
+                LatencyStats = CalculateLatency(timeout, result.Times);
+                Duration = TimeSpan.FromMicroseconds(result.Times.Sum(x => x.TotalMicroseconds)).TotalSeconds;
 
-                Average = result.Times.Average(x => x.TotalMicroseconds);
+                Average = result.Times.Average(x => x.TotalMilliseconds);
             }
 
-            public BenchStats(BenchResult[] results)
+            public BenchStats(int timeout, BenchResult[] results)
             {
-                Min = results.Min(result => result.Times.Min(x => x.TotalMicroseconds));
-                Max = results.Min(result => result.Times.Max(x => x.TotalMicroseconds));
+                Min = results.Min(result => result.Times.Min(x => x.TotalMicroseconds)) / 10;
+                Max = results.Min(result => result.Times.Max(x => x.TotalMicroseconds)) / 10;
                 NumQueries = results.Sum(result => result.Times.Count);
                 Samples = results.SelectMany(result => result.Samples).ToArray();
-                Times = results.SelectMany(result => result.Times.Select(x => x.TotalMicroseconds)).ToArray();
-                Duration = results.Average(result => result.Times.Sum(x => x.TotalMilliseconds));
-                Average = results.Average(result => result.Times.Average(x => x.TotalMicroseconds));
+                LatencyStats = CalculateLatency(timeout, results.SelectMany(x => x.Times));
+                Duration = TimeSpan.FromMicroseconds(results.Average(result => result.Times.Sum(x => x.TotalMicroseconds))).TotalSeconds;
+                Average = results.Average(result => result.Times.Average(x => x.TotalMilliseconds));
+            }
+
+            private static double[] CalculateLatency(int timeout, IEnumerable<TimeSpan> times)
+            {
+                var mc = times.Select(x => (long)Math.Round(x.TotalMicroseconds / 10));
+
+                var arr = new double[(long)Math.Round(TimeSpan.FromSeconds(timeout).TotalMicroseconds / 10)];
+
+                foreach (var x in mc)
+                {
+                    arr[x]++;
+                }
+
+                return arr;
             }
         }
     }

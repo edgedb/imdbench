@@ -16,7 +16,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks
         public int Duration { get; set; } = 2;
 
         [Option("timeout")]
-        public int Timeout { get; set; } = 5000;
+        public int Timeout { get; set; } = 5;
 
         [Option("warmup-time")]
         public int Warmup { get; set; } = 6;

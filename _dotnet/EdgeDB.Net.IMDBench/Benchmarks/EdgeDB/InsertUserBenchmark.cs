@@ -27,11 +27,11 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
             return base.IterationSetupAsync();
         }
 
-        public override Task<User> BenchmarkAsync()
+        public override Task<User> BenchmarkAsync(CancellationToken token)
             => Client.QueryRequiredSingleAsync<User>(Queries.INSERT_USER, new Dictionary<string, object?>()
             {
                 { "name", "name_" + _num },
                 { "image", "image_" + _num }
-            });
+            }, token: token);
     }
 }

@@ -23,7 +23,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
             return base.IterationSetupAsync();
         }
 
-        public override async Task<Movie> BenchmarkAsync()
+        public override async Task<Movie> BenchmarkAsync(CancellationToken token)
         {
             using var ctx = CreateContext();
 
@@ -45,16 +45,16 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
                 movie.Actors.Add(new Actor() { PersonId = id });
             }
 
-            var entry = await ctx.Movies.AddAsync(movie);
+            var entry = await ctx.Movies.AddAsync(movie, token);
 
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(token);
 
             return await ctx.Movies
                 .Include(x => x.Directors)
                     .ThenInclude(x => x.Person)
                 .Include(x => x.Actors)
                     .ThenInclude(x => x.Person)
-                .FirstAsync(x => x.Id == entry.Entity.Id);
+                .FirstAsync(x => x.Id == entry.Entity.Id, token);
         }
     }
 }

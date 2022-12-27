@@ -22,7 +22,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
             return base.IterationSetupAsync();
         }
         
-        public override async Task<User> BenchmarkAsync()
+        public override async Task<User> BenchmarkAsync(CancellationToken token)
         {
             using var ctx = CreateContext();
 
@@ -32,9 +32,9 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
                 Image = $"image_{_num}"
             };
 
-            var entry = await ctx.Users.AddAsync(user);
+            var entry = await ctx.Users.AddAsync(user, token);
 
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(token);
 
             return entry.Entity;
         }

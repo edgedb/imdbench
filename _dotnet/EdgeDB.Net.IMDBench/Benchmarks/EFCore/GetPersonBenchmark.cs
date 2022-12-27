@@ -12,7 +12,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
     {
         public override string Name => "get_person";
 
-        public override async Task<Person> BenchmarkAsync()
+        public override async Task<Person> BenchmarkAsync(CancellationToken token)
         {
             using var ctx = CreateContext();
 
@@ -27,7 +27,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
                     .OrderBy(x => x.Movie.Title)
                 ).ThenInclude(x => x.Movie)
                 .ThenInclude(x => x.Reviews)
-                .FirstAsync(x => x.Id == PersonId);
+                .FirstAsync(x => x.Id == PersonId, token);
 
             // include avg. rating
             person.Actors

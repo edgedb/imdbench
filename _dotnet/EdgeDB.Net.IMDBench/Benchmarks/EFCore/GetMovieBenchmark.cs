@@ -12,7 +12,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
     {
         public override string Name => "get_movie";
 
-        public override async Task<Movie> BenchmarkAsync()
+        public override async Task<Movie> BenchmarkAsync(CancellationToken token)
         {
             using var ctx = CreateContext();
 
@@ -26,7 +26,7 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
                 .Include(x => x.Reviews)
                     .ThenInclude(x => x.Author)
                 .ApplyAverageRating()
-                .FirstAsync(x => x.Id == MovieId);
+                .FirstAsync(x => x.Id == MovieId, token);
         }
     }
 }

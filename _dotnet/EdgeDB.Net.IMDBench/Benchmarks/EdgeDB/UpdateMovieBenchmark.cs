@@ -11,11 +11,11 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
     {
         public override string Name => "update_movie";
 
-        public override Task<Movie> BenchmarkAsync()
+        public override Task<Movie> BenchmarkAsync(CancellationToken token)
             => Client.QueryRequiredSingleAsync<Movie>(Queries.UPDATE_MOVIE, new Dictionary<string, object?>
             {
                 { "id", MovieId },
                 { "suffix", MovieId.ToString() }
-            });
+            }, token: token);
     }
 }

@@ -297,6 +297,9 @@ run-js:
 run-py:
 	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
 
+run-dotnet:
+	$(RUNNER) --html docs/dotnet.html --json docs/dotnet.json edgedb_dotnet efcore
+
 run-sql:
 	$(RUNNER) --html docs/sql.html --json docs/sql.json edgedb_py_sync postgres_psycopg postgres_asyncpg postgres_pg postgres_pgx postgres_dart
 

@@ -11,10 +11,10 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
     {
         public override string Name => "get_user";
 
-        public override Task<User> BenchmarkAsync()
+        public override Task<User> BenchmarkAsync(CancellationToken token)
             => Client.QueryRequiredSingleAsync<User>(Queries.SELECT_USER, new Dictionary<string, object?>()
             {
                 { "id", UserId }
-            });
+            }, token: token);
     }
 }

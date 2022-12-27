@@ -23,15 +23,15 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
             return base.IterationSetupAsync();
         }
         
-        public override async Task<Movie> BenchmarkAsync()
+        public override async Task<Movie> BenchmarkAsync(CancellationToken token)
         {
             using var ctx = CreateContext();
 
-            var movie = await ctx.Movies.FirstAsync(x => x.Id == MovieId);
+            var movie = await ctx.Movies.FirstAsync(x => x.Id == MovieId, token);
 
             movie.Title = $"New Title {_num}";
 
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(token);
 
             return movie;
         }
