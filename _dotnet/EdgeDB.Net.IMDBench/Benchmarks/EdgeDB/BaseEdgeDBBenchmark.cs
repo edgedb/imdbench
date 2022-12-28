@@ -23,6 +23,11 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EdgeDB
         public Guid[] MovieIds { get; private set; } = Array.Empty<Guid>();
         public Guid[] PeopleIds { get; private set; } = Array.Empty<Guid>();
 
+        public override string GetInUseIdsState()
+        {
+            return $"Movie ID: {MovieId}\nUser Id: {UserId}\nPerson Id: {PersonId}";
+        }
+
         public override ValueTask IterationSetupAsync()
         {
             var rand = new Random();

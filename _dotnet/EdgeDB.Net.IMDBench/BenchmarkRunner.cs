@@ -100,7 +100,7 @@ namespace EdgeDB.Net.IMDBench
                 }
                 catch (Exception x)
                 {
-                    Console.Error.WriteLine($"Exception in {benchmark.Category}.{benchmark.Name}: {x}");
+                    Console.Error.WriteLine($"Exception in {benchmark.Category}.{benchmark.Name}: {x.GetType()} {x}\nState: {benchmark.GetInUseIdsState()}");
 
 #if RELEASE
                     Environment.Exit(1);
@@ -141,7 +141,7 @@ namespace EdgeDB.Net.IMDBench
                 }
                 catch (Exception x)
                 {
-                    Console.Error.WriteLine($"Exception in {benchmark}: {x}");
+                    Console.Error.WriteLine($"Exception in {benchmark}: {x.GetType()} {x}\nState: {benchmark.GetInUseIdsState()}");
 
 #if RELEASE
                     Environment.Exit(1);

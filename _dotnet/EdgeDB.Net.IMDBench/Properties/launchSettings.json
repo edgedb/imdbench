@@ -2,7 +2,7 @@
   "profiles": {
     "EdgeDB.Net.IMDBench": {
       "commandName": "Project",
-      "commandLineArgs": "--concurrency 1 --duration 30 --timeout 5 --warmup-time 5 --output-format json --host 127.0.0.1 --nsamples 10 --number-of-ids 250 --query get_user --port 15656 --target edgedb_dotnet"
+      "commandLineArgs": "--concurrency 1 --duration 30 --timeout 5 --warmup-time 5 --output-format json --host 127.0.0.1 --nsamples 10 --number-of-ids 250 --query get_movie --port 15656 --target edgedb_dotnet"
     }
   }
 }

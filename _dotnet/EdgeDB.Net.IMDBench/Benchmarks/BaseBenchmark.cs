@@ -11,7 +11,9 @@ namespace EdgeDB.Net.IMDBench.Benchmarks
     {
         public abstract string Name { get; }
         public abstract string Category { get; }
-        
+
+        public abstract string GetInUseIdsState();
+
         public virtual ValueTask IterationSetupAsync() { return ValueTask.CompletedTask; }
 
         public virtual ValueTask SetupAsync(BenchmarkConfig config) { return ValueTask.CompletedTask; }

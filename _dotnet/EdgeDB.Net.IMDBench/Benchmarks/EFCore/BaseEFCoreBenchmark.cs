@@ -22,6 +22,11 @@ namespace EdgeDB.Net.IMDBench.Benchmarks.EFCore
         private string? _host;
         private int _port;
 
+        public override string GetInUseIdsState()
+        {
+            return $"Movie ID: {MovieId}\nUser Id: {UserId}\nPerson Id: {PersonId}";
+        }
+
         public override ValueTask IterationSetupAsync()
         {
             var rand = new Random();
