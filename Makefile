@@ -11,6 +11,8 @@ SHELL = /bin/bash
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
+EDGEDB_VERSION ?= latest
+
 DOCKER ?= docker
 PSQL ?= psql
 
@@ -104,7 +106,7 @@ docker-edgedb: docker-network docker-edgedb-volume
 		-e EDGEDB_SERVER_SECURITY=insecure_dev_mode \
 		--network=webapp-bench \
 		-p 15656:5656 \
-		edgedb/edgedb
+		edgedb/edgedb:$(EDGEDB_VERSION)
 	edgedb -H localhost -P 15656 \
 		--tls-security=insecure --wait-until-available=120s \
 		query "SELECT 'EdgeDB ready'"
@@ -151,7 +153,7 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	edgedb query 'DROP DATABASE temp'
 	edgedb migrate
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
-	cd _edgedb_js && npm i && npx edgeql-js --output-dir querybuilder --target cjs
+	cd _edgedb_js && npm i && npx @edgedb/generate edgeql-js --output-dir querybuilder --target cjs --force-overwrite
 
 load-edgedb-nosetup:
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
