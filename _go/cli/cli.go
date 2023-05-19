@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 )
 
 type Args struct {
