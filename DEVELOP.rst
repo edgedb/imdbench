@@ -28,6 +28,20 @@ Run locally
   
       npm install
 
+#. Install .NET 7 SDK
+   
+   See `Installing on linux <https://learn.microsoft.com/en-us/dotnet/core/install/linux>`_
+   for more details and troubleshooting.
+
+   .. code-block::
+
+      wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+      sudo dpkg -i packages-microsoft-prod.deb
+      rm packages-microsoft-prod.deb
+
+      sudo apt-get update && \
+      sudo apt-get install -y dotnet-sdk-7.0
+
 #. Install the following toolchains:
 
    - `EdgeDB <https://www.edgedb.com/install>`_
@@ -113,7 +127,24 @@ Run locally
       $ make run-py
    
    The results will be generated into ``docs/py.html``.
+
+#. Run the .NET benchmarks
+
+   First, run the following loaders:
    
+   .. code-block::
+
+      $ make load-postgres
+      $ make load-edgedb
+
+   Then run the benchmarks:
+
+   .. code-block::
+      
+      $ make run-dotnet
+   
+   The results will be generated into ``docs/dotnet.html``.
+
 #. Run the SQL benchmarks
 
    First, run the following loaders:
