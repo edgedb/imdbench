@@ -26,6 +26,9 @@ class IMDBenchStack(cdk.Stack):
             self,
             "imdbench-endpoint",
             handler=imdbench_lambda,
+            integration_options=cdk.aws_apigateway.LambdaIntegrationOptions(
+                timeout=cdk.Duration.minutes(15),
+            ),
         )
 
 
