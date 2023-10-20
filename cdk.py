@@ -22,15 +22,6 @@ class IMDBenchStack(cdk.Stack):
             memory_size=1024,
         )
 
-        cdk.aws_apigateway.LambdaRestApi(
-            self,
-            "imdbench-endpoint",
-            handler=imdbench_lambda,
-            integration_options=cdk.aws_apigateway.LambdaIntegrationOptions(
-                timeout=cdk.Duration.minutes(15),
-            ),
-        )
-
 
 app = cdk.App()
 IMDBenchStack(app, "IMDBenchStack")
