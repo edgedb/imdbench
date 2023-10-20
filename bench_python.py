@@ -250,21 +250,26 @@ def do_run_benchmark_async(ctx, benchname, ids, iproc, queryname) -> Result:
 
 
 def run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
-    # We want to split the input ids into separate chunks, so that we
-    # avoid concurrent mutations of the same object.
-    with futures.ProcessPoolExecutor(max_workers=ctx.async_split) as e:
-        tasks = []
-        for i in range(ctx.async_split):
-            task = e.submit(
-                do_run_benchmark_async,
-                ctx,
-                benchname,
-                ids,
-                i,
-                queryname)
-            tasks.append(task)
+    if ctx.async_split == 1:
+        results = do_run_benchmark_async(ctx, benchname, ids, 0, queryname)
+    else:
+        # We want to split the input ids into separate chunks, so that we
+        # avoid concurrent mutations of the same object.
+        with futures.ProcessPoolExecutor(max_workers=ctx.async_split) as e:
+            tasks = []
+            for i in range(ctx.async_split):
+                task = e.submit(
+                    do_run_benchmark_async,
+                    ctx,
+                    benchname,
+                    ids,
+                    i,
+                    queryname)
+                tasks.append(task)
 
-        results = [r for fut in futures.wait(tasks).done for r in fut.result()]
+            results = [
+                r for fut in futures.wait(tasks).done for r in fut.result()
+            ]
 
     return agg_results(results, benchname, queryname, ctx.duration)
 
