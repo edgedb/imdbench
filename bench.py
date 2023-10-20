@@ -20,6 +20,7 @@ import random
 import string
 import subprocess
 import sys
+import tempfile
 
 import distro
 import jinja2
@@ -225,23 +226,24 @@ def format_report_html(data, target_file):
 
 def run_benchmarks(args, argv):
     lang_args = {}
+    tmp = tempfile.mktemp(suffix=".json")
     for benchname in args.benchmarks:
         bench = _shared.IMPLEMENTATIONS[benchname]
         if bench.language == 'python':
             lang_args['python'] = [
-                'python', 'bench_python.py', '--json', '__tmp.json'
+                'python', 'bench_python.py', '--json', tmp
             ] + argv
         elif bench.language == 'go':
             lang_args['go'] = [
-                'python', 'bench_go.py', '--json', '__tmp.json'
+                'python', 'bench_go.py', '--json', tmp
             ] + argv
         elif bench.language == 'js':
             lang_args['js'] = [
-                'python', 'bench_js.py', '--json', '__tmp.json'
+                'python', 'bench_js.py', '--json', tmp
             ] + argv
         elif bench.language == 'dart':
             lang_args['dart'] = [
-                'python', 'bench_dart.py', '--json', '__tmp.json'
+                'python', 'bench_dart.py', '--json', tmp
             ] + argv
         else:
             raise ValueError('unsupported host language: {}'.format(
@@ -253,7 +255,7 @@ def run_benchmarks(args, argv):
             subprocess.run(
                 cmd, stdout=sys.stdout, stderr=sys.stderr, check=True)
 
-            with open('__tmp.json', 'rt') as f:
+            with open(tmp, 'rt') as f:
                 # Read the raw data from the file
                 results = f.read()
                 try:
@@ -266,8 +268,8 @@ def run_benchmarks(args, argv):
 
                 process_results(raw_data, agg_data)
     finally:
-        if os.path.exists('__tmp.json'):
-            os.unlink('__tmp.json')
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
     return mean_latency_stats(agg_data)
 
