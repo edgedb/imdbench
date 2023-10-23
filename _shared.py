@@ -228,6 +228,15 @@ def parse_args(*, prog_desc: str, out_to_json: bool = False,
     parser.add_argument(
         '--pg-port', type=int, default=15432,
         help='PostgreSQL server port')
+    parser.add_argument(
+        '--pg-user', type=str, default='postgres_bench',
+        help='PostgreSQL server user')
+    parser.add_argument(
+        '--pg-database', type=str, default='postgres_bench',
+        help='PostgreSQL server database')
+    parser.add_argument(
+        '--pg-password', type=str, default='edgedbbenchmark',
+        help='PostgreSQL server password')
 
     parser.add_argument(
         '--edgedb-port', type=int, default=None,

@@ -193,7 +193,10 @@ load-postgres: docker-postgres-stop reset-postgres $(BUILD)/dataset.json
 	$(PSQL_CMD) -U postgres_bench -d postgres_bench \
 			--file=$(CURRENT_DIR)/_postgres/schema.sql
 
-	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
+	PGHOST=localhost PGPORT=15432 \
+		PGUSER=postgres_bench PGPASSWORD=edgedbbenchmark \
+		PGDATABASE=postgres_bench \
+		$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
 	cd _postgres && npm i
 
 reset-postgres: docker-postgres

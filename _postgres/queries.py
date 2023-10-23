@@ -17,9 +17,9 @@ INSERT_PREFIX = 'insert_test__'
 
 async def connect(ctx):
     return await asyncpg.connect(
-        user='postgres_bench',
-        database='postgres_bench',
-        password='edgedbbenchmark',
+        user=ctx.pg_user,
+        database=ctx.pg_database,
+        password=ctx.pg_password,
         host=ctx.db_host,
         port=ctx.pg_port)
 
