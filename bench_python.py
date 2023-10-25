@@ -202,21 +202,24 @@ def agg_results(results, benchname, queryname, duration) -> Result:
 
 def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
     method_ids = ids[queryname]
-    # We want to split the input ids into separate chunks, so that we
-    # avoid concurrent mutations of the same object.
-    chunk_len = math.ceil(len(method_ids) / ctx.concurrency)
-    with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
-        tasks = []
-        for i in range(ctx.concurrency):
-            task = e.submit(
-                run_benchmark_method,
-                ctx,
-                benchname,
-                method_ids[chunk_len*i:chunk_len*(i+1)],
-                queryname)
-            tasks.append(task)
+    if ctx.concurrency == 1:
+        results = [run_benchmark_method(ctx, benchname, method_ids, queryname)]
+    else:
+        # We want to split the input ids into separate chunks, so that we
+        # avoid concurrent mutations of the same object.
+        chunk_len = math.ceil(len(method_ids) / ctx.concurrency)
+        with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
+            tasks = []
+            for i in range(ctx.concurrency):
+                task = e.submit(
+                    run_benchmark_method,
+                    ctx,
+                    benchname,
+                    method_ids[chunk_len*i:chunk_len*(i+1)],
+                    queryname)
+                tasks.append(task)
 
-        results = [fut.result() for fut in futures.wait(tasks).done]
+            results = [fut.result() for fut in futures.wait(tasks).done]
 
     return agg_results(results, benchname, queryname, ctx.duration)
 
