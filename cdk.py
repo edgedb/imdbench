@@ -19,7 +19,7 @@ class IMDBenchStack(cdk.Stack):
                 for key, value in os.environ.items()
                 if key.startswith("IMDBENCH")
             },
-            memory_size=1024,
+            memory_size=2048,
         )
 
 
