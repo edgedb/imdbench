@@ -7,6 +7,7 @@
 
 
 import json
+import os
 import random
 import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
@@ -25,10 +26,18 @@ async def connect(ctx):
     global session_factory
 
     if session_factory is None:
-        engine = sa_asyncio.create_async_engine(
+        dsn = (
             f"postgresql+asyncpg://sqlalch_bench:edgedbbenchmark@"
             f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench"
         )
+        if 'IMDBENCH_EXTRA_ENV' in os.environ:
+            if os.environ['IMDBENCH_EXTRA_ENV'] == 'supabase':
+                dsn = (
+                    f"postgresql+asyncpg://"
+                    f"postgres:{os.environ['SUPABASE_PASSWORD']}@"
+                    f"{os.environ['SUPABASE_HOST']}/sqlalch_bench"
+                )
+        engine = sa_asyncio.create_async_engine(dsn)
         session_factory = orm.sessionmaker(
             bind=engine, expire_on_commit=False, class_=sa_asyncio.AsyncSession
         )

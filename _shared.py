@@ -35,6 +35,7 @@ class impl(typing.NamedTuple):
     language: str
     title: str
     module: typing.Optional[types.ModuleType]
+    extra_env: typing.Optional[str] = None
 
 
 IMPLEMENTATIONS = {
@@ -74,6 +75,14 @@ IMPLEMENTATIONS = {
 
     'sqlalchemy_asyncio':
         impl('python', 'SQLAlchemy (asyncio)', sqlalchemy_queries_asyncio),
+
+    'supabase_sqla':
+        impl(
+            'python',
+            'Supabase (Python, SQLAlchemy, asyncio)',
+            sqlalchemy_queries_asyncio,
+            'supabase',
+        ),
 
     'postgres_asyncpg':
         impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),

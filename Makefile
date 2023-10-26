@@ -343,4 +343,4 @@ run-scratch:
 	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go
 
 run-cloud:
-	$(CLOUD_RUNNER) --html docs/cloud.html --json docs/cloud.json edgedb_py_sync
+	$(CLOUD_RUNNER) --html docs/cloud.html --json docs/cloud.json edgedb_py_sync supabase_sqla

@@ -13,6 +13,7 @@ import concurrent.futures as futures
 import json
 import math
 import multiprocessing
+import os
 import random
 import time
 import typing
@@ -299,7 +300,8 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
 
 
 def run_async(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
+    impl = _shared.IMPLEMENTATIONS[benchname]
+    queries_mod = impl.module
     results = []
 
     async def fetch_ids():
@@ -329,19 +331,23 @@ def run_async(ctx, benchname) -> typing.List[Result]:
         finally:
             await queries_mod.close(ctx, conn)
 
-    uvloop.install()
-    ids = asyncio.run(fetch_ids())
+    os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
+    try:
+        uvloop.install()
+        ids = asyncio.run(fetch_ids())
 
-    for queryname in ctx.queries:
-        # Potentially setup the benchmark state
-        asyncio.run(setup())
+        for queryname in ctx.queries:
+            # Potentially setup the benchmark state
+            asyncio.run(setup())
 
-        res = run_benchmark_async(ctx, benchname, ids, queryname)
-        results.append(res)
-        print_result(ctx, res)
+            res = run_benchmark_async(ctx, benchname, ids, queryname)
+            results.append(res)
+            print_result(ctx, res)
 
-        # Potentially clean up after the benchmarks
-        asyncio.run(cleanup())
+            # Potentially clean up after the benchmarks
+            asyncio.run(cleanup())
+    finally:
+        del os.environ['IMDBENCH_EXTRA_ENV']
 
     return results
 
