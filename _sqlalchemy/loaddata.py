@@ -10,6 +10,7 @@ import argparse
 import collections
 import datetime
 import json
+import os
 import progress.bar
 
 import sqlalchemy as sa
@@ -124,7 +125,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     engine = sa.create_engine(
-        "postgresql+asyncpg://sqlalch_bench:edgedbbenchmark@localhost:15432/sqlalch_bench?async_fallback=True"
+        "".join([
+            "postgresql+asyncpg://",
+            os.environ.get("PGUSER", "sqlalch_bench"),
+            ":",
+            os.environ.get("PGPASSWORD", "edgedbbenchmark"),
+            "@",
+            os.environ.get("PGHOST", "localhost"),
+            ":",
+            os.environ.get("PGPORT", "15432"),
+            "/",
+            os.environ.get("PGDATABASE", os.environ.get("PGUSER", "sqlalch_bench")),
+            "?async_fallback=True",
+        ])
     )
 
     load_data(args.filename, engine)

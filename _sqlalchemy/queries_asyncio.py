@@ -26,8 +26,8 @@ async def connect(ctx):
 
     if session_factory is None:
         engine = sa_asyncio.create_async_engine(
-            f"postgresql+asyncpg://sqlalch_bench:edgedbbenchmark@"
-            f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench"
+            f"postgresql+asyncpg://{ctx.pg_user}:{ctx.pg_password}@"
+            f"{ctx.db_host}:{ctx.pg_port}/{ctx.pg_database}"
         )
         session_factory = orm.sessionmaker(
             bind=engine, expire_on_commit=False, class_=sa_asyncio.AsyncSession

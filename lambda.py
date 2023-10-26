@@ -13,6 +13,9 @@ def handler(event, context):
         case "/supabase-sql-psycopg":
             return run_supabase(asyncpg=False)
 
+        case "/supabase-sqlalchemy":
+            return run_sqlalchemy(clean=False)
+
 
 def run_edgedb():
     dbname = os.environ["IMDBENCH_EDGEDB_DATABASE"]
@@ -22,6 +25,8 @@ def run_edgedb():
         "PYTHONPATH": os.getcwd(),
         **os.environ,
     }
+    if "PYTHONPATH" in os.environ:
+        env["PYTHONPATH"] = f"{os.getcwd()}:{os.environ['PYTHONPATH']}"
     subprocess.call(
         [
             "edgedb",
@@ -130,6 +135,8 @@ def run_supabase(asyncpg=True, clean=True):
         "PGPASSWORD": os.environ["IMDBENCH_SUPABASE_PASSWORD"],
         **os.environ,
     }
+    if "PYTHONPATH" in os.environ:
+        env["PYTHONPATH"] = f"{os.getcwd()}:{os.environ['PYTHONPATH']}"
     if clean:
         subprocess.check_call(
             [
@@ -220,6 +227,98 @@ def run_supabase(asyncpg=True, clean=True):
             "--html",
             "/tmp/supabase.html",
             "postgres_asyncpg" if asyncpg else "postgres_psycopg",
+        ],
+        env=env,
+    )
+    with open("/tmp/supabase.html") as f:
+        resp = f.read()
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html",
+        },
+        "body": resp,
+    }
+
+
+def run_sqlalchemy(clean=True):
+    env = {
+        "HOME": "/tmp",
+        "PYTHONPATH": os.getcwd(),
+        "PGHOST": os.environ["IMDBENCH_SUPABASE_HOST"],
+        "PGPORT": os.environ["IMDBENCH_SUPABASE_PORT"],
+        "PGDATABASE": os.environ["IMDBENCH_SUPABASE_DATABASE"],
+        "PGUSER": os.environ["IMDBENCH_SUPABASE_USER"],
+        "PGPASSWORD": os.environ["IMDBENCH_SUPABASE_PASSWORD"],
+        **os.environ,
+    }
+    if "PYTHONPATH" in os.environ:
+        env["PYTHONPATH"] = f"{os.getcwd()}:{os.environ['PYTHONPATH']}"
+    if clean:
+        subprocess.check_call(
+            [
+                "psql",
+                "-tc",
+                "DROP DATABASE IF EXISTS postgres_bench;",
+            ],
+            env=env,
+        )
+        subprocess.check_call(
+            [
+                "psql",
+                "-tc",
+                "CREATE DATABASE postgres_bench;",
+            ],
+            env=env,
+        )
+    env["PGDATABASE"] = "postgres_bench"
+    if clean:
+        subprocess.check_call(
+            [
+                "python",
+                "-m",
+                "alembic.config",
+                "upgrade",
+                "head",
+            ],
+            env=env,
+            cwd=os.getcwd() + "/_sqlalchemy/migrations",
+        )
+        subprocess.check_call(
+            [
+                "python",
+                "_sqlalchemy/loaddata.py",
+                os.getcwd() + "/dataset/build/dataset.json",
+            ],
+            env=env,
+        )
+    subprocess.check_call(
+        [
+            "python",
+            "bench.py",
+            "--query",
+            "insert_movie",
+            "--query",
+            "get_movie",
+            "--query",
+            "get_user",
+            "--concurrency",
+            "4",
+            "--duration",
+            "60",
+            "--db-host",
+            os.environ["IMDBENCH_SUPABASE_HOST"],
+            "--pg-port",
+            os.environ["IMDBENCH_SUPABASE_PORT"],
+            "--pg-database",
+            "postgres_bench",
+            "--pg-user",
+            os.environ["IMDBENCH_SUPABASE_USER"],
+            "--pg-password",
+            os.environ["IMDBENCH_SUPABASE_PASSWORD"],
+            "--html",
+            "/tmp/supabase.html",
+            "sqlalchemy_asyncio",
         ],
         env=env,
     )

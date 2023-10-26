@@ -1,4 +1,7 @@
 from __future__ import with_statement
+
+import os
+
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -24,6 +27,20 @@ target_metadata = _sqlalchemy.models.Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+dsn = "".join([
+    "postgresql+asyncpg://",
+    os.environ.get("PGUSER", "sqlalch_bench"),
+    ":",
+    os.environ.get("PGPASSWORD", "edgedbbenchmark"),
+    "@",
+    os.environ.get("PGHOST", "localhost"),
+    ":",
+    os.environ.get("PGPORT", "15432"),
+    "/",
+    os.environ.get("PGDATABASE", os.environ.get("PGUSER", "sqlalch_bench")),
+    "?async_fallback=true",
+])
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -34,9 +51,8 @@ def run_migrations_offline():
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
+        url=dsn, target_metadata=target_metadata, literal_binds=True
     )
 
     with context.begin_transaction():
@@ -48,8 +64,10 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    conf = config.get_section(config.config_ini_section)
+    conf["sqlalchemy.url"] = dsn
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        conf,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
