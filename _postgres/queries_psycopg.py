@@ -16,9 +16,9 @@ INSERT_PREFIX = 'insert_test__'
 
 def connect(ctx):
     conn = psycopg2.connect(
-        user='postgres_bench',
-        dbname='postgres_bench',
-        password='edgedbbenchmark',
+        user=ctx.pg_user,
+        database=ctx.pg_database,
+        password=ctx.pg_password,
         host=ctx.db_host,
         port=ctx.pg_port)
     conn.autocommit = True

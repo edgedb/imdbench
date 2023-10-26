@@ -7,8 +7,11 @@ def handler(event, context):
         case "/edgedb":
             return run_edgedb()
 
-        case "/supabase-sql":
+        case "/supabase-sql-asyncpg":
             return run_supabase()
+
+        case "/supabase-sql-psycopg":
+            return run_supabase(asyncpg=False)
 
 
 def run_edgedb():
@@ -96,7 +99,7 @@ def run_edgedb():
             "--query",
             "get_user",
             "--concurrency",
-            "4",
+            "1",
             "--duration",
             "60",
             "--html",
@@ -116,7 +119,7 @@ def run_edgedb():
     }
 
 
-def run_supabase():
+def run_supabase(asyncpg=True, clean=True):
     env = {
         "HOME": "/tmp",
         "PYTHONPATH": os.getcwd(),
@@ -127,67 +130,69 @@ def run_supabase():
         "PGPASSWORD": os.environ["IMDBENCH_SUPABASE_PASSWORD"],
         **os.environ,
     }
-    subprocess.check_call(
-        [
-            "psql",
-            "-tc",
-            "DROP DATABASE IF EXISTS postgres_bench;",
-        ],
-        env=env,
-    )
-    subprocess.check_call(
-        [
-            "psql",
-            "-tc",
-            "CREATE DATABASE postgres_bench;",
-        ],
-        env=env,
-    )
+    if clean:
+        subprocess.check_call(
+            [
+                "psql",
+                "-tc",
+                "DROP DATABASE IF EXISTS postgres_bench;",
+            ],
+            env=env,
+        )
+        subprocess.check_call(
+            [
+                "psql",
+                "-tc",
+                "CREATE DATABASE postgres_bench;",
+            ],
+            env=env,
+        )
     env["PGDATABASE"] = "postgres_bench"
-    subprocess.check_call(
-        [
-            "psql",
-            "--file",
-            os.getcwd() + "/_postgres/schema.sql",
-        ],
-        env=env,
-    )
-    subprocess.check_call(
-        [
-            "python",
-            "_postgres/loaddata.py",
-            os.getcwd() + "/dataset/build/dataset.json",
-        ],
-        env=env,
-    )
-    subprocess.check_call(
-        [
-            "psql",
-            "-tc",
-            """\
-            CREATE OR REPLACE VIEW movie_view AS \
-            SELECT \
-                movies.id, \
-                movies.image, \
-                movies.title, \
-                movies.year, \
-                movies.description, \
-                movies.avg_rating AS avg_rating \
-            FROM movies; \
-            CREATE OR REPLACE VIEW person_view AS \
-            SELECT \
-                persons.id, \
-                persons.first_name, \
-                persons.middle_name, \
-                persons.last_name, \
-                persons.image, \
-                persons.bio, \
-                persons.full_name AS full_name \
-            FROM persons; \
-            """,
-        ],
-        env=env,
-    )
+    if clean:
+        subprocess.check_call(
+            [
+                "psql",
+                "--file",
+                os.getcwd() + "/_postgres/schema.sql",
+            ],
+            env=env,
+        )
+        subprocess.check_call(
+            [
+                "python",
+                "_postgres/loaddata.py",
+                os.getcwd() + "/dataset/build/dataset.json",
+            ],
+            env=env,
+        )
+        subprocess.check_call(
+            [
+                "psql",
+                "-tc",
+                """\
+                CREATE OR REPLACE VIEW movie_view AS \
+                SELECT \
+                    movies.id, \
+                    movies.image, \
+                    movies.title, \
+                    movies.year, \
+                    movies.description, \
+                    movies.avg_rating AS avg_rating \
+                FROM movies; \
+                CREATE OR REPLACE VIEW person_view AS \
+                SELECT \
+                    persons.id, \
+                    persons.first_name, \
+                    persons.middle_name, \
+                    persons.last_name, \
+                    persons.image, \
+                    persons.bio, \
+                    persons.full_name AS full_name \
+                FROM persons; \
+                """,
+            ],
+            env=env,
+        )
     subprocess.check_call(
         [
             "python",
@@ -199,7 +204,7 @@ def run_supabase():
             "--query",
             "get_user",
             "--concurrency",
-            "4",
+            "1",
             "--duration",
             "60",
             "--db-host",
@@ -214,7 +219,7 @@ def run_supabase():
             os.environ["IMDBENCH_SUPABASE_PASSWORD"],
             "--html",
             "/tmp/supabase.html",
-            "postgres_asyncpg",
+            "postgres_asyncpg" if asyncpg else "postgres_psycopg",
         ],
         env=env,
     )
