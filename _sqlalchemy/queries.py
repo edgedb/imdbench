@@ -29,7 +29,7 @@ def connect(ctx):
             f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench"
         )
         if 'IMDBENCH_EXTRA_ENV' in os.environ:
-            if os.environ['IMDBENCH_EXTRA_ENV'] == 'supabase':
+            if os.environ['IMDBENCH_EXTRA_ENV'] == 'planetscale':
                 dsn = (
                     f"mysql://{os.environ['PLANETSCALE_USER']}:"
                     f"{os.environ['PLANETSCALE_PASSWORD']}@"
