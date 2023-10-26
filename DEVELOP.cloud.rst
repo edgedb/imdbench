@@ -51,6 +51,18 @@ Run locally
       $ export SUPABASE_HOST=db.xxxxxxxx.supabase.co
       $ export SUPABASE_PASSWORD=your_password
 
+#. Create a PlanetScale database and branch:
+
+   Create a new project on planetscale.com. Always create a new branch and
+   password from the empty project, for each `make load-*` call:
+
+   .. code-block::
+
+      $ export PLANETSCALE_USER=generated_user
+      $ export PLANETSCALE_PASSWORD=generated_password
+      $ export PLANETSCALE_HOST=aws.connect.psdb.cloud  # or use direct
+      $ export PLANETSCALE_DATABASE=your_database
+
 #. Load the data into the test databases via ``$ make load-cloud``.
    Alternatively, you can run only the loaders you care about:
 

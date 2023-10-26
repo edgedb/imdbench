@@ -9,6 +9,7 @@ SHELL = /bin/bash
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: run-js run-py run-orms run-graphql run-edgedb
 .PHONY: run-cloud load-cloud load-edgedb-cloud load-supabase-sqla
+.PHONY: load-planetscale-sqla
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -313,7 +314,12 @@ load-supabase-sqla:
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
-load-cloud: load-edgedb-cloud load-supabase-sqla
+load-planetscale-sqla: export SQLA_DSN=mysql://$(PLANETSCALE_USER):$(PLANETSCALE_PASSWORD)@$(PLANETSCALE_HOST)/$(PLANETSCALE_DATABASE)
+load-planetscale-sqla:
+	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
+	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
+
+load-cloud: load-edgedb-cloud load-supabase-sqla load-planetscale-sqla
 
 compile:
 	make -C _go
