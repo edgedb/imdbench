@@ -13,3 +13,4 @@ asyncpg
 distro
 numpy
 jinja2
+mysqlclient

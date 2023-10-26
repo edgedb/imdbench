@@ -315,6 +315,7 @@ load-supabase-sqla:
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
 
 load-planetscale-sqla: export SQLA_DSN=mysql://$(PLANETSCALE_USER):$(PLANETSCALE_PASSWORD)@$(PLANETSCALE_HOST)/$(PLANETSCALE_DATABASE)
+load-planetscale-sqla: export IMDBENCH_EXTRA_ENV=planetscale
 load-planetscale-sqla:
 	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
 	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json

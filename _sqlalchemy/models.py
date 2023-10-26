@@ -6,6 +6,7 @@
 ##
 
 
+import os
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
@@ -14,6 +15,10 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import declarative_base
 
 
+VARCHAR_LEN = None
+if os.environ.get("IMDBENCH_EXTRA_ENV") == "planetscale":
+    VARCHAR_LEN = 255
+
 Base = declarative_base()
 
 
@@ -21,8 +26,8 @@ class User(Base):
     __tablename__ = "user"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(), nullable=False)
-    image = sa.Column(sa.String(), nullable=False)
+    name = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
+    image = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
 
     reviews = orm.relationship(
         "Review", back_populates="author",
@@ -70,11 +75,11 @@ class Person(Base):
     __tablename__ = "person"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    first_name = sa.Column(sa.String(), nullable=False)
-    middle_name = sa.Column(sa.String(), nullable=False, server_default="")
-    last_name = sa.Column(sa.String(), nullable=False)
-    image = sa.Column(sa.String(), nullable=False)
-    bio = sa.Column(sa.String(), nullable=False)
+    first_name = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
+    middle_name = sa.Column(sa.String(VARCHAR_LEN), nullable=False, server_default="")
+    last_name = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
+    image = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
+    bio = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
 
     # These are direct relationships between people and movies.
     # They are useful when the 'list_order' is irrelevant
@@ -112,7 +117,7 @@ class Review(Base):
     __tablename__ = "review"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    body = sa.Column(sa.String(), nullable=False)
+    body = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
     rating = sa.Column(sa.Integer(), nullable=False)
     creation_time = sa.Column(sa.DateTime(timezone=True), nullable=False)
 
@@ -131,10 +136,10 @@ class Movie(Base):
     __tablename__ = "movie"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    image = sa.Column(sa.String(), nullable=False)
-    title = sa.Column(sa.String(), nullable=False)
+    image = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
+    title = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
     year = sa.Column(sa.Integer(), nullable=False)
-    description = sa.Column(sa.String(), nullable=False)
+    description = sa.Column(sa.String(VARCHAR_LEN), nullable=False)
 
     reviews = orm.relationship(
         Review, back_populates="movie", cascade="all, delete, delete-orphan"
