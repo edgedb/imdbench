@@ -8,7 +8,7 @@ SHELL = /bin/bash
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: run-js run-py run-orms run-graphql run-edgedb
-.PHONY: load-cloud load-edgedb-cloud
+.PHONY: run-cloud load-cloud load-edgedb-cloud
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -306,6 +306,7 @@ compile:
 	make -C _go
 
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 1 --duration 10 --net-latency 1
+CLOUD_RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 60
 
 run-js:
 	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
@@ -327,3 +328,6 @@ run-edgedb:
 
 run-scratch:
 	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go
+
+run-cloud:
+	$(CLOUD_RUNNER) --html docs/cloud.html --json docs/cloud.json edgedb_py_sync
