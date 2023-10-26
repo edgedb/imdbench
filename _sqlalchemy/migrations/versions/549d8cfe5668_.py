@@ -52,7 +52,7 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "cast",
+        sa.sql.quoted_name("cast", True),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("list_order", sa.Integer(), nullable=True),
         sa.Column("person_id", sa.Integer(), nullable=False),
@@ -67,8 +67,8 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_cast_movie_id"), "cast", ["movie_id"], unique=False)
-    op.create_index(op.f("ix_cast_person_id"), "cast", ["person_id"], unique=False)
+    op.create_index(op.f("ix_cast_movie_id"), sa.sql.quoted_name("cast", True), ["movie_id"], unique=False)
+    op.create_index(op.f("ix_cast_person_id"), sa.sql.quoted_name("cast", True), ["person_id"], unique=False)
     op.create_table(
         "directors",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -122,9 +122,9 @@ def downgrade():
     op.drop_index(op.f("ix_directors_person_id"), table_name="directors")
     op.drop_index(op.f("ix_directors_movie_id"), table_name="directors")
     op.drop_table("directors")
-    op.drop_index(op.f("ix_cast_person_id"), table_name="cast")
-    op.drop_index(op.f("ix_cast_movie_id"), table_name="cast")
-    op.drop_table("cast")
+    op.drop_index(op.f("ix_cast_person_id"), table_name=sa.sql.quoted_name("cast", True))
+    op.drop_index(op.f("ix_cast_movie_id"), table_name=sa.sql.quoted_name("cast", True))
+    op.drop_table(sa.sql.quoted_name("cast", True))
     op.drop_table("user")
     op.drop_table("person")
     op.drop_table("movie")
