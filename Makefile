@@ -303,7 +303,7 @@ load-graphql: load-hasura load-postgraphile
 PSQL_SUPABASE = $(PSQL) -h $(SUPABASE_HOST) -U postgres
 
 load-supabase-sqla: export PGPASSWORD=$(SUPABASE_PASSWORD)
-load-supabase-sqla: export SQLA_DSN=postgresql+asyncpg://edgedb:$(SUPABASE_PASSWORD)@$(SUPABASE_HOST)/sqlalch_bench?async_fallback=true
+load-supabase-sqla: export SQLA_DSN=postgresql+asyncpg://postgres:$(SUPABASE_PASSWORD)@$(SUPABASE_HOST)/sqlalch_bench?async_fallback=true
 load-supabase-sqla:
 	$(PSQL_SUPABASE) -tc \
 		"DROP DATABASE IF EXISTS sqlalch_bench;"
