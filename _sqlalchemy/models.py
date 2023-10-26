@@ -55,7 +55,7 @@ class Directors(Base):
 
 
 class Cast(Base):
-    __tablename__ = "cast"
+    __tablename__ = sa.sql.quoted_name("cast", True)
 
     id = sa.Column(sa.Integer(), primary_key=True)
     list_order = sa.Column(sa.Integer(), nullable=True)
@@ -92,7 +92,7 @@ class Person(Base):
     acted_in = orm.relationship(
         "Movie",
         secondary=Cast.__table__,
-        backref="cast",
+        backref=sa.sql.quoted_name("cast", True),
         viewonly=True,
     )
 
