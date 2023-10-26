@@ -8,6 +8,7 @@ SHELL = /bin/bash
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: run-js run-py run-orms run-graphql run-edgedb
+.PHONY: load-cloud load-edgedb-cloud
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -155,6 +156,17 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
 	cd _edgedb_js && npm i && npx @edgedb/generate edgeql-js --output-dir querybuilder --target cjs --force-overwrite
 
+load-edgedb-cloud: $(BUILD)/edbdataset.json
+	-edgedb project unlink --non-interactive
+	edgedb project init --link --database edgedb \
+		--non-interactive --no-migrations --server-instance $EDGEDB_INSTANCE
+	edgedb query 'CREATE DATABASE temp'
+	edgedb -d temp query 'DROP DATABASE edgedb'
+	edgedb -d temp query 'CREATE DATABASE edgedb'
+	edgedb query 'DROP DATABASE temp'
+	edgedb migrate
+	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
+
 load-edgedb-nosetup:
 	$(PP) -m _edgedb.loaddata $(BUILD)/edbdataset.json
 
@@ -287,6 +299,8 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 	  load-typeorm load-sequelize load-prisma load-graphql
 
 load-graphql: load-hasura load-postgraphile
+
+load-cloud: load-edgedb-cloud
 
 compile:
 	make -C _go
