@@ -84,6 +84,14 @@ IMPLEMENTATIONS = {
             'supabase',
         ),
 
+    'planetscale_sqla':
+        impl(
+            'python',
+            'PlanetScale (Python, SQLAlchemy)',
+            sqlalchemy_queries,
+            'planetscale',
+        ),
+
     'postgres_asyncpg':
         impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),
 

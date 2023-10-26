@@ -7,6 +7,7 @@
 
 
 import json
+import os
 import random
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
@@ -23,10 +24,19 @@ def connect(ctx):
     global session_factory
 
     if session_factory is None:
-        engine = sa.create_engine(
+        dsn = (
             f"postgresql://sqlalch_bench:edgedbbenchmark@"
             f"{ctx.db_host}:{ctx.pg_port}/sqlalch_bench"
         )
+        if 'IMDBENCH_EXTRA_ENV' in os.environ:
+            if os.environ['IMDBENCH_EXTRA_ENV'] == 'supabase':
+                dsn = (
+                    f"mysql://{os.environ['PLANETSCALE_USER']}:"
+                    f"{os.environ['PLANETSCALE_PASSWORD']}@"
+                    f"{os.environ['PLANETSCALE_HOST']}/"
+                    f"{os.environ['PLANETSCALE_DATABASE']}"
+                )
+        engine = sa.create_engine(dsn)
         session_factory = orm.sessionmaker(bind=engine, expire_on_commit=False)
 
     return session_factory()
