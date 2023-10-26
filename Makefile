@@ -159,7 +159,7 @@ load-edgedb: $(BUILD)/edbdataset.json docker-edgedb
 load-edgedb-cloud: $(BUILD)/edbdataset.json
 	-edgedb project unlink --non-interactive
 	edgedb project init --link --database edgedb \
-		--non-interactive --no-migrations --server-instance $EDGEDB_INSTANCE
+		--non-interactive --no-migrations --server-instance $(EDGEDB_INSTANCE)
 	edgedb query 'CREATE DATABASE temp'
 	edgedb -d temp query 'DROP DATABASE edgedb'
 	edgedb -d temp query 'CREATE DATABASE edgedb'
