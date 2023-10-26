@@ -41,6 +41,16 @@ Run locally
       $ edgedb instance create your-org/instance-name
       $ export EDGEDB_INSTANCE=your-org/instance-name
 
+#. Create a Supabase project:
+
+   Create a new project on supabase.com, and retrieve the following information
+   from Settings - Database:
+
+   .. code-block::
+
+      $ export SUPABASE_HOST=db.xxxxxxxx.supabase.co
+      $ export SUPABASE_PASSWORD=your_password
+
 #. Load the data into the test databases via ``$ make load-cloud``.
    Alternatively, you can run only the loaders you care about:
 

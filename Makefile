@@ -8,7 +8,7 @@ SHELL = /bin/bash
 .PHONY: load-typeorm load-sequelize load-prisma
 .PHONY: load-graphql load-hasura load-postgraphile
 .PHONY: run-js run-py run-orms run-graphql run-edgedb
-.PHONY: run-cloud load-cloud load-edgedb-cloud
+.PHONY: run-cloud load-cloud load-edgedb-cloud load-supabase-sqla
 
 CURRENT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -300,7 +300,20 @@ load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
 
 load-graphql: load-hasura load-postgraphile
 
-load-cloud: load-edgedb-cloud
+PSQL_SUPABASE = $(PSQL) -h $(SUPABASE_HOST) -U postgres
+
+load-supabase-sqla: export PGPASSWORD=$(SUPABASE_PASSWORD)
+load-supabase-sqla: export SQLA_DSN=postgresql+asyncpg://edgedb:$(SUPABASE_PASSWORD)@$(SUPABASE_HOST)/sqlalch_bench?async_fallback=true
+load-supabase-sqla:
+	$(PSQL_SUPABASE) -tc \
+		"DROP DATABASE IF EXISTS sqlalch_bench;"
+	$(PSQL_SUPABASE) -tc \
+		"CREATE DATABASE sqlalch_bench;"
+
+	cd _sqlalchemy/migrations && $(PP) -m alembic.config upgrade head && cd ../..
+	$(PP) _sqlalchemy/loaddata.py $(BUILD)/dataset.json
+
+load-cloud: load-edgedb-cloud load-supabase-sqla
 
 compile:
 	make -C _go
