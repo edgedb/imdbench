@@ -17,8 +17,10 @@ branch_labels = None
 depends_on = None
 
 VARCHAR_LEN = None
+USE_CONSTRAINT = True
 if os.environ.get("IMDBENCH_EXTRA_ENV") == "planetscale":
     VARCHAR_LEN = 255
+    USE_CONSTRAINT = False
 
 
 def upgrade():
@@ -57,31 +59,53 @@ def upgrade():
         sa.Column("list_order", sa.Integer(), nullable=True),
         sa.Column("person_id", sa.Integer(), nullable=False),
         sa.Column("movie_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["movie_id"],
-            ["movie.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["person_id"],
-            ["person.id"],
+        *(
+            [
+                sa.ForeignKeyConstraint(
+                    ["movie_id"],
+                    ["movie.id"],
+                ),
+                sa.ForeignKeyConstraint(
+                    ["person_id"],
+                    ["person.id"],
+                ),
+            ]
+            if USE_CONSTRAINT
+            else []
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_cast_movie_id"), sa.sql.quoted_name("cast", True), ["movie_id"], unique=False)
-    op.create_index(op.f("ix_cast_person_id"), sa.sql.quoted_name("cast", True), ["person_id"], unique=False)
+    op.create_index(
+        op.f("ix_cast_movie_id"),
+        sa.sql.quoted_name("cast", True),
+        ["movie_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_cast_person_id"),
+        sa.sql.quoted_name("cast", True),
+        ["person_id"],
+        unique=False,
+    )
     op.create_table(
         "directors",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("list_order", sa.Integer(), nullable=True),
         sa.Column("person_id", sa.Integer(), nullable=False),
         sa.Column("movie_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["movie_id"],
-            ["movie.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["person_id"],
-            ["person.id"],
+        *(
+            [
+                sa.ForeignKeyConstraint(
+                    ["movie_id"],
+                    ["movie.id"],
+                ),
+                sa.ForeignKeyConstraint(
+                    ["person_id"],
+                    ["person.id"],
+                ),
+            ]
+            if USE_CONSTRAINT
+            else []
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -99,13 +123,19 @@ def upgrade():
         sa.Column("creation_time", sa.DateTime(timezone=True), nullable=False),
         sa.Column("author_id", sa.Integer(), nullable=False),
         sa.Column("movie_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["author_id"],
-            ["user.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["movie_id"],
-            ["movie.id"],
+        *(
+            [
+                sa.ForeignKeyConstraint(
+                    ["author_id"],
+                    ["user.id"],
+                ),
+                sa.ForeignKeyConstraint(
+                    ["movie_id"],
+                    ["movie.id"],
+                ),
+            ]
+            if USE_CONSTRAINT
+            else []
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -122,7 +152,9 @@ def downgrade():
     op.drop_index(op.f("ix_directors_person_id"), table_name="directors")
     op.drop_index(op.f("ix_directors_movie_id"), table_name="directors")
     op.drop_table("directors")
-    op.drop_index(op.f("ix_cast_person_id"), table_name=sa.sql.quoted_name("cast", True))
+    op.drop_index(
+        op.f("ix_cast_person_id"), table_name=sa.sql.quoted_name("cast", True)
+    )
     op.drop_index(op.f("ix_cast_movie_id"), table_name=sa.sql.quoted_name("cast", True))
     op.drop_table(sa.sql.quoted_name("cast", True))
     op.drop_table("user")
