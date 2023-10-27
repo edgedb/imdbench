@@ -109,7 +109,7 @@ def load_data(filename, engine):
         bulk_insert(db, "cast", data["cast"], m.Cast)
 
         # reconcile the autoincrementing indexes with the actual indexes
-        reset_sequence(db, sa.sql.quoted_name("cast", True))
+        reset_sequence(db, "cast")
         reset_sequence(db, "directors")
         reset_sequence(db, "movie")
         reset_sequence(db, "person")
