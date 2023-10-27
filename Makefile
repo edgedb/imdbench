@@ -326,7 +326,7 @@ compile:
 	make -C _go
 
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 1 --duration 10 --net-latency 1
-CLOUD_RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 60
+CLOUD_RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 60 --async-split 4
 
 run-js:
 	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
