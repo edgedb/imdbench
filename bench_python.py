@@ -271,30 +271,35 @@ def run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
 
 
 def run_sync(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
+    impl = _shared.IMPLEMENTATIONS[benchname]
+    queries_mod = impl.module
     results = []
 
-    if hasattr(queries_mod, 'init'):
-        queries_mod.init(ctx)
-    idconn = queries_mod.connect(ctx)
-    ids = queries_mod.load_ids(ctx, idconn)
-    queries_mod.close(ctx, idconn)
+    os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
+    try:
+        if hasattr(queries_mod, 'init'):
+            queries_mod.init(ctx)
+        idconn = queries_mod.connect(ctx)
+        ids = queries_mod.load_ids(ctx, idconn)
+        queries_mod.close(ctx, idconn)
 
-    for queryname in ctx.queries:
-        # Potentially setup the benchmark state
-        conn = queries_mod.connect(ctx)
-        queries_mod.setup(ctx, conn, queryname)
-        queries_mod.close(ctx, conn)
+        for queryname in ctx.queries:
+            # Potentially setup the benchmark state
+            conn = queries_mod.connect(ctx)
+            queries_mod.setup(ctx, conn, queryname)
+            queries_mod.close(ctx, conn)
 
-        res = run_benchmark_sync(ctx, benchname, ids, queryname)
-        results.append(res)
-        print_result(ctx, res)
-        queries_mod.close(ctx, conn)
+            res = run_benchmark_sync(ctx, benchname, ids, queryname)
+            results.append(res)
+            print_result(ctx, res)
+            queries_mod.close(ctx, conn)
 
-        # Potentially clean up after the benchmarks
-        conn = queries_mod.connect(ctx)
-        queries_mod.cleanup(ctx, conn, queryname)
-        queries_mod.close(ctx, conn)
+            # Potentially clean up after the benchmarks
+            conn = queries_mod.connect(ctx)
+            queries_mod.cleanup(ctx, conn, queryname)
+            queries_mod.close(ctx, conn)
+    finally:
+        del os.environ['IMDBENCH_EXTRA_ENV']
 
     return results
 
