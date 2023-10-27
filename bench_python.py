@@ -275,7 +275,8 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
     queries_mod = impl.module
     results = []
 
-    os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
+    if impl.extra_env:
+        os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
     try:
         if hasattr(queries_mod, 'init'):
             queries_mod.init(ctx)
@@ -299,7 +300,7 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
             queries_mod.cleanup(ctx, conn, queryname)
             queries_mod.close(ctx, conn)
     finally:
-        del os.environ['IMDBENCH_EXTRA_ENV']
+        os.environ.pop('IMDBENCH_EXTRA_ENV', None)
 
     return results
 
@@ -336,7 +337,8 @@ def run_async(ctx, benchname) -> typing.List[Result]:
         finally:
             await queries_mod.close(ctx, conn)
 
-    os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
+    if impl.extra_env:
+        os.environ['IMDBENCH_EXTRA_ENV'] = impl.extra_env
     try:
         uvloop.install()
         ids = asyncio.run(fetch_ids())
@@ -352,7 +354,7 @@ def run_async(ctx, benchname) -> typing.List[Result]:
             # Potentially clean up after the benchmarks
             asyncio.run(cleanup())
     finally:
-        del os.environ['IMDBENCH_EXTRA_ENV']
+        os.environ.pop('IMDBENCH_EXTRA_ENV', None)
 
     return results
 
