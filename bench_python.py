@@ -89,7 +89,11 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
         while time.monotonic() - start < duration:
             rid = id_loop.get_next()
             req_start = time.monotonic_ns()
-            method(conn, rid)
+            try:
+                method(conn, rid)
+            except Exception as e:
+                print("ERROR: ", e)
+                continue
             req_time = (time.monotonic_ns() - req_start) // 10000
 
             if req_time > max_latency:
