@@ -336,7 +336,7 @@ class BenchApp extends App {
     }
   }
 
-  async getIDs() {
+  async getIDs(number_of_ids) {
     var ids = await Promise.all([
       this.models.User.findAll({ attributes: ["id"] }),
       this.models.Person.findAll({ attributes: ["id"] }),

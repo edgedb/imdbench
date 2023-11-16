@@ -56,7 +56,7 @@ export class App extends Connection {
     return await method(val);
   }
 
-  async getIDs() {
+  async getIDs(number_of_ids) {
     var ids = await Promise.all([
       this.getRepository(User).find({ select: ["id"] }),
       this.getRepository(Person).find({ select: ["id"] }),

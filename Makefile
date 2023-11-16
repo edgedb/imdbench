@@ -367,6 +367,7 @@ run-cloud-sqla:
 	$(CLOUD_RUNNER) --html docs/cloud.html --json docs/cloud.json edgedb_py_sync supabase_sqla planetscale_sqla
 
 run-planetscale: NAME ?= PlanetScale
+run-planetscale: export IMDBENCH_MYSQL=1
 run-planetscale:
 	$(BASE_RUNNER) --concurrency 1 --json docs/planetscale-1.json prisma
 	$(BASE_RUNNER) --concurrency 2 --json docs/planetscale-2.json prisma
