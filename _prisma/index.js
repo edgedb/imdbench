@@ -584,30 +584,34 @@ class App extends PrismaClient {
       `;
     } else if (query == 'insert_movie' || query == 'insert_movie_plus') {
       await this.$executeRaw`
-          DELETE FROM
-              "directors" as D
-          USING
-              "movies" as M
+          DELETE D FROM
+              directors as D
+          JOIN
+              movies as M
+          ON
+              D.movie_id = M.id
           WHERE
-              D.movie_id = M.id AND M.image LIKE 'insert_test__%';
+              M.image LIKE 'insert_test__%';
+      `;
+      await this.$executeRaw`
+          DELETE A FROM
+              actors as A
+          JOIN
+              movies as M
+          ON
+              A.movie_id = M.id
+          WHERE
+              M.image LIKE 'insert_test__%';
       `;
       await this.$executeRaw`
           DELETE FROM
-              "actors" as A
-          USING
-              "movies" as M
-          WHERE
-              A.movie_id = M.id AND M.image LIKE 'insert_test__%';
-      `;
-      await this.$executeRaw`
-          DELETE FROM
-              "movies" as M
+              movies as M
           WHERE
               M.image LIKE 'insert_test__%';
       `;
       return await this.$executeRaw`
           DELETE FROM
-              "persons" as P
+              persons as P
           WHERE
               P.image LIKE 'insert_test__%';
       `;
