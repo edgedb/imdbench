@@ -338,8 +338,9 @@ load-cloud: load-edgedb-cloud load-supabase-sqla load-planetscale-sqla
 compile:
 	make -C _go
 
+BASE_RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --duration 60
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 1 --duration 10 --net-latency 1
-CLOUD_RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 4 --duration 60 --async-split 4
+CLOUD_RUNNER = $(BASE_RUNNER) --concurrency 4 --async-split 4
 
 run-js:
 	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
@@ -362,5 +363,16 @@ run-edgedb:
 run-scratch:
 	python bench.py --query insert_movie --concurrency 1 --warmup-time 2 --duration 5 --html docs/scratch.html edgedb_go
 
-run-cloud:
+run-cloud-sqla:
 	$(CLOUD_RUNNER) --html docs/cloud.html --json docs/cloud.json edgedb_py_sync supabase_sqla planetscale_sqla
+
+run-planetscale: NAME ?= PlanetScale
+run-planetscale:
+	$(BASE_RUNNER) --concurrency 1 --json docs/planetscale-1.json prisma
+	$(BASE_RUNNER) --concurrency 2 --json docs/planetscale-2.json prisma
+	$(BASE_RUNNER) --concurrency 4 --json docs/planetscale-4.json prisma
+	$(BASE_RUNNER) --concurrency 8 --json docs/planetscale-8.json prisma
+	$(BASE_RUNNER) --concurrency 12 --json docs/planetscale-12.json prisma
+	$(BASE_RUNNER) --concurrency 16 --json docs/planetscale-16.json prisma
+	$(BASE_RUNNER) --concurrency 20 --json docs/planetscale-20.json prisma
+	$(PP) merge.py $(NAME) docs/planetscale-*.json > docs/planetscale.html
