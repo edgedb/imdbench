@@ -186,7 +186,7 @@ def process_results(lat_data, results):
             results.setdefault(query_bench['queryname'], []).append(d)
 
 
-def format_report_html(data, target_file):
+def format_report_html(data, target_file, sort=True):
     tpl_dir = pathlib.Path(__file__).parent / 'docs'
     tpl_path = tpl_dir / 'TEMPLATE.html'
 
@@ -215,12 +215,12 @@ def format_report_html(data, target_file):
         __BENCHMARK_DATA__={
             b: json.dumps(v) for b, v in data['benchmarks'].items()
         },
+        __BENCHMARK_SORT__='true' if sort else 'false',
     )
 
     output = tpl.render(**params)
 
-    with open(target_file, 'wt') as f:
-        f.write(output)
+    target_file.write(output)
 
 
 def run_benchmarks(args, argv):
@@ -338,7 +338,8 @@ def main():
     }
 
     if args.html:
-        format_report_html(report_data, args.html)
+        with open(args.html, 'wt') as f:
+            format_report_html(report_data, f)
 
     if args.json:
         with open(args.json, 'wt') as f:
