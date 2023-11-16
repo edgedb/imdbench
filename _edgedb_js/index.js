@@ -345,7 +345,7 @@ class App {
     await this.conn.connect();
   }
 
-  async getIDs() {
+  async getIDs(number_of_ids) {
     var ids = await this.conn.client.querySingle(`
       WITH
           U := User {id, r := random()},

@@ -103,9 +103,9 @@ async function runner(args, app) {
   var data = null;
   var samples = [];
 
-  var ids = (await app.getIDs())[args.query];
-  if (ids.length > args.numner_of_ids) {
-    ids = ids.slice(0, args.numner_of_ids);
+  var ids = (await app.getIDs(args.number_of_ids))[args.query];
+  if (ids.length > args.number_of_ids) {
+    ids = ids.slice(0, args.number_of_ids);
   }
   ids = _.shuffle(ids);
   var idIndex = 0;

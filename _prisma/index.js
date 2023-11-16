@@ -536,12 +536,27 @@ class App extends PrismaClient {
     }
   }
 
-  async getIDs() {
-    var ids = await Promise.all([
-      this.users.findMany({select: {id: true}}),
-      this.persons.findMany({select: {id: true}}),
-      this.movies.findMany({select: {id: true, title: true}}),
-    ]);
+  async getIDs(number_of_ids) {
+    var ids;
+    if (process.env.IMDBENCH_MYSQL) {
+      ids = await Promise.all([
+        this.$queryRaw`SELECT id
+                       FROM users
+                       ORDER BY RAND() LIMIT ${number_of_ids}`,
+        this.$queryRaw`SELECT id
+                       FROM persons
+                       ORDER BY RAND() LIMIT ${number_of_ids}`,
+        this.$queryRaw`SELECT id
+                       FROM movies
+                       ORDER BY RAND() LIMIT ${number_of_ids}`,
+      ]);
+    } else {
+      ids = await Promise.all([
+        this.users.findMany({select: {id: true}}),
+        this.persons.findMany({select: {id: true}}),
+        this.movies.findMany({select: {id: true, title: true}}),
+      ]);
+    }
     var people = ids[1].map((x) => x.id);
 
     return {
