@@ -2,13 +2,13 @@
   "name": "_prisma",
   "version": "1.0.0",
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "dependencies": {
-    "@prisma/client": "^4.14.1"
+    "@prisma/client": "^5.6.0"
   },
   "devDependencies": {
-    "prisma": "4.14.1"
+    "prisma": "5.6.0"
   },
   "scripts": {
     "dev": "node ./app.js"
