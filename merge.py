@@ -18,7 +18,7 @@ from bench import format_report_html
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("name")
-    parser.add_argument("json_files")
+    parser.add_argument("json_files", nargs='*')
     args = parser.parse_args()
     concurrencies = []
     benchmarks = {}
