@@ -13,17 +13,26 @@ import argparse
 import asyncio
 import edgedb
 import json
-import progress.bar
 import uvloop
-import edb.tools.experimental_interpreter.new_interpreter
-
-
+from edb.tools.experimental_interpreter import new_interpreter
+from edb.tools.experimental_interpreter.sqlite import sqlite_adapter
+import os
+from tqdm import tqdm
+import random
+TEST_SQLITE_FILE_NAME="imdb_test_1.sqlite"
 
 
 def import_data(data: dict):
 
-    with open("dbschema/default_sqlite.esdl", "r") as f:
-        dbschema, db = new_interpreter.dbschema_and_db_with_initial_schema_and_queries(f.read(), "", "test_1.sqlite")
+    new_interpreter.interpreter_parser_init()
+    if TEST_SQLITE_FILE_NAME:
+        if os.path.exists(TEST_SQLITE_FILE_NAME):
+            os.remove(TEST_SQLITE_FILE_NAME)
+
+    with open("imdbench/dbschema/default_sqlite.esdl", "r") as f:
+        dbschema, db = new_interpreter.dbschema_and_db_with_initial_schema_and_queries(f.read(), "", TEST_SQLITE_FILE_NAME)
+
+    assert isinstance(db.storage, sqlite_adapter.SQLiteEdgeDatabaseStorageProvider)
 
     users = data['user']
     reviews = data['review']
@@ -173,10 +182,27 @@ def import_data(data: dict):
         ) for r in reviews
     ]
 
-    map(people_data)
-    map(users_data)
-    map(movies_data)
-    map(reviews_data)
+    # random.shuffle(all_data)
+
+    def go_data(all_data):
+        db.storage.pause_disk_commit()
+        for i in tqdm(range(0, len(all_data), 1)):
+            (query, param) = all_data[i]
+            query = query[0]
+            assert isinstance(query, str)
+            new_interpreter.run_single_str((dbschema, db), query, param)
+        db.storage.resume_disk_commit()
+
+    print(f"Number of people: {len(people_data)}")
+    print(f"Number of users: {len(users_data)}")
+    print(f"Number of movies: {len(movies_data)}")
+    print(f"Number of reviews: {len(reviews_data)}")
+
+    go_data(people_data)
+    go_data(users_data)
+    go_data(movies_data)
+    go_data(reviews_data)
+
 
 
 def id2image(idmap, ids):
