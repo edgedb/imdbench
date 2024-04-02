@@ -1,0 +1,5 @@
+node_modules/
+querybuilder
+*.js
+*.js.map
+/tsconfig.tsbuildinfo

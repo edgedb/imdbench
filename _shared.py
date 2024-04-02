@@ -121,6 +121,9 @@ IMPLEMENTATIONS = {
     'prisma':
         impl('js', 'Prisma', None),
 
+    'drizzle':
+        impl('js', 'Drizzle', None),
+
     'edgedb_dart':
         impl('dart', 'EdgeDB (Dart)', None),
 

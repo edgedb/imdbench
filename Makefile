@@ -283,8 +283,11 @@ load-sequelize: $(BUILD)/dataset.json docker-postgres
 
 	cd _sequelize && npm i && node loaddata.js $(BUILD)/dataset.json
 
+load-drizzle: $(BUILD)/dataset.json load-postgres
+	cd _drizzle && npm i && npm run build
+
 load: load-mongodb load-edgedb load-django load-sqlalchemy load-postgres \
-	  load-typeorm load-sequelize load-prisma load-graphql
+	  load-typeorm load-sequelize load-prisma load-graphql load-drizzle
 
 load-graphql: load-hasura load-postgraphile
 
@@ -294,7 +297,7 @@ compile:
 RUNNER = python bench.py --query insert_movie --query get_movie --query get_user --concurrency 1 --duration 10 --net-latency 1
 
 run-js:
-	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma edgedb_js_qb
+	$(RUNNER) --html docs/js.html --json docs/js.json typeorm sequelize prisma drizzle edgedb_js_qb
 
 run-py:
 	$(RUNNER) --html docs/py.html --json docs/py.json django sqlalchemy edgedb_py_sync
@@ -306,7 +309,7 @@ run-graphql:
 	$(RUNNER) --html docs/py.html --json docs/py.json postgres_hasura_go postgres_postgraphile_go edgedb_go_graphql
 
 run-orms:
-	$(RUNNER) --html docs/orms.html --json docs/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy
+	$(RUNNER) --html docs/orms.html --json docs/orms.json typeorm sequelize prisma edgedb_js_qb django django_restfw mongodb sqlalchemy drizzle
 
 run-edgedb:
 	$(RUNNER) --html docs/edgedb.html --json docs/edgedb.json edgedb_py_sync edgedb_py_json edgedb_py_json_async edgedb_go edgedb_go_json edgedb_go_graphql edgedb_go_http edgedb_js edgedb_js_json edgedb_js_qb edgedb_dart edgedb_dart_json
