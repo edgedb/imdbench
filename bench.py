@@ -243,6 +243,10 @@ def run_benchmarks(args, argv):
             lang_args['dart'] = [
                 'python', 'bench_dart.py', '--json', '__tmp.json'
             ] + argv
+        elif bench.language == 'edgeql_sqlite':
+            lang_args['edgeql_sqlite'] = [
+                'python', 'imdbench/bench_edgeql_lite.py', '--json', '__tmp.json'
+            ] + argv
         else:
             raise ValueError('unsupported host language: {}'.format(
                 bench.language))

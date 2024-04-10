@@ -19,23 +19,25 @@ from edb.tools.experimental_interpreter.sqlite import sqlite_adapter
 import os
 from tqdm import tqdm
 import random
-TEST_SQLITE_FILE_NAME="imdb_test_1.sqlite"
+TEST_SQLITE_FILE_NAME="imdb_test_3.sqlite"
 # TEST_SQLITE_FILE_NAME=None
 
+IMDBENCH_SDL_FILEPATH="imdbench/dbschema/default_sqlite.esdl"
 
 
-def go_data(dbschema, db, all_data):
+
+def go_data(edgeql_interpreter : new_interpreter.EdgeQLInterpreter, all_data):
     if TEST_SQLITE_FILE_NAME:
-        assert isinstance(db.storage, sqlite_adapter.SQLiteEdgeDatabaseStorageProvider)
-        db.storage.pause_disk_commit()
+        assert isinstance(edgeql_interpreter.db.storage, sqlite_adapter.SQLiteEdgeDatabaseStorageProvider)
+        edgeql_interpreter.db.storage.pause_disk_commit()
     for i in tqdm(range(0, len(all_data), 1)):
         (query, param) = all_data[i]
         query = query[0]
         assert isinstance(query, str)
-        new_interpreter.run_single_str((dbschema, db), query, param)
+        edgeql_interpreter.run_single_str_get_json_with_cache(query, param, disable_cache=True)
     if TEST_SQLITE_FILE_NAME:
-        assert isinstance(db.storage, sqlite_adapter.SQLiteEdgeDatabaseStorageProvider)
-        db.storage.resume_disk_commit()
+        assert isinstance(edgeql_interpreter.db.storage, sqlite_adapter.SQLiteEdgeDatabaseStorageProvider)
+        edgeql_interpreter.db.storage.resume_disk_commit()
 
 
 def prepare_data(data):
@@ -206,11 +208,11 @@ def import_data_bulk1(data: dict):
         if os.path.exists(TEST_SQLITE_FILE_NAME):
             os.remove(TEST_SQLITE_FILE_NAME)
 
-    with open("imdbench/dbschema/default_sqlite.esdl", "r") as f:
-        dbschema, db = new_interpreter.dbschema_and_db_with_initial_schema_and_queries(f.read(), "", TEST_SQLITE_FILE_NAME)
+    with open(IMDBENCH_SDL_FILEPATH, "r") as f:
+        edgeql_interpreter = new_interpreter.EdgeQLInterpreter(f.read(), TEST_SQLITE_FILE_NAME)
 
-    go_data(dbschema, db, people_data)
-    go_data(dbschema, db, users_data)
+    go_data(edgeql_interpreter, people_data)
+    go_data(edgeql_interpreter, users_data)
 
 def import_data_bulk2(data: dict):
 
@@ -218,11 +220,11 @@ def import_data_bulk2(data: dict):
 
     new_interpreter.interpreter_parser_init()
 
-    with open("imdbench/dbschema/default_sqlite.esdl", "r") as f:
-        dbschema, db = new_interpreter.dbschema_and_db_with_initial_schema_and_queries(f.read(), "", TEST_SQLITE_FILE_NAME)
+    with open(IMDBENCH_SDL_FILEPATH, "r") as f:
+        edgeql_interpreter = new_interpreter.EdgeQLInterpreter(f.read(), TEST_SQLITE_FILE_NAME)
 
-    go_data(dbschema, db, movies_data)
-    go_data(dbschema, db, reviews_data)
+    go_data(edgeql_interpreter, movies_data)
+    go_data(edgeql_interpreter, reviews_data)
 
 
 

@@ -382,7 +382,7 @@ def main():
     data = []
     for benchmark in ctx.benchmarks:
         bench_desc = _shared.IMPLEMENTATIONS[benchmark]
-        if bench_desc.language != 'python':
+        if bench_desc.language != 'edgeql_sqlite':
             continue
 
         res = run_bench(ctx, benchmark)

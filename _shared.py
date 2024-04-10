@@ -13,6 +13,7 @@ import typing
 
 
 from _edgedb import queries_json as edgedb_queries_json
+from _edgedb import queries_json_sqlite as edgedb_queries_json_sqlite
 from _edgedb import queries_async as edgedb_queries_async
 from _edgedb import queries_repack as edgedb_queries_repack
 from _go.edgedb import queries_edgedb as edgedb_json_golang
@@ -41,6 +42,9 @@ IMPLEMENTATIONS = {
 
     'edgedb_py_json':
         impl('python', 'EdgeDB (Python, JSON)', edgedb_queries_json),
+
+    'edgeql_json_sqlite':
+        impl('edgeql_sqlite', 'EdgeQL on SQLite (Python, JSON)', edgedb_queries_json_sqlite),
 
     'edgedb_py_json_async':
         impl('python', 'EdgeDB (Python, JSON, asyncio)', edgedb_queries_async),
