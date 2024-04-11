@@ -56,20 +56,6 @@ GET_MOVIE = """
         }
         ORDER BY @list_order EMPTY LAST
             THEN .last_name,
-
-        reviews := (
-            SELECT Movie.<movie[IS Review] {
-                id,
-                body,
-                rating,
-                author: {
-                    id,
-                    name,
-                    image,
-                }
-            }
-            ORDER BY .creation_time DESC
-        ),
     }
     FILTER .id = <uuid>$id
 """

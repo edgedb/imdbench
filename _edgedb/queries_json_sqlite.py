@@ -29,27 +29,28 @@ def connect(ctx):
 
 
 def close(ctx, conn):
-    conn.close()
+    pass
 
 
 def load_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
-    d = edgeql_interpreter.run_single_str_get_json_with_cache('''
+    d = edgeql_interpreter.query_single_json('''
         WITH
-            U := User {id, r := random()},
-            M := Movie {id, r := random()},
-            P := Person {id, r := random()}
+            U := (select User limit 2) {id, r := random()},
+            M := (select Movie limit 2) {id, r := random()},
+            P := (select Person limit 2) {id, r := random()}
         SELECT (
             users := array_agg((SELECT U ORDER BY U.r LIMIT <int64>$lim).id),
             movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim).id),
             people := array_agg((SELECT P ORDER BY P.r LIMIT <int64>$lim).id),
         );
-    ''', {"lim": ctx.number_of_ids})
+    ''', lim=ctx.number_of_ids)
 
-    movies = list(d.movies)
-    people = list(d.people)
+
+    movies = list(d['movies'])
+    people = list(d['people'])
 
     return dict(
-        get_user=list(d.users),
+        get_user=list(d['users']),
         get_movie=movies,
         get_person=people,
         # re-use user IDs for update tests

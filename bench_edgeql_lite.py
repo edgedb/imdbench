@@ -202,71 +202,29 @@ def agg_results(results, benchname, queryname, duration) -> Result:
 
 def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
     method_ids = ids[queryname]
+    assert ctx.concurrency == 1
     # We want to split the input ids into separate chunks, so that we
     # avoid concurrent mutations of the same object.
-    chunk_len = math.ceil(len(method_ids) / ctx.concurrency)
-    with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
-        tasks = []
-        for i in range(ctx.concurrency):
-            task = e.submit(
-                run_benchmark_method,
-                ctx,
-                benchname,
-                method_ids[chunk_len*i:chunk_len*(i+1)],
-                queryname)
-            tasks.append(task)
 
-        results = [fut.result() for fut in futures.wait(tasks).done]
+    # chunk_len = math.ceil(len(method_ids) / ctx.concurrency)
+    # with futures.ProcessPoolExecutor(max_workers=ctx.concurrency) as e:
+    #     tasks = []
+    #     for i in range(ctx.concurrency):
+    #         task = e.submit(
+    #             run_benchmark_method,
+    #             ctx,
+    #             benchname,
+    #             method_ids[chunk_len*i:chunk_len*(i+1)],
+    #             queryname)
+    #         tasks.append(task)
+
+    #     results = [fut.result() for fut in futures.wait(tasks).done]
+    print(f'Running {benchname} {queryname} sync, method_ids: {method_ids}')
+    results = [run_benchmark_method(ctx, benchname, method_ids, queryname)]
 
     return agg_results(results, benchname, queryname, ctx.duration)
 
 
-def do_run_benchmark_async(ctx, benchname, ids, iproc, queryname) -> Result:
-    method_ids = ids[queryname]
-    # We want to split the input ids into separate chunks, so that we
-    # avoid concurrent mutations of the same object.
-    proc_chunk_len = math.ceil(len(method_ids) / ctx.async_split)
-    method_ids = method_ids[proc_chunk_len*iproc:proc_chunk_len*(iproc+1)]
-    chunk_len = math.ceil(
-        len(method_ids) / (ctx.concurrency // ctx.async_split)
-    )
-
-    uvloop.install()
-
-    async def run():
-        tasks = []
-        for i in range(ctx.concurrency // ctx.async_split):
-            task = asyncio.create_task(
-                run_async_benchmark_method(
-                    ctx,
-                    benchname,
-                    method_ids[chunk_len*i:chunk_len*(i+1)],
-                    queryname))
-            tasks.append(task)
-
-        return await asyncio.gather(*tasks)
-
-    return asyncio.run(run())
-
-
-def run_benchmark_async(ctx, benchname, ids, queryname) -> Result:
-    # We want to split the input ids into separate chunks, so that we
-    # avoid concurrent mutations of the same object.
-    with futures.ProcessPoolExecutor(max_workers=ctx.async_split) as e:
-        tasks = []
-        for i in range(ctx.async_split):
-            task = e.submit(
-                do_run_benchmark_async,
-                ctx,
-                benchname,
-                ids,
-                i,
-                queryname)
-            tasks.append(task)
-
-        results = [r for fut in futures.wait(tasks).done for r in fut.result()]
-
-    return agg_results(results, benchname, queryname, ctx.duration)
 
 
 def run_sync(ctx, benchname) -> typing.List[Result]:
@@ -298,60 +256,11 @@ def run_sync(ctx, benchname) -> typing.List[Result]:
     return results
 
 
-def run_async(ctx, benchname) -> typing.List[Result]:
-    queries_mod = _shared.IMPLEMENTATIONS[benchname].module
-    results = []
-
-    async def fetch_ids():
-        if hasattr(queries_mod, 'init'):
-            queries_mod.init(ctx)
-        conn = await queries_mod.connect(ctx)
-        try:
-            return await queries_mod.load_ids(ctx, conn)
-        finally:
-            await queries_mod.close(ctx, conn)
-
-    async def setup():
-        if not hasattr(queries_mod, 'setup'):
-            return
-        conn = await queries_mod.connect(ctx)
-        try:
-            return await queries_mod.setup(ctx, conn, queryname)
-        finally:
-            await queries_mod.close(ctx, conn)
-
-    async def cleanup():
-        if not hasattr(queries_mod, 'cleanup'):
-            return
-        conn = await queries_mod.connect(ctx)
-        try:
-            return await queries_mod.cleanup(ctx, conn, queryname)
-        finally:
-            await queries_mod.close(ctx, conn)
-
-    uvloop.install()
-    ids = asyncio.run(fetch_ids())
-
-    for queryname in ctx.queries:
-        # Potentially setup the benchmark state
-        asyncio.run(setup())
-
-        res = run_benchmark_async(ctx, benchname, ids, queryname)
-        results.append(res)
-        print_result(ctx, res)
-
-        # Potentially clean up after the benchmarks
-        asyncio.run(cleanup())
-
-    return results
-
 
 def run_bench(ctx, benchname) -> typing.List[Result]:
     queries_mod = _shared.IMPLEMENTATIONS[benchname].module
-    if getattr(queries_mod, 'ASYNC', False):
-        return run_async(ctx, benchname)
-    else:
-        return run_sync(ctx, benchname)
+    assert getattr(queries_mod, 'ASYNC', False) == False
+    return run_sync(ctx, benchname)
 
 
 def print_result(ctx, result: Result):
