@@ -35,9 +35,9 @@ def close(ctx, conn):
 def load_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
     d = edgeql_interpreter.query_single_json('''
         WITH
-            U := (select User limit 2) {id, r := random()},
-            M := (select Movie limit 2) {id, r := random()},
-            P := (select Person limit 2) {id, r := random()}
+            U := (select User) {id, r := random()},
+            M := (select Movie) {id, r := random()},
+            P := (select Person) {id, r := random()}
         SELECT (
             users := array_agg((SELECT U ORDER BY U.r LIMIT <int64>$lim).id),
             movies := array_agg((SELECT M ORDER BY M.r LIMIT <int64>$lim).id),
@@ -124,7 +124,7 @@ def insert_movie_plus(conn, val):
 
 def setup(ctx, conn, queryname):
     if queryname == 'update_movie':
-        conn.execute('''
+        conn.query_json('''
             update Movie
             filter contains(.title, '---')
             set {
@@ -132,21 +132,21 @@ def setup(ctx, conn, queryname):
             };
         ''')
     elif queryname == 'insert_user':
-        conn.query('''
+        conn.query_json('''
             delete User
             filter .name LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}%')
     elif queryname == 'insert_movie':
-        conn.query('''
+        conn.query_json('''
             delete Movie
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')
     elif queryname == 'insert_movie_plus':
-        conn.query('''
+        conn.query_json('''
             delete Movie
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')
-        conn.query('''
+        conn.query_json('''
             delete Person
             filter .image LIKE <str>$prefix
         ''', prefix=f'{INSERT_PREFIX}image%')

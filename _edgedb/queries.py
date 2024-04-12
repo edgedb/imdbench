@@ -12,7 +12,7 @@ GET_USER = """
         name,
         image,
         latest_reviews := (
-            WITH UserReviews := User.<author[IS Review]
+            WITH UserReviews := .<author[IS Review]
             SELECT UserReviews {
                 id,
                 body,
@@ -56,6 +56,20 @@ GET_MOVIE = """
         }
         ORDER BY @list_order EMPTY LAST
             THEN .last_name,
+        
+        reviews := (
+            SELECT .<movie[IS Review] {
+                id,
+                body,
+                rating,
+                author: {
+                    id,
+                    name,
+                    image,
+                }
+            }
+            ORDER BY .creation_time DESC
+        ),
     }
     FILTER .id = <uuid>$id
 """
@@ -69,7 +83,7 @@ GET_PERSON = """
         bio,
 
         acted_in := (
-            WITH M := Person.<cast[IS Movie]
+            WITH M := .<cast[IS Movie]
             SELECT M {
                 id,
                 image,
@@ -81,7 +95,7 @@ GET_PERSON = """
         ),
 
         directed := (
-            WITH M := Person.<directors[IS Movie]
+            WITH M := .<directors[IS Movie]
             SELECT M {
                 id,
                 image,

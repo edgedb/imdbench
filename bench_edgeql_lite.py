@@ -219,7 +219,7 @@ def run_benchmark_sync(ctx, benchname, ids, queryname) -> Result:
     #         tasks.append(task)
 
     #     results = [fut.result() for fut in futures.wait(tasks).done]
-    print(f'Running {benchname} {queryname} sync, method_ids: {method_ids}')
+    # print(f'Running {benchname} {queryname} sync, method_ids: {method_ids}')
     results = [run_benchmark_method(ctx, benchname, method_ids, queryname)]
 
     return agg_results(results, benchname, queryname, ctx.duration)
