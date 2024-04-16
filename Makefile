@@ -15,6 +15,7 @@ EDGEDB_VERSION ?= latest
 
 DOCKER ?= docker
 PSQL ?= psql
+MYSQL ?= mysql
 
 PSQL_CMD = $(PSQL) -h localhost -p 15432 -U postgres
 PYTHON ?= python
@@ -195,6 +196,18 @@ load-postgres: docker-postgres-stop reset-postgres $(BUILD)/dataset.json
 
 	$(PP) _postgres/loaddata.py $(BUILD)/dataset.json
 	cd _postgres && npm i
+
+load-planetscale-prisma: export MYSQL_PWD=$(PLANETSCALE_PASSWORD)
+load-planetscale-prisma: $(BUILD)/dataset.json
+	$(MYSQL) -h $(PLANETSCALE_HOST) -u $(PLANETSCALE_USER) \
+		< $(CURRENT_DIR)/_postgres/planetscale.sql
+
+	$(PP) _postgres/loaddata_planetscale.py $(BUILD)/dataset.json
+
+	cd _prisma && \
+	npm i && \
+	echo 'DATABASE_URL="mysql://$(PLANETSCALE_USER):$(PLANETSCALE_PASSWORD)@$(PLANETSCALE_HOST):3306/$(PLANETSCALE_DATABASE)?sslaccept=strict&schema=public"' > .env && \
+	npx prisma generate --schema=prisma/planetscale.prisma && npm i
 
 reset-postgres: docker-postgres
 	$(PSQL_CMD) -tc \

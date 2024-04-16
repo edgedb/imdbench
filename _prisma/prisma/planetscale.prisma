@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model actors {
+  id         Int     @id @default(autoincrement())
+  list_order Int?
+  person_id  Int
+  movie_id   Int
+  movie      movies  @relation(fields: [movie_id], references: [id])
+  person     persons @relation(fields: [person_id], references: [id])
+
+  @@index([movie_id], name: "actors_movie_index")
+  @@index([person_id], name: "actors_person_index")
+}
+
+model directors {
+  id         Int     @id @default(autoincrement())
+  list_order Int?
+  person_id  Int
+  movie_id   Int
+  movie      movies  @relation(fields: [movie_id], references: [id])
+  person     persons @relation(fields: [person_id], references: [id])
+
+  @@index([movie_id], name: "directors_movie_index")
+  @@index([person_id], name: "directors_person_index")
+}
+
+model movies {
+  id          Int         @id @default(autoincrement())
+  image       String
+  title       String
+  year        Int
+  description String
+  cast        actors[]
+  directors   directors[]
+  reviews     reviews[]
+}
+
+model persons {
+  id          Int         @id @default(autoincrement())
+  first_name  String
+  middle_name String      @default("")
+  last_name   String
+  image       String
+  bio         String
+  acted_in    actors[]
+  directed    directors[]
+}
+
+model reviews {
+  id            Int      @id @default(autoincrement())
+  body          String
+  rating        Int
+  creation_time DateTime @db.Timestamp(6)
+  author_id     Int
+  movie_id      Int
+  author        users    @relation(fields: [author_id], references: [id])
+  movie         movies   @relation(fields: [movie_id], references: [id])
+
+  @@index([author_id], name: "review_author_index")
+  @@index([movie_id], name: "review_movie_index")
+  @@index([creation_time], name: "creation_time_index")
+}
+
+model users {
+  id      Int       @id @default(autoincrement())
+  name    String
+  image   String
+  reviews reviews[]
+}

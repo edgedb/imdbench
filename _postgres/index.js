@@ -494,7 +494,7 @@ class App {
     }
   }
 
-  async getIDs() {
+  async getIDs(number_of_ids) {
     var ids = await Promise.all([
       await this.pool.query("SELECT u.id FROM users u ORDER BY random();"),
       await this.pool.query("SELECT p.id FROM persons p ORDER BY random();"),
