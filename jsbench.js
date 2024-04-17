@@ -16,6 +16,7 @@ const sequelizeapp = require('./_sequelize/index');
 const pgapp = require('./_postgres/index');
 const edgedbapp = require('./_edgedb_js/index');
 const prismaapp = require('./_prisma/index');
+const drizzleapp = require('./_drizzle/index');
 
 async function getApp(args) {
   var app;
@@ -43,6 +44,12 @@ async function getApp(args) {
     app = new prismaapp.TunedApp();
   } else if (args.orm == 'postgres_pg') {
     app = new pgapp.App({
+      host: args.host,
+      port: args.port,
+      max: ncon,
+    });
+  } else if (args.orm == 'drizzle') {
+    app = new drizzleapp.App({
       host: args.host,
       port: args.port,
       max: ncon,
@@ -317,6 +324,7 @@ async function main() {
       'postgres_pg',
       'prisma',
       'prisma_untuned',
+      'drizzle',
       'edgedb_js',
       'edgedb_js_json',
       'edgedb_js_qb',
