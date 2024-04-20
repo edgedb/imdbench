@@ -9,7 +9,6 @@ import {
   asc,
   desc,
   avg,
-  inArray,
 } from "drizzle-orm";
 import { Pool } from "pg";
 
@@ -289,7 +288,7 @@ export class App {
     }
   }
 
-  async movieDetails(id: number): Promise<any> {
+  async movieDetails(id: number): Promise<string> {
     // XXX: `extras` doesn't support aggregations yet
     const rs = await this.preparedAvgRating.execute({
       ids: `[${id}]`,
@@ -298,7 +297,8 @@ export class App {
     if (rs.length > 0) {
       avgRating = rs[0].avgRating;
     }
-    return await this.preparedMovieDetails.execute({ avgRating, id });
+    let result = await this.preparedMovieDetails.execute({ avgRating, id });
+    return JSON.stringify(result);
   }
 
   async userDetails(id: number): Promise<any> {
@@ -314,16 +314,17 @@ export class App {
       (acc: { [key: number]: number }, r) => ({ ...acc, [r.id]: r.avgRating }),
       {},
     );
-    return {
+    let result = {
       ...rv,
       reviews: rv.reviews.map((review) => ({
         ...review,
         movie: { ...review.movie, avg_rating: ratings[review.movie.id] },
       })),
     };
+    return JSON.stringify(result);
   }
 
-  async insertMovie(val: { prefix: string; people: number[] }) {
+  async insertMovie(val: { prefix: string; people: number[] }): Promise<string> {
     // XXX: insert CTE https://github.com/drizzle-team/drizzle-orm/issues/2078
     const num = Math.floor(Math.random() * 1000000);
     const movie = (
@@ -347,10 +348,10 @@ export class App {
         movieId: movie.id,
       })),
     );
-    return { ...movie, directors, cast };
+    return JSON.stringify({...movie, directors, cast});
   }
 
-  async cleanup(query: string) {
+  async cleanup(query: string): Promise<void> {
     if (
       [
         "update_movie",
