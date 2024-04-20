@@ -1,5 +1,8 @@
 import * as schema from "./db/schema";
+import * as mysql from "./db/mysql";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle as pscale } from "drizzle-orm/planetscale-serverless";
+import { Client } from "@planetscale/database";
 import {
   sql,
   like,
@@ -9,14 +12,70 @@ import {
   asc,
   desc,
   avg,
+  inArray,
 } from "drizzle-orm";
 import { Pool } from "pg";
+import * as process from "process";
 
-export class App {
+abstract class BaseApp {
+  protected concurrency: number;
+  protected INSERT_PREFIX: string;
+
+  constructor(options: { [key: string]: any }) {
+    this.concurrency = options.max;
+    this.INSERT_PREFIX = "insert_test__";
+  }
+
+  getConnection(i: number) {
+    return this;
+  }
+
+  abstract setup(query: string): Promise<void>;
+  abstract movieDetails(id: number): Promise<string>;
+  abstract userDetails(id: number): Promise<any>;
+  abstract insertMovie(val: {
+    prefix: string;
+    people: number[];
+  }): Promise<string>;
+
+  async benchQuery(query: string, val: any) {
+    if (query == "get_user") {
+      return await this.userDetails(val as number);
+    } else if (query == "get_person") {
+      // return await this.personDetails(id);
+    } else if (query == "get_movie") {
+      return await this.movieDetails(val as number);
+    } else if (query == "update_movie") {
+      // return await this.updateMovie(id);
+    } else if (query == "insert_user") {
+      // return await this.insertUser(id);
+    } else if (query == "insert_movie") {
+      return await this.insertMovie(
+        val as { prefix: string; people: number[] },
+      );
+    } else if (query == "insert_movie_plus") {
+      // return await this.insertMoviePlus(id);
+    }
+  }
+
+  async cleanup(query: string): Promise<void> {
+    if (
+      [
+        "update_movie",
+        "insert_user",
+        "insert_movie",
+        "insert_movie_plus",
+      ].indexOf(query) >= 0
+    ) {
+      // The clean up is the same as setup for mutation benchmarks
+      return await this.setup(query);
+    }
+  }
+}
+
+export class App extends BaseApp {
   private client;
   private db;
-  private concurrency: number;
-  private INSERT_PREFIX: string;
   private preparedAvgRating;
   private preparedMovieDetails;
   private preparedUserDetails;
@@ -32,6 +91,7 @@ export class App {
       port: 15432,
       ...(options || {}),
     };
+    super(options);
     this.client = new Pool({
       host: options.host,
       port: options.port,
@@ -40,8 +100,6 @@ export class App {
       database: options.database,
     });
     this.db = drizzle(this.client, { schema, logger: false });
-    this.concurrency = options.max;
-    this.INSERT_PREFIX = "insert_test__";
     const ids = this.db
       .select({ val: sql`val::int` })
       .from(
@@ -216,7 +274,7 @@ export class App {
     };
   }
 
-  async setup(query: string) {
+  async setup(query: string): Promise<void> {
     if (query == "update_movie") {
       await this.db
         .update(schema.movies)
@@ -264,30 +322,6 @@ export class App {
     }
   }
 
-  getConnection(i: number) {
-    return this;
-  }
-
-  async benchQuery(query: string, val: any) {
-    if (query == "get_user") {
-      return await this.userDetails(val as number);
-    } else if (query == "get_person") {
-      // return await this.personDetails(id);
-    } else if (query == "get_movie") {
-      return await this.movieDetails(val as number);
-    } else if (query == "update_movie") {
-      // return await this.updateMovie(id);
-    } else if (query == "insert_user") {
-      // return await this.insertUser(id);
-    } else if (query == "insert_movie") {
-      return await this.insertMovie(
-        val as { prefix: string; people: number[] },
-      );
-    } else if (query == "insert_movie_plus") {
-      // return await this.insertMoviePlus(id);
-    }
-  }
-
   async movieDetails(id: number): Promise<string> {
     // XXX: `extras` doesn't support aggregations yet
     const rs = await this.preparedAvgRating.execute({
@@ -324,7 +358,10 @@ export class App {
     return JSON.stringify(result);
   }
 
-  async insertMovie(val: { prefix: string; people: number[] }): Promise<string> {
+  async insertMovie(val: {
+    prefix: string;
+    people: number[];
+  }): Promise<string> {
     // XXX: insert CTE https://github.com/drizzle-team/drizzle-orm/issues/2078
     const num = Math.floor(Math.random() * 1000000);
     const movie = (
@@ -348,20 +385,329 @@ export class App {
         movieId: movie.id,
       })),
     );
-    return JSON.stringify({...movie, directors, cast});
+    return JSON.stringify({ ...movie, directors, cast });
+  }
+}
+
+export class MySQLApp extends BaseApp {
+  private client;
+  private db;
+  private fullName;
+  private preparedMovieDetails;
+  private preparedUserDetails;
+  private preparedInsertMovie;
+  private preparedLastInsertedMovie;
+
+  constructor(options: { [key: string]: any }) {
+    options = {
+      user: process.env.IMDBENCH_MYSQL_USER,
+      host: process.env.IMDBENCH_MYSQL_HOST,
+      database: process.env.IMDBENCH_MYSQL_DATABASE,
+      password: process.env.IMDBENCH_MYSQL_PASSWORD,
+      ...(options || {}),
+    };
+    super(options);
+    this.client = new Client({
+      url: `mysql://${options.user}:${options.password}@${options.host}/${options.database}?sslaccept=strict`,
+    });
+    this.db = pscale(this.client, { schema: mysql, logger: false });
+    this.fullName = sql<string>`
+      CASE WHEN ${mysql.persons.middleName} != '' THEN
+      CONCAT(${mysql.persons.firstName}, ' ', ${mysql.persons.middleName}, ' ', ${mysql.persons.lastName})
+      ELSE
+      CONCAT(${mysql.persons.firstName}, ' ', ${mysql.persons.lastName})
+      END`;
+    this.preparedMovieDetails = this.db.query.movies
+      .findFirst({
+        columns: {
+          id: true,
+          image: true,
+          title: true,
+          year: true,
+          description: true,
+        },
+        extras: {
+          avg_rating: sql`${sql.placeholder("avgRating")}`.as("avg_rating"),
+        },
+        with: {
+          directors: {
+            columns: {},
+            with: {
+              person: {
+                columns: {
+                  id: true,
+                  image: true,
+                },
+                extras: {
+                  full_name: this.fullName.as("full_name"),
+                },
+              },
+            },
+            orderBy: [
+              // XXX: unsupported Drizzle features as of writing
+              asc(mysql.directors.listOrder), // .nullsLast()
+              // asc(mysql.persons.lastName),
+            ],
+          },
+          cast: {
+            columns: {},
+            with: {
+              person: {
+                columns: {
+                  id: true,
+                  image: true,
+                },
+                extras: {
+                  full_name: this.fullName.as("full_name"),
+                },
+              },
+            },
+            orderBy: [
+              // XXX: unsupported Drizzle features as of writing
+              asc(mysql.directors.listOrder), // .nullsLast()
+              // asc(mysql.persons.lastName),
+            ],
+          },
+          reviews: {
+            columns: {
+              id: true,
+              body: true,
+              rating: true,
+            },
+            with: {
+              author: {
+                columns: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+            orderBy: [desc(mysql.reviews.creationTime)],
+          },
+        },
+        where: eq(mysql.movies.id, sql.placeholder("id")),
+      })
+      .prepare();
+    this.preparedUserDetails = this.db.query.users
+      .findFirst({
+        columns: {
+          id: true,
+          name: true,
+          image: true,
+        },
+        with: {
+          reviews: {
+            columns: {
+              id: true,
+              body: true,
+              rating: true,
+            },
+            with: {
+              movie: {
+                columns: {
+                  id: true,
+                  image: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+        where: eq(mysql.users.id, sql.placeholder("id")),
+      })
+      .prepare();
+    this.preparedInsertMovie = this.db
+      .insert(mysql.movies)
+      .values({
+        title: sql`CONCAT(${sql.placeholder("prefix")}, ${sql.placeholder("num")})`,
+        image: sql`CONCAT('img', ${sql.placeholder("num")}, '.jpeg')`,
+        description: sql`CONCAT(${sql.placeholder("prefix")}, 'description', ${sql.placeholder("num")})`,
+        year: sql.placeholder("num"),
+      })
+      .prepare();
+    this.preparedLastInsertedMovie = this.db.query.movies
+      .findFirst({
+        where: eq(mysql.movies.id, sql`LAST_INSERT_ID()`),
+      })
+      .prepare();
   }
 
-  async cleanup(query: string): Promise<void> {
-    if (
-      [
-        "update_movie",
-        "insert_user",
-        "insert_movie",
-        "insert_movie_plus",
-      ].indexOf(query) >= 0
-    ) {
-      // The clean up is the same as setup for mutation benchmarks
-      return await this.setup(query);
+  async getIDs(number_of_ids: number) {
+    const ids = await Promise.all([
+      this.db.query.users.findMany({
+        columns: { id: true },
+        orderBy: sql`rand()`,
+        limit: number_of_ids,
+      }),
+      this.db.query.persons.findMany({
+        columns: { id: true },
+        orderBy: sql`rand()`,
+        limit: number_of_ids,
+      }),
+      this.db.query.movies.findMany({
+        columns: { id: true },
+        orderBy: sql`rand()`,
+        limit: number_of_ids,
+      }),
+    ]);
+    const people = ids[1].map((x) => x.id);
+    return {
+      get_user: ids[0].map((x) => x.id),
+      get_person: people,
+      get_movie: ids[2].map((x) => x.id),
+      update_movie: ids[2].map((x) => x.id),
+      insert_user: Array(this.concurrency).fill(this.INSERT_PREFIX),
+      insert_movie: Array(this.concurrency).fill({
+        prefix: this.INSERT_PREFIX,
+        people: people.slice(0, 4),
+      }),
+      insert_movie_plus: Array(this.concurrency).fill(this.INSERT_PREFIX),
+    };
+  }
+
+  async setup(query: string): Promise<void> {
+    if (query == "update_movie") {
+      await this.db
+        .update(mysql.movies)
+        .set({ title: sql`split_part(title, '---', 1)` })
+        .where(like(mysql.movies.title, "%---%"));
+    } else if (query == "insert_user") {
+      await this.db
+        .delete(mysql.users)
+        .where(like(mysql.users.name, `${this.INSERT_PREFIX}%`));
+    } else if (query == "insert_movie" || query == "insert_movie_plus") {
+      // XXX: use `delete ... using ...` once Drizzle supports it
+      await this.db.delete(mysql.directors).where(
+        exists(
+          this.db
+            .select()
+            .from(mysql.movies)
+            .where(
+              and(
+                eq(mysql.directors.movieId, mysql.movies.id),
+                like(mysql.movies.image, `${this.INSERT_PREFIX}%`),
+              ),
+            ),
+        ),
+      );
+      await this.db.delete(mysql.actors).where(
+        exists(
+          this.db
+            .select()
+            .from(mysql.movies)
+            .where(
+              and(
+                eq(mysql.actors.movieId, mysql.movies.id),
+                like(mysql.movies.image, `${this.INSERT_PREFIX}%`),
+              ),
+            ),
+        ),
+      );
+      await this.db
+        .delete(mysql.movies)
+        .where(like(mysql.movies.image, `${this.INSERT_PREFIX}%`));
+
+      await this.db
+        .delete(mysql.persons)
+        .where(like(mysql.persons.image, `${this.INSERT_PREFIX}%`));
     }
+  }
+
+  async movieDetails(id: number): Promise<string> {
+    // XXX: `extras` doesn't support aggregations yet
+    const rs = await this.db
+      .select({
+        id: mysql.reviews.movieId,
+        avgRating: avg(mysql.reviews.rating).mapWith(Number),
+      })
+      .from(mysql.reviews)
+      .groupBy(mysql.reviews.movieId)
+      .where(eq(mysql.reviews.movieId, id));
+    let avgRating: number = 0;
+    if (rs.length > 0) {
+      avgRating = rs[0].avgRating;
+    }
+    let result = await this.preparedMovieDetails.execute({ avgRating, id });
+    return JSON.stringify(result);
+  }
+
+  async userDetails(id: number): Promise<any> {
+    const rv = await this.preparedUserDetails.execute({ id });
+    if (rv === undefined) {
+      return;
+    }
+    const ratings = (
+      await this.db
+        .select({
+          id: mysql.reviews.movieId,
+          avgRating: avg(mysql.reviews.rating).mapWith(Number),
+        })
+        .from(mysql.reviews)
+        .groupBy(mysql.reviews.movieId)
+        .where(
+          inArray(
+            mysql.reviews.movieId,
+            rv?.reviews.map((r) => r.movie.id),
+          ),
+        )
+    ).reduce(
+      (acc: { [key: number]: number }, r) => ({ ...acc, [r.id]: r.avgRating }),
+      {},
+    );
+    let result = {
+      ...rv,
+      reviews: rv.reviews.map((review) => ({
+        ...review,
+        movie: { ...review.movie, avg_rating: ratings[review.movie.id] },
+      })),
+    };
+    return JSON.stringify(result);
+  }
+
+  async insertMovie(val: {
+    prefix: string;
+    people: number[];
+  }): Promise<string> {
+    // XXX: insert CTE https://github.com/drizzle-team/drizzle-orm/issues/2078
+    const num = Math.floor(Math.random() * 1000000);
+    // XXX: LAST_INSERT_ID() only works in tx, while prepared statements don't
+    let movie = await this.db.transaction(async (tx) => {
+      await tx.insert(mysql.movies).values({
+        title: sql`CONCAT(${val.prefix}, ${num})`,
+        image: sql`CONCAT('img', ${num}, '.jpeg')`,
+        description: sql`CONCAT(${val.prefix}, 'description', ${num})`,
+        year: num,
+      });
+      return await tx.query.movies.findFirst({
+        where: eq(mysql.movies.id, sql`LAST_INSERT_ID()`),
+      });
+    });
+    const people = await this.db.query.persons.findMany({
+      columns: {
+        id: true,
+        image: true,
+      },
+      extras: {
+        full_name: this.fullName.as("full_name"),
+      },
+      where: inArray(mysql.users.id, val.people),
+    });
+    const directors = people.slice(0, 1);
+    const cast = people.slice(1, 4);
+    // XXX: prepared statements & batching
+    await this.db.insert(mysql.directors).values(
+      directors.map((director) => ({
+        personId: director.id,
+        movieId: movie!.id,
+      })),
+    );
+    await this.db.insert(mysql.actors).values(
+      cast.map((actor) => ({
+        personId: actor.id,
+        movieId: movie!.id,
+      })),
+    );
+    return JSON.stringify({ ...movie, directors, cast });
   }
 }

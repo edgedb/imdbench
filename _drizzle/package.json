@@ -6,6 +6,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@planetscale/database": "^1.16.0",
     "drizzle-orm": "^0.30.6",
     "pg": "^8.11.4",
     "postgres": "^3.4.4"
