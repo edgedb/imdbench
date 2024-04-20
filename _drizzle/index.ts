@@ -32,7 +32,7 @@ abstract class BaseApp {
 
   abstract setup(query: string): Promise<void>;
   abstract movieDetails(id: number): Promise<string>;
-  abstract userDetails(id: number): Promise<any>;
+  abstract userDetails(id: number): Promise<string | undefined>;
   abstract insertMovie(val: {
     prefix: string;
     people: number[];
@@ -335,7 +335,7 @@ export class App extends BaseApp {
     return JSON.stringify(result);
   }
 
-  async userDetails(id: number): Promise<any> {
+  async userDetails(id: number): Promise<string | undefined> {
     const rv = await this.preparedUserDetails.execute({ id });
     if (rv === undefined) {
       return;
@@ -632,7 +632,7 @@ export class MySQLApp extends BaseApp {
     return JSON.stringify(result);
   }
 
-  async userDetails(id: number): Promise<any> {
+  async userDetails(id: number): Promise<string | undefined> {
     const rv = await this.preparedUserDetails.execute({ id });
     if (rv === undefined) {
       return;
