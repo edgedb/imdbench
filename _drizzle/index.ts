@@ -76,6 +76,7 @@ abstract class BaseApp {
 export class App extends BaseApp {
   private client;
   private db;
+  private fullName;
   private preparedAvgRating;
   private preparedMovieDetails;
   private preparedUserDetails;
@@ -114,7 +115,7 @@ export class App extends BaseApp {
       .groupBy(schema.reviews.movieId)
       .where(eq(schema.reviews.movieId, sql`any(${ids})`))
       .prepare("avgRating");
-    const fullName = sql<string>`
+    this.fullName = sql<string>`
       CASE WHEN ${schema.persons.middleName} != '' THEN
       ${schema.persons.firstName} || ' ' || ${schema.persons.middleName} || ' ' || ${schema.persons.lastName}
       ELSE
@@ -142,7 +143,7 @@ export class App extends BaseApp {
                   image: true,
                 },
                 extras: {
-                  full_name: fullName.as("full_name"),
+                  full_name: this.fullName.as("full_name"),
                 },
               },
             },
@@ -161,7 +162,7 @@ export class App extends BaseApp {
                   image: true,
                 },
                 extras: {
-                  full_name: fullName.as("full_name"),
+                  full_name: this.fullName.as("full_name"),
                 },
               },
             },
@@ -237,7 +238,7 @@ export class App extends BaseApp {
           image: true,
         },
         extras: {
-          full_name: fullName.as("full_name"),
+          full_name: this.fullName.as("full_name"),
         },
         where: eq(schema.users.id, sql`any(${ids})`),
       })
