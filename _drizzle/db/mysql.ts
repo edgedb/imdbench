@@ -42,6 +42,11 @@ export const persons = mysqlTable("persons", {
   bio: text("bio"),
 });
 
+export const personActsRelations = relations(persons, ({ many }) => ({
+  actedIn: many(actors),
+  directed: many(directors),
+}));
+
 export const directors = mysqlTable(
   "directors",
   {
