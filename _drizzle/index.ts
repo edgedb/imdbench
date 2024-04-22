@@ -32,17 +32,18 @@ abstract class BaseApp {
 
   abstract setup(query: string): Promise<void>;
   abstract movieDetails(id: number): Promise<string>;
-  abstract userDetails(id: number): Promise<any>;
+  abstract userDetails(id: number): Promise<string | undefined>;
   abstract insertMovie(val: {
     prefix: string;
     people: number[];
   }): Promise<string>;
+  abstract personDetails(id: number): Promise<string>;
 
   async benchQuery(query: string, val: any) {
     if (query == "get_user") {
       return await this.userDetails(val as number);
     } else if (query == "get_person") {
-      // return await this.personDetails(id);
+      return await this.personDetails(val as number);
     } else if (query == "get_movie") {
       return await this.movieDetails(val as number);
     } else if (query == "update_movie") {
@@ -76,6 +77,7 @@ abstract class BaseApp {
 export class App extends BaseApp {
   private client;
   private db;
+  private fullName;
   private preparedAvgRating;
   private preparedMovieDetails;
   private preparedUserDetails;
@@ -114,7 +116,7 @@ export class App extends BaseApp {
       .groupBy(schema.reviews.movieId)
       .where(eq(schema.reviews.movieId, sql`any(${ids})`))
       .prepare("avgRating");
-    const fullName = sql<string>`
+    this.fullName = sql<string>`
       CASE WHEN ${schema.persons.middleName} != '' THEN
       ${schema.persons.firstName} || ' ' || ${schema.persons.middleName} || ' ' || ${schema.persons.lastName}
       ELSE
@@ -142,7 +144,7 @@ export class App extends BaseApp {
                   image: true,
                 },
                 extras: {
-                  full_name: fullName.as("full_name"),
+                  full_name: this.fullName.as("full_name"),
                 },
               },
             },
@@ -161,7 +163,7 @@ export class App extends BaseApp {
                   image: true,
                 },
                 extras: {
-                  full_name: fullName.as("full_name"),
+                  full_name: this.fullName.as("full_name"),
                 },
               },
             },
@@ -237,7 +239,7 @@ export class App extends BaseApp {
           image: true,
         },
         extras: {
-          full_name: fullName.as("full_name"),
+          full_name: this.fullName.as("full_name"),
         },
         where: eq(schema.users.id, sql`any(${ids})`),
       })
@@ -335,7 +337,7 @@ export class App extends BaseApp {
     return JSON.stringify(result);
   }
 
-  async userDetails(id: number): Promise<any> {
+  async userDetails(id: number): Promise<string | undefined> {
     const rv = await this.preparedUserDetails.execute({ id });
     if (rv === undefined) {
       return;
@@ -386,6 +388,87 @@ export class App extends BaseApp {
       })),
     );
     return JSON.stringify({ ...movie, directors, cast });
+  }
+
+  async personDetails(id: number): Promise<string> {
+    let person = await this.db.transaction(
+      async (tx) => {
+        let person = await tx.query.persons.findFirst({
+          columns: {
+            id: true,
+            image: true,
+            bio: true,
+          },
+          with: {
+            actedIn: {
+              columns: {},
+              with: {
+                movie: {
+                  columns: {
+                    id: true,
+                  },
+                },
+              },
+            },
+            directed: {
+              columns: {},
+              with: {
+                movie: {
+                  columns: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+          extras: {
+            full_name: this.fullName.as("full_name"),
+          },
+          where: eq(schema.persons.id, id),
+        });
+        let actedIn =
+          person!.actedIn.length > 0
+            ? await tx.query.movies.findMany({
+                columns: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                },
+                where: inArray(
+                  schema.movies.id,
+                  person!.actedIn.map((r) => r.movie.id),
+                ),
+                orderBy: [asc(schema.movies.year), asc(schema.movies.title)],
+              })
+            : [];
+        let directed =
+          person!.directed.length > 0
+            ? await tx.query.movies.findMany({
+                columns: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                },
+                where: inArray(
+                  schema.movies.id,
+                  person!.directed.map((r) => r.movie.id),
+                ),
+                orderBy: [asc(schema.movies.year), asc(schema.movies.title)],
+              })
+            : [];
+        return {
+          ...person,
+          actedIn,
+          directed,
+        };
+      },
+      {
+        isolationLevel: "repeatable read",
+      },
+    );
+    return JSON.stringify(person);
   }
 }
 
@@ -632,7 +715,7 @@ export class MySQLApp extends BaseApp {
     return JSON.stringify(result);
   }
 
-  async userDetails(id: number): Promise<any> {
+  async userDetails(id: number): Promise<string | undefined> {
     const rv = await this.preparedUserDetails.execute({ id });
     if (rv === undefined) {
       return;
@@ -709,5 +792,86 @@ export class MySQLApp extends BaseApp {
       })),
     );
     return JSON.stringify({ ...movie, directors, cast });
+  }
+
+  async personDetails(id: number): Promise<string> {
+    let person = await this.db.transaction(
+      async (tx) => {
+        let person = await tx.query.persons.findFirst({
+          columns: {
+            id: true,
+            image: true,
+            bio: true,
+          },
+          with: {
+            actedIn: {
+              columns: {},
+              with: {
+                movie: {
+                  columns: {
+                    id: true,
+                  },
+                },
+              },
+            },
+            directed: {
+              columns: {},
+              with: {
+                movie: {
+                  columns: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+          extras: {
+            full_name: this.fullName.as("full_name"),
+          },
+          where: eq(mysql.persons.id, id),
+        });
+        let actedIn =
+          person!.actedIn.length > 0
+            ? await tx.query.movies.findMany({
+                columns: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                },
+                where: inArray(
+                  mysql.movies.id,
+                  person!.actedIn.map((r) => r.movie.id),
+                ),
+                orderBy: [asc(mysql.movies.year), asc(mysql.movies.title)],
+              })
+            : [];
+        let directed =
+          person!.directed.length > 0
+            ? await tx.query.movies.findMany({
+                columns: {
+                  id: true,
+                  image: true,
+                  title: true,
+                  year: true,
+                },
+                where: inArray(
+                  mysql.movies.id,
+                  person!.directed.map((r) => r.movie.id),
+                ),
+                orderBy: [asc(mysql.movies.year), asc(mysql.movies.title)],
+              })
+            : [];
+        return {
+          ...person,
+          actedIn,
+          directed,
+        };
+      },
+      {
+        isolationLevel: "repeatable read",
+      },
+    );
+    return JSON.stringify(person);
   }
 }
