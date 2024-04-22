@@ -1,6 +1,9 @@
 import * as schema from "./db/schema";
 import * as mysql from "./db/mysql";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
+import { drizzle as neon } from "drizzle-orm/neon-serverless";
+import * as ws from "ws";
 import { drizzle as pscale } from "drizzle-orm/planetscale-serverless";
 import { Client } from "@planetscale/database";
 import {
@@ -16,6 +19,7 @@ import {
 } from "drizzle-orm";
 import { Pool } from "pg";
 import * as process from "process";
+neonConfig.webSocketConstructor = ws;
 
 abstract class BaseApp {
   protected concurrency: number;
@@ -94,14 +98,21 @@ export class App extends BaseApp {
       ...(options || {}),
     };
     super(options);
-    this.client = new Pool({
-      host: options.host,
-      port: options.port,
-      user: options.user,
-      password: options.password,
-      database: options.database,
-    });
-    this.db = drizzle(this.client, { schema, logger: false });
+    if (process.env.NEON_DATABASE_URL) {
+      this.client = new NeonPool({
+        connectionString: process.env.NEON_DATABASE_URL,
+      });
+      this.db = neon(this.client, { schema, logger: false });
+    } else {
+      let client = new Pool({
+        host: options.host,
+        port: options.port,
+        user: options.user,
+        password: options.password,
+        database: options.database,
+      });
+      this.db = drizzle(client, { schema, logger: false });
+    }
     const ids = this.db
       .select({ val: sql`val::int` })
       .from(
