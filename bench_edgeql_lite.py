@@ -57,6 +57,10 @@ def run_benchmark_method(ctx, benchname, ids, queryname):
 
     method = getattr(queries_mod, queryname)
     conn = queries_mod.connect(ctx)
+    if len(ids) == 0:
+        raise ValueError('No input IDs for query', 'Make sure you run', 'python3',
+        'imdbench/_edgedb/loaddata_nobulk_sqlite.py', '0', 'imdbench/dataset/build/edbdataset.json'
+                         )
     # This is used to loop over input IDs in such a way as to avoid
     # repeating the same ID too closely to itself. This avoid
     # conflicts when concurrently updating the same object.
