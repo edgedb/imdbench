@@ -79,7 +79,7 @@ IMPLEMENTATIONS = {
         impl('python', 'PostgreSQL (Python, asyncpg)', postgres_queries),
 
     'postgres_psycopg':
-        impl('python', 'PostgreSQL (Pyhton, psycopg2)', postgres_psycopg_queries),
+        impl('python', 'PostgreSQL (Python, psycopg2)', postgres_psycopg_queries),
 
     'postgres_pq':
         impl('go', 'PostgreSQL (Go, pq)', postgres_pq_golang),
