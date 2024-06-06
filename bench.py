@@ -247,6 +247,7 @@ def run_benchmarks(args, argv):
             lang_args['edgeql_sqlite'] = [
                 'python', 'imdbench/bench_edgeql_lite.py', '--json', '__tmp.json'
             ] + argv
+            print(lang_args)
         else:
             raise ValueError('unsupported host language: {}'.format(
                 bench.language))

@@ -7,6 +7,7 @@
 
 
 import random
+import pickle
 
 from . import queries
 
@@ -16,6 +17,7 @@ INSERT_PREFIX = 'insert_test__'
 import sys
 
 sys.path.append("../edgedb/")
+import os
 
 from edb.tools.experimental_interpreter import new_interpreter
 from edb.tools.experimental_interpreter.sqlite import sqlite_adapter
@@ -33,6 +35,14 @@ def close(ctx, conn):
 
 
 def load_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
+    print(ctx)
+    if not os.path.exists("edgeql_ids.pickle"):
+        raise ValueError("Please run 'python queries_json_sqlite.py preload_ids' first ")
+    with open("edgeql_ids.pickle", "rb") as f:
+        d = pickle.load(f)
+        return d
+
+def preload_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
     d = edgeql_interpreter.query_single_json('''
         WITH
             U := (select User) {id, r := random()},
@@ -49,7 +59,7 @@ def load_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
     movies = list(d['movies'])
     people = list(d['people'])
 
-    return dict(
+    return_data = dict(
         get_user=list(d['users']),
         get_movie=movies,
         get_person=people,
@@ -64,6 +74,8 @@ def load_ids(ctx, edgeql_interpreter : new_interpreter.EdgeQLInterpreter):
         }] * ctx.concurrency,
         insert_movie_plus=[INSERT_PREFIX] * ctx.concurrency,
     )
+    with open("edgeql_ids.pickle", "wb") as f:
+        pickle.dump(return_data, f)
 
 
 def get_user(conn, id):
@@ -153,7 +165,19 @@ def setup(ctx, conn, queryname):
 
 
 def cleanup(ctx, conn, queryname):
+    print("Time [if logging enabled]")
+    # print(sqlite_adapter.cumulative_time)
+
     if queryname in {'update_movie', 'insert_user', 'insert_movie',
                      'insert_movie_plus'}:
         # The clean up is the same as setup for mutation benchmarks
         setup(ctx, conn, queryname)
+
+
+if __name__ == "__main__":
+    if sys.argv[1] == 'preload_ids':
+        edgeql_interpreter = connect(None)
+        class Ctx:
+            number_of_ids = 250
+            concurrency = 1
+        preload_ids(Ctx(), edgeql_interpreter)
