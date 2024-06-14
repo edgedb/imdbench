@@ -49,7 +49,7 @@ async function getApp(args) {
       max: ncon,
     });
   } else if (args.orm == 'drizzle') {
-    app = new drizzleapp.App({
+    app = new (process.env.IMDBENCH_MYSQL ? drizzleapp.MySQLApp : drizzleapp.App)({
       host: args.host,
       port: args.port,
       max: ncon,
