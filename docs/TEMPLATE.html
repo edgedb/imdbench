@@ -987,12 +987,14 @@
           });
       }
 
-      function _copyAndSortBenchmarks(benchmarks) {
+      function _copyAndSortBenchmarks(benchmarks, options) {
         var newBench = [];
         Array.prototype.push.apply(newBench, benchmarks);
-        newBench.sort(function (e1, e2) {
-          return d3.ascending(e1.qps, e2.qps);
-        });
+        if (options.sort) {
+          newBench.sort(function (e1, e2) {
+            return d3.ascending(e1.qps, e2.qps);
+          });
+        }
         return newBench;
       }
 
@@ -1007,7 +1009,7 @@
           margin = {top: 10, right: 65, bottom: 55, left: 65},
           width = fullWidth - margin.left - margin.right,
           height = fullHeight - margin.top - margin.bottom,
-          benchmarks = _copyAndSortBenchmarks(data);
+          benchmarks = _copyAndSortBenchmarks(data, options);
 
         // data reshape
 
@@ -1164,7 +1166,7 @@
           margin = {top: 10, right: 65, bottom: 55, left: 65},
           width = fullWidth - margin.left - margin.right,
           height = fullHeight - margin.top - margin.bottom,
-          benchmarks = _copyAndSortBenchmarks(data);
+          benchmarks = _copyAndSortBenchmarks(data, options);
 
         // data reshape
 
@@ -1500,8 +1502,8 @@
 
     <script>
       var DATA_{{ bench }} = {{ data }};
-      drawBars('#bars-{{ bench }}', DATA_{{ bench }});
-      drawLats('#lats-{{ bench }}', DATA_{{ bench }});
+      drawBars('#bars-{{ bench }}', DATA_{{ bench }}, {sort: {{ __BENCHMARK_SORT__ }}});
+      drawLats('#lats-{{ bench }}', DATA_{{ bench }}, {sort: {{ __BENCHMARK_SORT__ }}});
     </script>
 
     {% if bench != "mean" %}
