@@ -20,3 +20,9 @@ venv*
 .python-version
 .dart_tool
 .packages
+_edgedb_js/querybuilder
+.venv
+/_dotnet/EdgeDB.Net.IMDBench/bin/*
+/_dotnet/EdgeDB.Net.IMDBench/obj/*
+/_dotnet/EdgeDB.Net.IMDBench/.vs/*
+

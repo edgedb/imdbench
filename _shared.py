@@ -132,6 +132,12 @@ IMPLEMENTATIONS = {
 
     'postgres_dart':
         impl('dart', 'Postgres (Dart)', None),
+
+    'edgedb_dotnet':
+        impl("dotnet", "EdgeDB (.NET)", None),
+
+    'efcore':
+        impl("dotnet", "EFCore w/ Postgres (.NET)", None)
 }
 
 
